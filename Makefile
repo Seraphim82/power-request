@@ -1,17 +1,20 @@
 # Atalhos do Power Request (rode a partir da raiz do projeto)
-.PHONY: setup test typecheck build check run dev app icon
+.PHONY: setup test typecheck build check run dev app icon node-check
 
-setup:  ## Instala backend (venv) e frontend
+node-check:  ## Confere a versão do Node exigida pelo frontend
+	@node -e "const [a,b]=process.versions.node.split('.').map(Number); if(!(a>22||(a===22&&b>=12)||(a===20&&b>=19))){console.error('Precisa de Node 20.19+ ou 22.12+ (voce tem '+process.versions.node+'). Instale em https://nodejs.org');process.exit(1)}"
+
+setup: node-check  ## Instala backend (venv) e frontend
 	cd backend && python3 -m venv venv && ./venv/bin/pip install -r requirements-dev.txt
 	cd frontend && npm install
 
 test:  ## Testes do backend
 	cd backend && ./venv/bin/python -m pytest
 
-typecheck:  ## Checagem de tipos do frontend
+typecheck: node-check  ## Checagem de tipos do frontend
 	cd frontend && npm run typecheck
 
-build:  ## Compila o frontend (frontend/dist)
+build: node-check  ## Compila o frontend (frontend/dist)
 	cd frontend && npm run build
 
 check: test typecheck build  ## Tudo que precisa passar antes de um commit
