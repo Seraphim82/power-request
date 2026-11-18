@@ -19,13 +19,25 @@ class PowerRequestEngine:
 
     MAX_FIELD_LENGTH = 2000
 
+    # Ids internos (base educacional) -> ids usados pela interface.
+    CATEGORIA_UI = {
+        "bots": "bot",
+        "jogos": "jogo",
+        "mobile": "mobile",
+        "web": "web",
+        "automacao": "automacao",
+        "geral": "geral",
+    }
+
     INJECTION_PATTERNS = [
         r"ignore\s+(all\s+)?(previous|prior|above)\s+instructions",
         r"ignore\s+(todas\s+as\s+)?instru[çc][õo]es\s+anteriores",
         r"desconsidere\s+(tudo|todas\s+as\s+regras)",
         r"<\s*script\b",
         r"javascript\s*:",
-        r"\{\{.*\}\}",
+        # Bloqueia expressões em {{ }} (ex: {{7*7}}, {{config.items()}}, {{__class__}}),
+        # mas permite variáveis simples de template como {{nome}} ou {{cliente.email}}.
+        r"(?s)\{\{(?!\s*(?![\w.]*__)[A-Za-z_][\w.]*\s*\}\}).*?\}\}",
     ]
 
     BASE_EDUCACIONAL: dict[str, dict[str, Any]] = {
@@ -551,7 +563,23 @@ class PowerRequestEngine:
             categoria = "geral"
 
         perfil = self.BASE_EDUCACIONAL[categoria]
+        identificada = categoria != "geral"
         return {
+            "categoria_sugerida": self.CATEGORIA_UI[categoria],
+            "confianca": "alta" if identificada else "media",
+            "motivo": (
+                f"identificado como {perfil['titulo']}"
+                if identificada
+                else "nenhuma palavra-chave específica encontrada; usando perfil geral"
+            ),
+            "rascunho": {
+                "objetivo": texto,
+                "stack": "",
+                "entrada": "",
+                "saida": "",
+                "regras": [],
+                "tratamento_erros": "",
+            },
             "categoria": categoria,
             "titulo": perfil["titulo"],
             "guia_educacional": perfil["guia"],
@@ -591,6 +619,13 @@ class PowerRequestEngine:
         limpo["tratamento_erros"] = (
             self._sanitizar_e_validar_seguranca(erros_opcional, "tratamento_erros")
             if erros_opcional
+            else ""
+        )
+
+        contexto_opcional = payload.get("contexto_fixo", "")
+        limpo["contexto_fixo"] = (
+            self._sanitizar_e_validar_seguranca(contexto_opcional, "contexto_fixo")
+            if contexto_opcional
             else ""
         )
         return limpo
@@ -643,7 +678,12 @@ class PowerRequestEngine:
             or "Validar entradas e retornar mensagens claras sem quebrar a execução."
         )
 
+        contexto_md = (
+            f"### Contexto\n{limpo['contexto_fixo']}\n\n" if limpo["contexto_fixo"] else ""
+        )
+
         prompt = (
+            f"{contexto_md}"
             f"### Objetivo\n{limpo['objetivo']}\n\n"
             f"### Stack\n{limpo['stack']}\n\n"
             f"### Input\n{limpo['entrada']}\n\n"

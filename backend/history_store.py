@@ -54,6 +54,14 @@ class HistoryStore:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS configuracoes (
+                    chave TEXT PRIMARY KEY,
+                    valor TEXT NOT NULL
+                )
+                """
+            )
 
     @staticmethod
     def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
@@ -175,3 +183,22 @@ class HistoryStore:
         with self._connect() as conn:
             cursor = conn.execute("DELETE FROM pedidos")
             return int(cursor.rowcount)
+
+    def obter_config(self, chave: str, padrao: str = "") -> str:
+        """Lê uma configuração de texto salva localmente (ex: contexto fixo)."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT valor FROM configuracoes WHERE chave = ?", (chave,)
+            ).fetchone()
+        return str(row["valor"]) if row else padrao
+
+    def salvar_config(self, chave: str, valor: str) -> None:
+        """Grava (ou substitui) uma configuração de texto."""
+        if not chave or len(chave) > 60:
+            raise HistoryStoreError("Nome de configuração inválido.")
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT INTO configuracoes (chave, valor) VALUES (?, ?) "
+                "ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor",
+                (chave, valor),
+            )

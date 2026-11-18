@@ -5,11 +5,15 @@ from __future__ import annotations
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
+import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 
@@ -111,20 +115,68 @@ LOCAL_CLI_SPECS: dict[str, dict[str, Any]] = {
         "nome": "Claude (Local)",
         "binaries": ["claude"],
         "args": ["-p"],
+        # No envio do prompt a IA só precisa escrever texto: sem ferramentas (arquivos, shell, web).
+        "send_args": ["-p", "--tools", ""],
+        # No Terminal o prompt entra como argumento inicial da sessão interativa.
+        "terminal_mode": "argumento",
     },
     "antigravity_cli": {
         "brand_id": "gemini",
         "nome": "Antigravity / Gemini (Local)",
         "binaries": ["agy", "gemini"],
         "args": ["-p"],
+        # Sintaxe do prompt inicial varia entre agy e gemini: abre a sessão e copia o prompt.
+        "terminal_mode": "area_de_transferencia",
     },
 }
+
+PROVIDER_UI_META: dict[str, dict[str, str]] = {
+    "openrouter": {"auth_mode": "api_key"},
+    "gemini": {"auth_mode": "api_key"},
+    "claude": {"auth_mode": "api_key"},
+    "openai": {"auth_mode": "api_key"},
+    "ollama": {"auth_mode": "local_server", "base_url_padrao": "http://127.0.0.1:11434"},
+    "claude_cli": {"auth_mode": "local_cli", "cli_command": "claude"},
+    "antigravity_cli": {"auth_mode": "local_cli", "cli_command": "agy / gemini"},
+}
+
+
+def providers_for_ui() -> list[dict[str, Any]]:
+    """Catálogo no formato consumido pelo frontend (lista com id, auth_mode, dica etc.)."""
+    itens: list[dict[str, Any]] = []
+    for provider_id, meta in PROVIDERS_CATALOG.items():
+        ui = PROVIDER_UI_META.get(provider_id, {})
+        itens.append(
+            {
+                "id": provider_id,
+                "nome": meta["nome"],
+                "auth_mode": ui.get("auth_mode", "api_key" if meta["precisa_chave"] else "local_cli"),
+                "cli_command": ui.get("cli_command", ""),
+                "modelo_padrao": meta["modelo_padrao"],
+                "modelos_sugeridos": list(meta["modelos_sugeridos"]),
+                "base_url_padrao": ui.get("base_url_padrao", ""),
+                "console_url": meta["link_chave"],
+                "dica": meta["descricao"],
+            }
+        )
+    return itens
+
 
 MODEL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9._:/-]{2,120}$")
 OAUTH_TOKEN_PATTERN = re.compile(r"^[a-zA-Z0-9._~-]{8,512}$")
 ALLOWED_LOCAL_HOSTS = {"localhost", "127.0.0.1"}
 MAX_CLI_PROMPT_CHARS = 12000
 MAX_CLI_OUTPUT_CHARS = 24000
+
+# Envio direto do prompt final para a IA (respostas longas, ex: código)
+MAX_SEND_PROMPT_CHARS = 11000
+SEND_MAX_TOKENS = 4096
+SEND_HTTP_TIMEOUT = 300
+SEND_CLI_TIMEOUT = 600
+MAX_TERMINAL_PROMPT_CHARS = 100_000
+TERMINAL_PASTAS_PROIBIDAS = {"library", "applications", "system", "private", "volumes"}
+
+SEND_SYSTEM_PROMPT = "Siga com precisão o pedido do usuário e entregue o resultado completo."
 
 
 def _build_search_path() -> str:
@@ -201,6 +253,17 @@ class AIHubClient:
         }
         return resultado
 
+    def ferramentas_locais_para_ui(self) -> list[dict[str, Any]]:
+        """Ferramentas locais no formato consumido pelo frontend (provider_id, command, installed)."""
+        return [
+            {
+                "provider_id": provider_id,
+                "command": info["comando_detectado"],
+                "installed": bool(info["disponivel"]),
+            }
+            for provider_id, info in self.detectar_ferramentas_locais().items()
+        ]
+
     def validate_config(self, config: dict[str, Any]) -> dict[str, str]:
         """Valida provedor, modelo, chave e bloqueia SSRF, command injection e header injection."""
         provider = str(config.get("provider", "")).strip().lower()
@@ -248,7 +311,15 @@ class AIHubClient:
             "base_url": validated_url,
         }
 
-    def _call_local_cli(self, cfg: dict[str, str], system_prompt: str, user_prompt: str) -> str:
+    def _call_local_cli(
+        self,
+        cfg: dict[str, str],
+        system_prompt: str,
+        user_prompt: str,
+        timeout: int | None = None,
+        cwd: str | None = None,
+        cli_args: list[str] | None = None,
+    ) -> str:
         """Executa o CLI local autenticado via stdin com shell=False e allowlist estrita."""
         provider = cfg["provider"]
         spec = LOCAL_CLI_SPECS.get(provider)
@@ -278,20 +349,22 @@ class AIHubClient:
         env["NO_COLOR"] = "1"
         env["TERM"] = "dumb"
 
-        cmd = [binary_path, *spec["args"]]
+        cmd = [binary_path, *(cli_args or spec["args"])]
+        limite = timeout or self.LOCAL_CLI_TIMEOUT
         try:
             proc = subprocess.run(
                 cmd,
                 input=combined_prompt,
                 capture_output=True,
                 text=True,
-                timeout=self.LOCAL_CLI_TIMEOUT,
+                timeout=limite,
                 shell=False,
                 env=env,
+                **({"cwd": cwd} if cwd else {}),
             )
         except subprocess.TimeoutExpired:
             raise AIHubError(
-                f"Tempo esgotado ({self.LOCAL_CLI_TIMEOUT}s) aguardando resposta de {cfg['alias']}."
+                f"Tempo esgotado ({limite}s) aguardando resposta de {cfg['alias']}."
             ) from None
         except OSError as exc:
             raise AIHubError(f"Falha ao executar {binary_name} localmente: {exc}") from None
@@ -300,6 +373,11 @@ class AIHubClient:
         stderr = (proc.stderr or "").strip()
 
         if proc.returncode != 0:
+            if cli_args and "unknown option" in (stderr or "").lower():
+                raise AIHubError(
+                    f"Sua versão do {spec['nome']} não aceita o modo seguro usado no envio "
+                    "(sem ferramentas). Atualize o programa e tente de novo."
+                )
             detalhe = (stderr or stdout or "verifique se você já fez login no terminal")[:280]
             raise AIHubError(f"{cfg['alias']} retornou erro (código {proc.returncode}): {detalhe}")
 
@@ -309,7 +387,11 @@ class AIHubClient:
         return stdout[:MAX_CLI_OUTPUT_CHARS]
 
     def _build_request(
-        self, cfg: dict[str, str], system_prompt: str, user_prompt: str
+        self,
+        cfg: dict[str, str],
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int | None = None,
     ) -> urllib.request.Request:
         provider = cfg["provider"]
         api_key = cfg["api_key"]
@@ -336,6 +418,8 @@ class AIHubClient:
                     {"role": "user", "content": user_prompt},
                 ],
             }
+            if max_tokens:
+                body["max_tokens"] = max_tokens
             return urllib.request.Request(
                 url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
             )
@@ -349,7 +433,7 @@ class AIHubClient:
             }
             body = {
                 "model": model,
-                "max_tokens": 900,
+                "max_tokens": max_tokens or 900,
                 "temperature": 0.2,
                 "system": system_prompt,
                 "messages": [{"role": "user", "content": user_prompt}],
@@ -367,7 +451,10 @@ class AIHubClient:
             body = {
                 "system_instruction": {"parts": [{"text": system_prompt}]},
                 "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
-                "generationConfig": {"temperature": 0.2},
+                "generationConfig": {
+                    "temperature": 0.2,
+                    **({"maxOutputTokens": max_tokens} if max_tokens else {}),
+                },
             }
             return urllib.request.Request(
                 url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
@@ -383,6 +470,7 @@ class AIHubClient:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                **({"options": {"num_predict": max_tokens}} if max_tokens else {}),
             }
             return urllib.request.Request(
                 url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
@@ -405,16 +493,28 @@ class AIHubClient:
             raise AIHubError(f"Resposta inesperada do provedor {provider}.") from exc
         raise AIHubError(f"Não foi possível ler a resposta de {provider}.")
 
-    def call_llm(self, config: dict[str, Any], system_prompt: str, user_prompt: str) -> str:
+    def call_llm(
+        self,
+        config: dict[str, Any],
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        max_tokens: int | None = None,
+        timeout: int | None = None,
+        cwd: str | None = None,
+        cli_args: list[str] | None = None,
+    ) -> str:
         """Executa a chamada ao modelo ativo no Hub (nuvem ou CLI local)."""
         cfg = self.validate_config(config)
 
         if cfg["provider"] in LOCAL_CLI_SPECS:
-            return self._call_local_cli(cfg, system_prompt, user_prompt)
+            return self._call_local_cli(
+                cfg, system_prompt, user_prompt, timeout=timeout, cwd=cwd, cli_args=cli_args
+            )
 
-        req = self._build_request(cfg, system_prompt, user_prompt)
+        req = self._build_request(cfg, system_prompt, user_prompt, max_tokens=max_tokens)
         try:
-            with urllib.request.urlopen(req, timeout=self.DEFAULT_TIMEOUT) as resp:
+            with urllib.request.urlopen(req, timeout=timeout or self.DEFAULT_TIMEOUT) as resp:
                 raw = resp.read().decode("utf-8", errors="replace")
                 data = json.loads(raw)
                 return self._extract_text(cfg["provider"], data)
@@ -455,6 +555,143 @@ class AIHubClient:
             "provider": cfg["provider"],
             "model": cfg["model"],
             "resposta": resposta[:60],
+            "mensagem": f"{cfg['alias']} respondeu ({cfg['model']}).",
+        }
+
+    def enviar_prompt(self, config: dict[str, Any], prompt: str) -> dict[str, Any]:
+        """Envia o prompt final para a IA ativa e devolve a resposta completa."""
+        cfg = self.validate_config(config)
+        texto = (prompt or "").strip()
+        if not texto:
+            raise AIHubError("Não há prompt para enviar.")
+        if len(texto) > MAX_SEND_PROMPT_CHARS:
+            raise AIHubError(
+                f"O prompt tem mais de {MAX_SEND_PROMPT_CHARS} caracteres. Reduza o pedido antes de enviar."
+            )
+
+        # CLIs locais rodam numa pasta nova e vazia (apagada ao terminar), sem acesso aos
+        # arquivos do projeto e, quando o CLI permite, sem ferramentas.
+        spec = LOCAL_CLI_SPECS.get(cfg["provider"], {})
+        with tempfile.TemporaryDirectory(prefix="power-request-") as pasta_isolada:
+            resposta = self.call_llm(
+                cfg,
+                SEND_SYSTEM_PROMPT,
+                texto,
+                max_tokens=SEND_MAX_TOKENS,
+                timeout=SEND_CLI_TIMEOUT if spec else SEND_HTTP_TIMEOUT,
+                cwd=pasta_isolada,
+                cli_args=spec.get("send_args"),
+            )
+        return {
+            "resposta": resposta,
+            "alias": cfg["alias"],
+            "provider": cfg["provider"],
+            "model": cfg["model"],
+        }
+
+    @staticmethod
+    def validar_pasta_terminal(pasta: str) -> Path:
+        """Aceita só pastas dentro da home (cria se não existir), sem ocultas nem de sistema."""
+        texto = (pasta or "").strip()
+        if not texto or len(texto) > 500 or any(ord(c) < 32 for c in texto):
+            raise AIHubError("Informe uma pasta válida para abrir o Terminal.")
+        home = Path.home().resolve()
+        caminho = Path(texto).expanduser()
+        if not caminho.is_absolute():
+            caminho = home / caminho
+        caminho = caminho.resolve()
+        try:
+            relativo = caminho.relative_to(home)
+        except ValueError:
+            raise AIHubSecurityError("Use uma pasta dentro da sua pasta de usuário.") from None
+        partes = relativo.parts
+        if not partes:
+            raise AIHubSecurityError("Escolha uma subpasta (ex.: Desktop/meu-projeto), não a pasta de usuário inteira.")
+        if any(p.startswith(".") for p in partes) or partes[0].lower() in TERMINAL_PASTAS_PROIBIDAS:
+            raise AIHubSecurityError("Essa pasta é oculta ou de sistema e não pode ser usada.")
+        try:
+            caminho.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise AIHubError(f"Não foi possível usar a pasta: {exc.strerror or exc}") from None
+        return caminho
+
+    def abrir_no_terminal(self, config: dict[str, Any], prompt: str, pasta: str) -> dict[str, Any]:
+        """Abre o Terminal do macOS na pasta, com a IA local já iniciada (com todas as ferramentas).
+
+        O prompt nunca vai dentro de um comando de shell: fica num arquivo temporário privado
+        (0600) que o script lê e apaga antes de iniciar a IA.
+        """
+        if sys.platform != "darwin":
+            raise AIHubError("Abrir no Terminal está disponível apenas no macOS.")
+        cfg = self.validate_config(config)
+        provider = cfg["provider"]
+        spec = LOCAL_CLI_SPECS.get(provider)
+        if not spec:
+            raise AIHubError("Abrir no Terminal só funciona com IAs locais (Claude ou Antigravity/Gemini).")
+        texto = (prompt or "").strip()
+        if not texto:
+            raise AIHubError("Não há prompt para enviar.")
+        if len(texto) > MAX_TERMINAL_PROMPT_CHARS:
+            raise AIHubError(f"O prompt tem mais de {MAX_TERMINAL_PROMPT_CHARS} caracteres.")
+        if "\x00" in texto:
+            raise AIHubSecurityError("Entrada contém byte nulo não permitido.")
+
+        binary_name, binary_path = self._resolve_local_binary(provider)
+        if not binary_path:
+            raise AIHubError(f"{spec['nome']} não foi encontrado neste computador.")
+        destino = self.validar_pasta_terminal(pasta)
+        modo = spec["terminal_mode"]
+
+        env_path = _build_search_path()
+        if modo == "area_de_transferencia":
+            try:
+                subprocess.run(
+                    ["pbcopy"], input=texto, text=True, timeout=10, shell=False, check=True
+                )
+            except (OSError, subprocess.SubprocessError):
+                raise AIHubError("Não foi possível copiar o prompt para a área de transferência.") from None
+
+        pasta_tmp = tempfile.mkdtemp(prefix="power-request-term-")  # permissão 0700
+        os.chmod(pasta_tmp, 0o700)
+        arquivo_prompt = os.path.join(pasta_tmp, "prompt.txt")
+        script = os.path.join(pasta_tmp, "abrir.command")
+        try:
+            if modo == "argumento":
+                fd = os.open(arquivo_prompt, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    f.write(texto)
+                inicio = (
+                    f"PROMPT=$(cat {shlex.quote(arquivo_prompt)})\n"
+                    f"rm -rf {shlex.quote(pasta_tmp)}\n"
+                    f'exec {shlex.quote(binary_path)} "$PROMPT"\n'
+                )
+            else:
+                inicio = (
+                    f"rm -rf {shlex.quote(pasta_tmp)}\n"
+                    'echo "Prompt copiado. Cole com Cmd+V quando a IA abrir."\n'
+                    f"exec {shlex.quote(binary_path)}\n"
+                )
+            conteudo = (
+                "#!/bin/bash\n"
+                f"export PATH={shlex.quote(env_path)}\n"
+                f"cd {shlex.quote(str(destino))} || exit 1\n"
+                "clear\n" + inicio
+            )
+            fd = os.open(script, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o700)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(conteudo)
+            subprocess.run(
+                ["open", "-a", "Terminal", script], timeout=15, shell=False, check=True
+            )
+        except (OSError, subprocess.SubprocessError):
+            shutil.rmtree(pasta_tmp, ignore_errors=True)
+            raise AIHubError("Não foi possível abrir o Terminal.") from None
+        return {
+            "aberto": True,
+            "modo": modo,
+            "pasta": str(destino),
+            "alias": cfg["alias"],
+            "provider": provider,
         }
 
     @staticmethod
