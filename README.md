@@ -1,5 +1,7 @@
 # Power Request
 
+[![CI](https://github.com/Seraphim82/power-request/actions/workflows/ci.yml/badge.svg)](https://github.com/Seraphim82/power-request/actions/workflows/ci.yml) [![Licença: MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg)](LICENSE)
+
 Formalizador de pedidos para IA: transforma uma ideia solta em um prompt estruturado, revisado e econômico em tokens.
 Roda 100% local (FastAPI + React), com histórico em SQLite e Hub opcional para usar sua IA favorita.
 
@@ -94,3 +96,15 @@ O contrato com o frontend é protegido por testes (`backend/tests/test_api_contr
 - **"Ambiente Python não encontrado" ao abrir o app** — rode `make setup`.
 - **"Interface ainda não compilada"** — rode `make build`.
 - **Teste de conexão com Claude (Local) falha** — rode `claude` no Terminal e faça login.
+
+## Requisitos
+
+Python 3.10+, Node 20.19+ ou 22.12+ (o `make` avisa se a versão for menor) e, para os recursos de IA local, o Claude (`claude`) ou o Antigravity/Gemini já logados no terminal. O Abrir no Terminal e o app `.app` são para macOS; o restante roda em qualquer sistema.
+
+## Opine e contribua
+
+Achou um bug, tem uma ideia ou quer ajudar? Abra uma [issue](https://github.com/Seraphim82/power-request/issues/new/choose). Veja [CONTRIBUTING.md](CONTRIBUTING.md). Falhas de segurança: [SECURITY.md](SECURITY.md).
+
+## Licença
+
+[MIT](LICENSE).
