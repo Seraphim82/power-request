@@ -46,6 +46,7 @@ export interface ResultadoPrompt {
   tokens_estimados: number;
   gerado_por?: string;
   historico_id?: number;
+  aviso?: string;
 }
 
 export interface ItemHistorico {
@@ -218,11 +219,28 @@ export const BRANDS = [
 
 export const STEP_META = [
   { num: 1, key: 'objetivo', titulo: '1. O que você quer criar?', ajuda: 'Explique com suas palavras o resultado principal, sem se preocupar com termos técnicos.' },
-  { num: 2, key: 'stack', titulo: '2. Qual tecnologia prefere? (Opcional)', ajuda: 'Se já tiver uma linguagem ou ferramenta em mente, coloque aqui. Se não tiver, deixe em branco ou use uma sugestão.' },
+  { num: 2, key: 'stack', titulo: '2. Qual tecnologia prefere?', ajuda: 'Se já tiver uma linguagem ou ferramenta em mente, coloque aqui. Se não tiver, clique em "Deixar a IA escolher".' },
   { num: 3, key: 'entrada', titulo: '3. O que entra no sistema?', ajuda: 'Quais informações, comandos, cliques ou arquivos o usuário ou o sistema vai fornecer?' },
   { num: 4, key: 'saida', titulo: '4. O que deve sair / acontecer?', ajuda: 'Qual é o resultado esperado na tela, no arquivo, na resposta ou no comportamento?' },
-  { num: 5, key: 'regras', titulo: '5. Regras importantes (Opcional)', ajuda: 'Limites, estilo, performance ou condições que não podem falhar. Você pode adicionar várias.' },
+  { num: 5, key: 'regras', titulo: '5. Regras importantes', ajuda: 'Informe pelo menos 1 regra: limites, estilo, performance ou condições que não podem falhar. Você pode adicionar várias.' },
   { num: 6, key: 'tratamento_erros', titulo: '6. O que fazer se algo der errado?', ajuda: 'Como o sistema deve reagir a erro de rede, dado inválido, arquivo ausente ou falha inesperada.' },
 ] as const;
 
 export const STORAGE_KEY = 'power_request_ai_hub_v1';
+
+export const STACK_AUTO = 'Deixar a IA escolher a melhor opção';
+
+export type EstadoIa = 'desconhecido' | 'verificando' | 'online' | 'offline';
+
+export const ESTADO_IA_META: Record<EstadoIa, { rotulo: string; cor: string }> = {
+  desconhecido: { rotulo: 'Não testada', cor: '#94a3b8' },
+  verificando: { rotulo: 'Verificando...', cor: '#fbbf24' },
+  online: { rotulo: 'Online', cor: '#4ade80' },
+  offline: { rotulo: 'Offline', cor: '#f87171' },
+};
+
+export const CONTEXTO_MAX = 2000;
+export const CONTEXTO_ATIVO_KEY = 'power_request_contexto_ativo_v1';
+
+export const PASTA_TERMINAL_KEY = 'power_request_pasta_terminal_v1';
+export const PASTA_TERMINAL_PADRAO = 'Desktop/meu-projeto';

@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BRANDS,
   CATEGORIES,
+  CONTEXTO_ATIVO_KEY,
+  PASTA_TERMINAL_KEY,
+  PASTA_TERMINAL_PADRAO,
+  CONTEXTO_MAX,
+  ESTADO_IA_META,
   STEP_META,
+  STACK_AUTO,
   STORAGE_KEY,
   type AIConfigSalva,
   type AnaliseIntencao,
   type CategoriaConfig,
   type CategoriaId,
+  type EstadoIa,
   type ItemHistorico,
   type LocalToolStatus,
   type ProviderInfo,
@@ -86,6 +93,39 @@ export default function App() {
   const [otimizarComIa, setOtimizarComIa] = useState<boolean>(configInicial.otimizarComIa);
   const [statusConexao, setStatusConexao] = useState<string>('');
   const [testandoConexao, setTestandoConexao] = useState<boolean>(false);
+  const [estadoIa, setEstadoIa] = useState<EstadoIa>('desconhecido');
+  const [detalheIa, setDetalheIa] = useState<string>('');
+  const verificacaoAtual = useRef<number>(0);
+
+  const [enviando, setEnviando] = useState<boolean>(false);
+  const [segundosEnvio, setSegundosEnvio] = useState<number>(0);
+  const [respostaIa, setRespostaIa] = useState<{ texto: string; origem: string } | null>(null);
+  const [erroEnvio, setErroEnvio] = useState<string>('');
+  const [respostaCopiada, setRespostaCopiada] = useState<string>('');
+  const envioAtual = useRef<number>(0);
+
+  const [pastaTerminal, setPastaTerminal] = useState<string>(() => {
+    try {
+      return localStorage.getItem(PASTA_TERMINAL_KEY) || PASTA_TERMINAL_PADRAO;
+    } catch {
+      return PASTA_TERMINAL_PADRAO;
+    }
+  });
+  const [abrindoTerminal, setAbrindoTerminal] = useState<boolean>(false);
+  const [avisoTerminal, setAvisoTerminal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+
+  const [contextoAberto, setContextoAberto] = useState<boolean>(false);
+  const [contextoFixo, setContextoFixo] = useState<string>('');
+  const [contextoSalvo, setContextoSalvo] = useState<string>('');
+  const [usarContexto, setUsarContexto] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(CONTEXTO_ATIVO_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const [salvandoContexto, setSalvandoContexto] = useState<boolean>(false);
+  const [statusContexto, setStatusContexto] = useState<string>('');
 
   const catConfig: CategoriaConfig =
     CATEGORIES.find((c) => c.id === categoria) || CATEGORIES[0];
@@ -131,7 +171,7 @@ export default function App() {
     fetch(`${API_BASE}/api/hub/providers`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.providers) {
+        if (Array.isArray(data?.providers)) {
           setProvedores(data.providers);
           const atual = data.providers.find(
             (p: ProviderInfo) => p.id === configInicial.provider
@@ -146,10 +186,20 @@ export default function App() {
       })
       .catch(() => {});
 
+    fetch(`${API_BASE}/api/contexto`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (typeof data?.contexto === 'string') {
+          setContextoFixo(data.contexto);
+          setContextoSalvo(data.contexto);
+        }
+      })
+      .catch(() => {});
+
     fetch(`${API_BASE}/api/hub/local-tools`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.tools) setFerramentasLocais(data.tools);
+        if (Array.isArray(data?.tools)) setFerramentasLocais(data.tools);
       })
       .catch(() => {});
   }, []);
@@ -194,8 +244,11 @@ export default function App() {
     };
   };
 
-  const testarConexaoIa = async () => {
+  const verificarConexaoIa = async () => {
+    const id = ++verificacaoAtual.current;
     setTestandoConexao(true);
+    setEstadoIa('verificando');
+    setDetalheIa('');
     setStatusConexao('Testando conexão...');
     try {
       const res = await fetch(`${API_BASE}/api/hub/testar`, {
@@ -210,17 +263,53 @@ export default function App() {
         }),
       });
       const data = await res.json();
+      if (id !== verificacaoAtual.current) return;
       if (!res.ok) {
-        setStatusConexao(`Falha: ${data.detail || 'Verifique os dados.'}`);
+        const motivo = String(data.detail || 'Verifique os dados.');
+        setStatusConexao(`Falha: ${motivo}`);
+        setEstadoIa('offline');
+        setDetalheIa(motivo);
       } else {
         setStatusConexao(`Conectado: ${data.mensagem}`);
+        setEstadoIa('online');
+        setDetalheIa(String(data.mensagem || ''));
       }
     } catch {
-      setStatusConexao('Não foi possível conectar ao backend local.');
+      if (id !== verificacaoAtual.current) return;
+      const motivo = 'Não foi possível conectar ao backend local.';
+      setStatusConexao(motivo);
+      setEstadoIa('offline');
+      setDetalheIa(motivo);
     } finally {
-      setTestandoConexao(false);
+      if (id === verificacaoAtual.current) setTestandoConexao(false);
     }
   };
+
+  const testarConexaoIa = verificarConexaoIa;
+
+  // Teste automático só para IAs locais (gratuitas). Com chave de API o teste é manual,
+  // para não gastar cota sem você pedir. Qualquer mudança de configuração zera o status.
+  useEffect(() => {
+    verificacaoAtual.current += 1;
+    setTestandoConexao(false);
+    setEstadoIa('desconhecido');
+    setDetalheIa('');
+
+    const modo = providerSelecionado?.auth_mode;
+    if (modo === 'local_cli') {
+      if (ferramentasLocais.length === 0) return;
+      if (!ferramentaLocalAtual?.installed) {
+        setEstadoIa('offline');
+        setDetalheIa('Comando não encontrado neste computador.');
+        return;
+      }
+    } else if (modo !== 'local_server') {
+      return;
+    }
+    const timer = setTimeout(verificarConexaoIa, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerId, model, baseUrl, apiKey, providerSelecionado?.auth_mode, ferramentaLocalAtual?.installed, ferramentasLocais.length]);
 
   const analisarIntencaoLivre = async () => {
     if (!intencaoLivre.trim()) {
@@ -243,12 +332,14 @@ export default function App() {
       setAnaliseInfo(data);
       if (data.categoria_sugerida) setCategoria(data.categoria_sugerida);
       if (data.rascunho) {
-        setObjetivo(data.rascunho.objetivo || '');
-        setStack(data.rascunho.stack || '');
-        setEntrada(data.rascunho.entrada || '');
-        setSaida(data.rascunho.saida || '');
-        setRegras(Array.isArray(data.rascunho.regras) ? data.rascunho.regras : []);
-        setTratamentoErros(data.rascunho.tratamento_erros || '');
+        if (data.rascunho.objetivo) setObjetivo(data.rascunho.objetivo);
+        if (data.rascunho.stack) setStack(data.rascunho.stack);
+        if (data.rascunho.entrada) setEntrada(data.rascunho.entrada);
+        if (data.rascunho.saida) setSaida(data.rascunho.saida);
+        if (Array.isArray(data.rascunho.regras) && data.rascunho.regras.length > 0) {
+          setRegras(data.rascunho.regras);
+        }
+        if (data.rascunho.tratamento_erros) setTratamentoErros(data.rascunho.tratamento_erros);
       }
       setRevisao(null);
       setResultado(null);
@@ -272,7 +363,142 @@ export default function App() {
     setRegras((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  useEffect(() => {
+    if (!enviando) return;
+    const timer = setInterval(() => setSegundosEnvio((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, [enviando]);
+
+  // Invalida qualquer envio em andamento (ex: ao iniciar novo pedido) para que uma
+  // resposta atrasada não apareça junto de outro prompt.
+  const limparEnvio = () => {
+    envioAtual.current += 1;
+    setAvisoTerminal(null);
+    setEnviando(false);
+    setSegundosEnvio(0);
+    setRespostaIa(null);
+    setErroEnvio('');
+    setRespostaCopiada('');
+  };
+
+  const enviarParaIa = async () => {
+    if (!resultado?.prompt_final || enviando) return;
+    const cfg = montarAiConfigPayload();
+    if (!cfg) {
+      setErroEnvio('Informe a chave desta IA no Hub de IAs antes de enviar.');
+      setHubAberto(true);
+      return;
+    }
+    const id = ++envioAtual.current;
+    setEnviando(true);
+    setSegundosEnvio(0);
+    setErroEnvio('');
+    setRespostaIa(null);
+    setRespostaCopiada('');
+    try {
+      const res = await fetch(`${API_BASE}/api/enviar-prompt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: resultado.prompt_final, ai_config: cfg }),
+      });
+      const data = await res.json();
+      if (id !== envioAtual.current) return;
+      if (!res.ok) {
+        setErroEnvio(String(data.detail || 'Não foi possível enviar o prompt.'));
+      } else {
+        setRespostaIa({ texto: String(data.resposta || ''), origem: `${data.alias} (${data.model})` });
+      }
+    } catch {
+      if (id !== envioAtual.current) return;
+      setErroEnvio('Não foi possível conectar ao servidor local.');
+    } finally {
+      if (id === envioAtual.current) setEnviando(false);
+    }
+  };
+
+  const abrirNoTerminal = async () => {
+    if (!resultado?.prompt_final || abrindoTerminal) return;
+    const cfg = montarAiConfigPayload();
+    if (!cfg) return;
+    setAbrindoTerminal(true);
+    setAvisoTerminal(null);
+    try {
+      localStorage.setItem(PASTA_TERMINAL_KEY, pastaTerminal);
+    } catch {
+      // ignora erro de storage
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/abrir-terminal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: resultado.prompt_final, pasta: pastaTerminal, ai_config: cfg }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAvisoTerminal({ tipo: 'erro', texto: String(data.detail || 'Não foi possível abrir o Terminal.') });
+      } else {
+        setAvisoTerminal({
+          tipo: 'ok',
+          texto:
+            data.modo === 'argumento'
+              ? `Terminal aberto em ${data.pasta}. A IA já começou com o seu prompt.`
+              : `Terminal aberto em ${data.pasta}. O prompt foi copiado: cole com ⌘V quando a IA abrir.`,
+        });
+      }
+    } catch {
+      setAvisoTerminal({ tipo: 'erro', texto: 'Não foi possível conectar ao servidor local.' });
+    } finally {
+      setAbrindoTerminal(false);
+    }
+  };
+
+  const copiarResposta = async () => {
+    if (!respostaIa?.texto) return;
+    try {
+      await navigator.clipboard.writeText(respostaIa.texto);
+      setRespostaCopiada('Resposta copiada.');
+    } catch {
+      setRespostaCopiada('Selecione e copie o texto acima.');
+    }
+  };
+
+  const alternarUsoContexto = (ativo: boolean) => {
+    setUsarContexto(ativo);
+    try {
+      localStorage.setItem(CONTEXTO_ATIVO_KEY, ativo ? '1' : '0');
+    } catch {
+      // ignora erro de storage
+    }
+  };
+
+  const salvarContexto = async () => {
+    setSalvandoContexto(true);
+    setStatusContexto('');
+    try {
+      const res = await fetch(`${API_BASE}/api/contexto`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contexto: contextoFixo }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatusContexto(`Não foi possível salvar: ${data.detail || 'verifique o texto.'}`);
+      } else {
+        setContextoFixo(data.contexto);
+        setContextoSalvo(data.contexto);
+        setStatusContexto('Contexto salvo.');
+      }
+    } catch {
+      setStatusContexto('Não foi possível conectar ao backend local.');
+    } finally {
+      setSalvandoContexto(false);
+    }
+  };
+
+  const contextoAtivoNoPedido = usarContexto && contextoSalvo.trim().length > 0;
+
   const payloadAtual = () => ({
+    contexto_fixo: contextoAtivoNoPedido ? contextoSalvo : '',
     categoria,
     objetivo,
     stack,
@@ -285,8 +511,22 @@ export default function App() {
     salvar_historico: true,
   });
 
+  const validarCamposObrigatorios = (): boolean => {
+    const faltando: { etapa: number; nome: string }[] = [];
+    if (!objetivo.trim()) faltando.push({ etapa: 1, nome: 'o que você quer criar' });
+    if (!stack.trim()) faltando.push({ etapa: 2, nome: 'a tecnologia (ou "Deixar a IA escolher")' });
+    if (!entrada.trim()) faltando.push({ etapa: 3, nome: 'o que entra no sistema' });
+    if (!saida.trim()) faltando.push({ etapa: 4, nome: 'o que deve sair' });
+    if (regras.length === 0) faltando.push({ etapa: 5, nome: 'pelo menos 1 regra' });
+    if (faltando.length === 0) return true;
+    setErro(`Falta preencher: ${faltando.map((f) => f.nome).join('; ')}.`);
+    setEtapa(faltando[0].etapa);
+    return false;
+  };
+
   const handleRevisar = async () => {
     setErro('');
+    if (!validarCamposObrigatorios()) return;
     setResultado(null);
     setCarregando('revisar');
     try {
@@ -310,6 +550,8 @@ export default function App() {
 
   const handleGerar = async () => {
     setErro('');
+    if (!validarCamposObrigatorios()) return;
+    limparEnvio();
     setCarregando('gerar');
     try {
       const res = await fetch(`${API_BASE}/api/gerar-prompt`, {
@@ -351,6 +593,7 @@ export default function App() {
     });
     setRevisao(null);
     setErro('');
+    limparEnvio();
     setEtapa(1);
     setHistoricoAberto(false);
   };
@@ -420,6 +663,7 @@ export default function App() {
     setResultado(null);
     setErro('');
     setCopiadoTexto('');
+    limparEnvio();
   };
 
   const renderCampoEtapa = () => {
@@ -458,7 +702,7 @@ export default function App() {
             />
             <div style={styles.chipsRow}>
               <span style={styles.chipsLabel}>Sugestões:</span>
-              {catConfig.sugestoes.stack.map((s) => (
+              {[...catConfig.sugestoes.stack, STACK_AUTO].map((s) => (
                 <button key={s} type="button" style={styles.chip} onClick={() => setStack(s)}>
                   + {s}
                 </button>
@@ -566,6 +810,14 @@ export default function App() {
     <div style={styles.page}>
       <div style={styles.container}>
         <header style={styles.header}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <img
+            src="/logo.svg"
+            alt="Logo Power Request"
+            width={76}
+            height={76}
+            style={{ flexShrink: 0, borderRadius: '18px' }}
+          />
           <div>
             <div style={styles.badge}>POWER REQUEST • ENGENHARIA DE PROMPT GUIADA</div>
             <h1 style={styles.title}>Power Request</h1>
@@ -574,10 +826,32 @@ export default function App() {
               sem precisar saber programar ou escrever prompts complexos.
             </p>
           </div>
+          </div>
           <div style={styles.headerActions}>
+            {providerSelecionado && (
+              <button
+                type="button"
+                className="ia-status"
+                style={styles.iaPill}
+                role="status"
+                aria-live="polite"
+                title={`${providerSelecionado.nome} (${model || providerSelecionado.modelo_padrao}) — ${ESTADO_IA_META[estadoIa].rotulo}${detalheIa ? `: ${detalheIa}` : ''}`}
+                onClick={() => setHubAberto(true)}
+              >
+                <span
+                  className={`ia-dot-${estadoIa}`}
+                  style={{ ...styles.iaDot, backgroundColor: ESTADO_IA_META[estadoIa].cor }}
+                />
+                <span style={styles.iaPillName}>{providerSelecionado.nome}</span>
+                <span style={{ color: ESTADO_IA_META[estadoIa].cor, fontWeight: 700 }}>
+                  {ESTADO_IA_META[estadoIa].rotulo}
+                </span>
+              </button>
+            )}
             <button
               type="button"
-              style={styles.btnGhost}
+              className="btn-header"
+              style={{ ...styles.btnHeader, ...(historicoAberto ? styles.btnHeaderActive : {}) }}
               onClick={() => {
                 const proximo = !historicoAberto;
                 setHistoricoAberto(proximo);
@@ -586,10 +860,25 @@ export default function App() {
             >
               {historicoAberto ? 'Fechar Histórico' : `Histórico (${historico.length})`}
             </button>
-            <button type="button" style={styles.btnGhost} onClick={() => setHubAberto(!hubAberto)}>
+            <button
+              type="button"
+              className="btn-header"
+              style={{ ...styles.btnHeader, ...(hubAberto ? styles.btnHeaderActive : {}) }}
+              onClick={() => setHubAberto(!hubAberto)}
+            >
               {hubAberto ? 'Fechar Hub de IAs' : 'Hub de IAs'}
             </button>
-            <button type="button" style={styles.btnGhost} onClick={resetar}>
+            <button
+              type="button"
+              className="btn-header"
+              style={{ ...styles.btnHeader, ...(contextoAberto ? styles.btnHeaderActive : {}) }}
+              onClick={() => setContextoAberto(!contextoAberto)}
+              title={contextoAtivoNoPedido ? 'Contexto fixo ligado: entra em todos os pedidos' : 'Contexto fixo desligado ou vazio'}
+            >
+              {contextoAberto ? 'Fechar Contexto' : 'Contexto fixo'}
+              {contextoAtivoNoPedido && !contextoAberto ? ' ●' : ''}
+            </button>
+            <button type="button" className="btn-header" style={styles.btnHeader} onClick={resetar}>
               Novo Pedido
             </button>
           </div>
@@ -819,6 +1108,51 @@ export default function App() {
           </section>
         )}
 
+        {contextoAberto && (
+          <section style={styles.card}>
+            <h2 style={styles.sectionTitle}>Contexto fixo — vale para todos os pedidos</h2>
+            <p style={styles.helpText}>
+              Escreva aqui o que deve ser igual em todos os seus projetos (stack padrão, idioma, estilo de
+              código, testes). Ele entra no início de cada prompt gerado e também na revisão pela IA. Use só
+              preferências estáveis: o histórico de cada projeto fica com o seu ai-memory.
+            </p>
+            <textarea
+              rows={5}
+              style={styles.textarea}
+              maxLength={CONTEXTO_MAX}
+              value={contextoFixo}
+              onChange={(e) => {
+                setContextoFixo(e.target.value);
+                setStatusContexto('');
+              }}
+              placeholder={'Ex:\n- Interface sempre em português do Brasil\n- Stack padrão: Python + FastAPI e React + TypeScript\n- Código tipado, comentado e com testes automatizados'}
+            />
+            <div style={{ ...styles.actionBar, alignItems: 'center' }}>
+              <button
+                type="button"
+                style={styles.btnSecondary}
+                onClick={salvarContexto}
+                disabled={salvandoContexto || contextoFixo === contextoSalvo}
+              >
+                {salvandoContexto ? 'Salvando...' : 'Salvar contexto'}
+              </button>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                <input
+                  type="checkbox"
+                  checked={usarContexto}
+                  onChange={(e) => alternarUsoContexto(e.target.checked)}
+                />
+                Incluir nos pedidos
+              </label>
+              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                {contextoFixo.length}/{CONTEXTO_MAX}
+                {contextoFixo !== contextoSalvo ? ' • alterações não salvas' : ''}
+              </span>
+            </div>
+            {statusContexto && <div style={styles.statusMsg}>{statusContexto}</div>}
+          </section>
+        )}
+
         <section style={styles.card}>
           <h2 style={styles.sectionTitle}>Passo 0 — Escolha o tipo de projeto ou deixe a IA identificar</h2>
           <p style={styles.helpText}>
@@ -1042,6 +1376,7 @@ export default function App() {
                   <div style={{ fontSize: '12px', color: '#94a3b8' }}>
                     {resultado.gerado_por}
                     {resultado.historico_id ? ' • Salvo no Histórico' : ''}
+                    {resultado.aviso ? ` • ${resultado.aviso}` : ''}
                   </div>
                 </div>
                 <button type="button" style={styles.btnPrimary} onClick={copiarPrompt}>
@@ -1061,6 +1396,146 @@ export default function App() {
               >
                 {resultado.prompt_final}
               </pre>
+
+              <div
+                style={{
+                  marginTop: '16px',
+                  paddingTop: '14px',
+                  borderTop: '1px solid #1e293b',
+                }}
+              >
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    style={{ ...styles.btnPrimary, opacity: enviando ? 0.7 : 1 }}
+                    onClick={enviarParaIa}
+                    disabled={enviando}
+                  >
+                    {enviando
+                      ? `Enviando... ${segundosEnvio}s`
+                      : `Enviar para ${providerSelecionado?.nome ?? 'a IA ativa'}`}
+                  </button>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    {modoAuth === 'api_key'
+                      ? 'Usa a sua chave de API (consome a sua cota). A resposta aparece aqui.'
+                      : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
+                  </span>
+                </div>
+
+                {modoAuth === 'local_cli' && (
+                  <div
+                    style={{
+                      marginTop: '14px',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid #1e293b',
+                      backgroundColor: '#0b1220',
+                    }}
+                  >
+                    <div style={{ fontSize: '13px', color: '#cbd5e1', marginBottom: '8px' }}>
+                      <strong>Projeto grande?</strong> Abra no Terminal: a IA trabalha numa pasta sua, com
+                      todas as ferramentas (cria arquivos e roda testes), sem limite de tamanho.
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input
+                        aria-label="Pasta do projeto"
+                        style={{ ...styles.input, flex: '1 1 240px', minWidth: 0 }}
+                        value={pastaTerminal}
+                        onChange={(e) => setPastaTerminal(e.target.value)}
+                        placeholder="Ex: Desktop/meu-projeto (dentro da sua pasta de usuário)"
+                        maxLength={500}
+                      />
+                      <button
+                        type="button"
+                        style={{ ...styles.btnSecondary, opacity: abrindoTerminal ? 0.7 : 1 }}
+                        onClick={abrirNoTerminal}
+                        disabled={abrindoTerminal || !pastaTerminal.trim()}
+                      >
+                        {abrindoTerminal ? 'Abrindo...' : 'Abrir no Terminal'}
+                      </button>
+                    </div>
+                    {avisoTerminal && (
+                      <div
+                        role={avisoTerminal.tipo === 'erro' ? 'alert' : 'status'}
+                        data-testid="aviso-terminal"
+                        style={{
+                          marginTop: '10px',
+                          fontSize: '13px',
+                          color: avisoTerminal.tipo === 'erro' ? '#fecaca' : '#bbf7d0',
+                        }}
+                      >
+                        {avisoTerminal.texto}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {erroEnvio && (
+                  <div
+                    role="alert"
+                    style={{
+                      marginTop: '12px',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: '1px solid #7f1d1d',
+                      backgroundColor: '#2a1010',
+                      color: '#fecaca',
+                      fontSize: '13px',
+                    }}
+                  >
+                    {erroEnvio}
+                  </div>
+                )}
+
+                {respostaIa && (
+                  <div
+                    style={{
+                      marginTop: '12px',
+                      padding: '14px',
+                      borderRadius: '12px',
+                      border: '1px solid #15803d',
+                      backgroundColor: '#07140e',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap',
+                        marginBottom: '10px',
+                      }}
+                    >
+                      <strong style={{ color: '#4ade80', fontSize: '14px' }}>
+                        Resposta de {respostaIa.origem}
+                      </strong>
+                      <button type="button" style={styles.btnSecondary} onClick={copiarResposta}>
+                        Copiar resposta
+                      </button>
+                    </div>
+                    <pre
+                      data-testid="resposta-ia"
+                      style={{
+                        margin: 0,
+                        maxHeight: '480px',
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                        fontSize: '13.5px',
+                        color: '#e2e8f0',
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      {respostaIa.texto}
+                    </pre>
+                    {respostaCopiada && (
+                      <div style={{ marginTop: '8px', fontSize: '12.5px', color: '#bbf7d0' }}>{respostaCopiada}</div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div
                 style={{

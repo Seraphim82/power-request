@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <title>Power Request</title>
     <style>
       * { box-sizing: border-box; }
@@ -13,6 +14,14 @@
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
+      @keyframes ia-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); } 50% { box-shadow: 0 0 0 5px rgba(74, 222, 128, 0); } }
+      @keyframes ia-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+      .ia-dot-online { animation: ia-glow 2.4s ease-out infinite; }
+      .ia-dot-verificando { animation: ia-pulse 0.9s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) { .ia-dot-online, .ia-dot-verificando { animation: none; } }
+      .ia-status:hover { border-color: #334155 !important; }
+      .btn-header:hover { background-color: rgba(212, 175, 55, 0.22) !important; transform: translateY(-1px); }
+      .btn-header:focus-visible { outline: 2px solid #fde68a; outline-offset: 2px; }
       input:focus, textarea:focus {
         outline: none;
         border-color: #d4af37 !important;

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d162a"/>
+      <stop offset="55%" stop-color="#080e1c"/>
+      <stop offset="100%" stop-color="#04070f"/>
+    </linearGradient>
+    <linearGradient id="mdBoltGrad" x1="15%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="35%" stop-color="#facc15"/>
+      <stop offset="75%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#9a7215"/>
+    </linearGradient>
+    <linearGradient id="trimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="100%" stop-color="#b4861e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fundo escuro minimalista com borda dourada -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#bgGrad)" stroke="#d4af37" stroke-width="10"/>
+  <rect x="44" y="44" width="424" height="424" rx="94" fill="none" stroke="#1e293b" stroke-width="4"/>
+
+  <!-- Sombra / recorte externo tunado -->
+  <polygon points="326,72 132,272 238,272 184,440 386,232 276,232" fill="#03060c" opacity="0.85"/>
+
+  <!-- Corpo principal do raio MD tunado (geométrico, encorpado e com quebras agressivas) -->
+  <polygon
+    points="318,78 138,266 246,266 194,432 378,238 268,238"
+    fill="url(#mdBoltGrad)"
+    stroke="#fffbeb"
+    stroke-width="3"
+    stroke-linejoin="miter"
+  />
+
+  <!-- Vinco interno / detalhe aerodinâmico MD -->
+  <polygon
+    points="298,118 176,246 266,246 224,386 344,256 254,256"
+    fill="none"
+    stroke="url(#trimGrad)"
+    stroke-width="4"
+    stroke-linejoin="miter"
+    opacity="0.75"
+  />
+
+  <!-- Acentos de precisão nas extremidades -->
+  <polygon points="96,112 124,112 110,134" fill="#d4af37"/>
+  <polygon points="388,378 416,378 402,400" fill="#d4af37"/>
+</svg>
