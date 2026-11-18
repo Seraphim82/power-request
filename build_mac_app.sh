@@ -20,6 +20,8 @@ cat << PLIST > "$APP_PATH/Contents/Info.plist"
     <string>br.com.seraphim.powerrequest</string>
     <key>CFBundleVersion</key>
     <string>2.0.0</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleExecutable</key>
     <string>launcher</string>
     <key>CFBundlePackageType</key>
@@ -28,15 +30,36 @@ cat << PLIST > "$APP_PATH/Contents/Info.plist"
 </plist>
 PLIST
 
+if [ -f "$PROJECT_DIR/assets/AppIcon.icns" ]; then
+    cp "$PROJECT_DIR/assets/AppIcon.icns" "$APP_PATH/Contents/Resources/AppIcon.icns"
+fi
+
 cat << LAUNCHER > "$APP_PATH/Contents/MacOS/launcher"
 #!/bin/zsh
 export PATH="/opt/homebrew/bin:/usr/local/bin:\$HOME/.local/bin:\$HOME/.npm-global/bin:\$PATH"
-cd "$PROJECT_DIR/backend"
-if lsof -i :8765 -sTCP:LISTEN >/dev/null 2>&1; then
+PROJECT_DIR="$PROJECT_DIR"
+PYTHON_BIN="\$PROJECT_DIR/backend/venv/bin/python"
+
+aviso() {
+    osascript -e "display dialog \"\$1\" buttons {\"OK\"} default button \"OK\" with title \"Power Request\" with icon caution" >/dev/null 2>&1
+}
+
+if [ ! -x "\$PYTHON_BIN" ]; then
+    aviso "Ambiente Python não encontrado. Abra o Terminal na pasta do projeto e rode: make setup"
+    exit 1
+fi
+if [ ! -f "\$PROJECT_DIR/frontend/dist/index.html" ]; then
+    aviso "Interface ainda não compilada. Abra o Terminal na pasta do projeto e rode: make build"
+    exit 1
+fi
+
+cd "\$PROJECT_DIR/backend"
+# Se o Power Request já estiver rodando, só abre a janela (confere o /api/health para não confundir com outro programa na porta)
+if curl -fs --max-time 1 http://127.0.0.1:8765/api/health 2>/dev/null | grep -q '"status"'; then
     open "http://127.0.0.1:8765"
     exit 0
 fi
-exec "$PROJECT_DIR/backend/venv/bin/python" "$PROJECT_DIR/backend/desktop_app.py"
+exec "\$PYTHON_BIN" desktop_app.py
 LAUNCHER
 
 chmod +x "$APP_PATH/Contents/MacOS/launcher"
