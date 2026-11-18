@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 import ai_hub
 import main
-from ai_hub import AIHubClient, AIHubError
+from ai_hub import AIHubClient, AIHubError, AIHubSecurityError
 from main import app
 
 client = TestClient(app, base_url="http://127.0.0.1:8765")
@@ -186,3 +186,30 @@ def test_documentacao_interativa_desligada():
     c = TestClient(main.app)
     assert c.get("/openapi.json").status_code == 404
     assert "swagger" not in c.get("/docs").text.lower()
+
+
+# ---------- mensagens de erro públicas ----------
+def test_mensagem_publica_remove_caminhos_e_limita_tamanho():
+    from main import mensagem_publica, MAX_MENSAGEM_ERRO
+    msg = mensagem_publica(AIHubError("Falha em /Users/fulano/Desktop/app/segredo.txt e C:\\Users\\x\\y.txt\nlinha 2"))
+    assert "/Users" not in msg and "fulano" not in msg and "C:\\" not in msg and "\n" not in msg
+    assert "<caminho>" in msg
+    assert len(mensagem_publica(AIHubError("x" * 5000))) == MAX_MENSAGEM_ERRO
+    assert mensagem_publica(AIHubError("")) == "Não foi possível concluir a operação."
+
+
+def test_erro_de_dominio_vira_400_ou_403_sem_vazar_caminho(monkeypatch):
+    def quebra(self, *a, **k):
+        raise AIHubError("não achei /Users/fulano/x/claude")
+
+    def proibido(self, *a, **k):
+        raise AIHubSecurityError("bloqueado em /home/fulano/.ssh/id")
+
+    corpo = {"prompt": PROMPT, "ai_config": {"provider": "claude_cli"}}
+    monkeypatch.setattr(AIHubClient, "enviar_prompt", quebra)
+    r = client.post("/api/enviar-prompt", json=corpo)
+    assert r.status_code == 400 and "fulano" not in r.text and "<caminho>" in r.json()["detail"]
+    assert r.headers["x-content-type-options"] == "nosniff"
+    monkeypatch.setattr(AIHubClient, "enviar_prompt", proibido)
+    r = client.post("/api/enviar-prompt", json=corpo)
+    assert r.status_code == 403 and "fulano" not in r.text

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import threading
 from pathlib import Path
 from typing import Callable, Optional, TypeVar
@@ -160,13 +161,38 @@ class PayloadRequest(BaseModel):
         )
 
 
+# Erros de domínio viram respostas HTTP por tratadores centrais (abaixo), que limpam a mensagem.
+_CAMINHO_RE = re.compile(
+    r"(?:/(?:Users|home|private|var|tmp|opt|usr|etc|Volumes|Library|System)(?:/[^\s'\"):,;]+)+)"
+    r"|(?:[A-Za-z]:\\[^\s'\"):,;]+)"
+)
+MAX_MENSAGEM_ERRO = 400
+
+
+def mensagem_publica(exc: Exception) -> str:
+    """Texto de erro seguro para o cliente: sem caminhos de arquivo, sem quebras e com limite."""
+    texto = _CAMINHO_RE.sub("<caminho>", str(exc))
+    texto = " ".join(texto.split())
+    if not texto:
+        return "Não foi possível concluir a operação."
+    return texto[:MAX_MENSAGEM_ERRO]
+
+
+def _erro_http(status: int):
+    def tratador(_request: Request, exc: Exception) -> JSONResponse:
+        return JSONResponse(status_code=status, content={"detail": mensagem_publica(exc)})
+
+    return tratador
+
+
+for _classe in FORBIDDEN_ERRORS:
+    app.add_exception_handler(_classe, _erro_http(403))
+for _classe in BAD_REQUEST_ERRORS:
+    app.add_exception_handler(_classe, _erro_http(400))
+
+
 def _run_domain_action(action: Callable[[], T]) -> T:
-    try:
-        return action()
-    except FORBIDDEN_ERRORS as exc:
-        raise HTTPException(status_code=403, detail=str(exc)) from exc
-    except BAD_REQUEST_ERRORS as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return action()
 
 
 @app.get("/api/health")
