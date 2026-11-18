@@ -3,6 +3,7 @@ import {
   BRANDS,
   CATEGORIES,
   CONTEXTO_ATIVO_KEY,
+  LEMBRAR_CHAVE_KEY,
   PASTA_TERMINAL_KEY,
   PASTA_TERMINAL_PADRAO,
   CONTEXTO_MAX,
@@ -32,7 +33,8 @@ function carregarConfigSalva(): AIConfigSalva {
       const parsed = JSON.parse(raw);
       return {
         provider: parsed.provider || 'claude_cli',
-        apiKey: parsed.apiKey || '',
+        // A chave só é restaurada se a pessoa optou por lembrá-la neste navegador.
+        apiKey: localStorage.getItem(LEMBRAR_CHAVE_KEY) === '1' ? parsed.apiKey || '' : '',
         model: parsed.model || '',
         alias: parsed.alias || '',
         baseUrl: parsed.baseUrl || '',
@@ -87,6 +89,13 @@ export default function App() {
   const [ferramentasLocais, setFerramentasLocais] = useState<LocalToolStatus[]>([]);
   const [providerId, setProviderId] = useState<string>(configInicial.provider);
   const [apiKey, setApiKey] = useState<string>(configInicial.apiKey);
+  const [lembrarChave, setLembrarChave] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(LEMBRAR_CHAVE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
   const [model, setModel] = useState<string>(configInicial.model);
   const [alias] = useState<string>(configInicial.alias);
   const [baseUrl, setBaseUrl] = useState<string>(configInicial.baseUrl);
@@ -208,17 +217,19 @@ export default function App() {
     try {
       const payload: AIConfigSalva = {
         provider: providerId,
-        apiKey,
+        // Por padrão a chave fica só na memória; guardar em texto claro exige opt-in explícito.
+        apiKey: lembrarChave ? apiKey : '',
         model,
         alias,
         baseUrl,
         otimizarComIa,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      localStorage.setItem(LEMBRAR_CHAVE_KEY, lembrarChave ? '1' : '0');
     } catch {
       // ignora erro de storage
     }
-  }, [providerId, apiKey, model, alias, baseUrl, otimizarComIa]);
+  }, [providerId, apiKey, lembrarChave, model, alias, baseUrl, otimizarComIa]);
 
   const selecionarProvedor = (novoId: string) => {
     setProviderId(novoId);
@@ -1057,14 +1068,30 @@ export default function App() {
 
             {modoAuth === 'api_key' && (
               <div style={styles.modeBox}>
-                <label style={styles.magicLabel}>Chave de API (armazenada apenas no navegador)</label>
+                <label style={styles.magicLabel}>Chave de API</label>
                 <input
                   type="password"
                   style={styles.input}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="Cole sua API Key aqui"
+                  autoComplete="off"
                 />
+                <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '10px', fontSize: '13px', color: '#cbd5e1', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={lembrarChave}
+                    onChange={(e) => setLembrarChave(e.target.checked)}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <span>
+                    Lembrar esta chave neste navegador
+                    <span style={{ display: 'block', color: '#94a3b8', fontSize: '12px' }}>
+                      Desmarcado (recomendado): a chave fica só na memória e some ao recarregar a página.
+                      Marcado: fica guardada <strong>sem criptografia</strong> neste navegador.
+                    </span>
+                  </span>
+                </label>
                 {providerSelecionado?.dica && <p style={styles.helpText}>{providerSelecionado.dica}</p>}
               </div>
             )}

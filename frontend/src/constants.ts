@@ -244,3 +244,4 @@ export const CONTEXTO_ATIVO_KEY = 'power_request_contexto_ativo_v1';
 
 export const PASTA_TERMINAL_KEY = 'power_request_pasta_terminal_v1';
 export const PASTA_TERMINAL_PADRAO = 'Desktop/meu-projeto';
+export const LEMBRAR_CHAVE_KEY = 'power_request_lembrar_chave_v1';
