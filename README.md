@@ -99,7 +99,16 @@ O contrato com o frontend é protegido por testes (`backend/tests/test_api_contr
 
 ## Requisitos
 
-Python 3.10+, Node 20.19+ ou 22.12+ (o `make` avisa se a versão for menor) e, para os recursos de IA local, o Claude (`claude`) ou o Antigravity/Gemini já logados no terminal. O Abrir no Terminal e o app `.app` são para macOS; o restante roda em qualquer sistema.
+Python 3.10+, Node 20.19+ ou 22.12+ (o `make` avisa se a versão for menor) e, para os recursos de IA local, o Claude (`claude`) ou o Antigravity/Gemini já logados no terminal.
+
+### Sistemas suportados
+
+| Sistema | Situação |
+|---|---|
+| **macOS** | Testado: tudo funciona, incluindo o app `.app` e o **Abrir no Terminal**. |
+| **Linux e Windows** | **Não testado.** O backend (Python) e a interface (navegador) deveriam rodar, assim como o botão **Enviar**. O app `.app` e o **Abrir no Terminal** são só do macOS (no resto, o app recusa com uma mensagem clara). Sem `make` no Windows, rode os passos do Makefile à mão. |
+
+Testou em Linux ou Windows? Conte numa [issue](https://github.com/Seraphim82/power-request/issues/new/choose), seja funcionou ou não. Isso ajuda muito.
 
 ## Opine e contribua
 
