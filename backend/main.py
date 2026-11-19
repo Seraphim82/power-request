@@ -21,6 +21,7 @@ from ai_hub import (
     exchange_openrouter_oauth_code,
     providers_for_ui,
 )
+import envio_automatico
 from history_store import HistoryStore, HistoryStoreError
 from prompt_engine import PowerRequestEngine, SecurityError, ValidationError
 
@@ -136,6 +137,17 @@ class AbrirTerminalRequest(BaseModel):
 class EnviarPromptRequest(BaseModel):
     prompt: str = Field(max_length=200_000)
     ai_config: AIConfigModel
+
+
+class EnvioAutomaticoRequest(BaseModel):
+    prompt: str = Field(max_length=200_000)
+    ia: str = Field(max_length=40)
+    navegador: Optional[str] = Field(default=None, max_length=40)
+    aviso_aceito: bool = False
+
+
+class TestarAutomacaoRequest(BaseModel):
+    navegador: Optional[str] = Field(default=None, max_length=40)
 
 
 class ContextoRequest(BaseModel):
@@ -325,6 +337,25 @@ def enviar_prompt(req: EnviarPromptRequest):
 def abrir_terminal(req: AbrirTerminalRequest):
     return _run_domain_action(
         lambda: ai_hub.abrir_no_terminal(req.ai_config.model_dump(), req.prompt, req.pasta)
+    )
+
+
+@app.get("/api/envio-automatico/perfis")
+def perfis_envio_automatico():
+    return _run_domain_action(envio_automatico.perfis_para_ui)
+
+
+@app.post("/api/envio-automatico/testar")
+def testar_envio_automatico(req: TestarAutomacaoRequest):
+    return _run_domain_action(lambda: envio_automatico.testar_automacao(req.navegador))
+
+
+@app.post("/api/envio-automatico")
+def enviar_automatico(req: EnvioAutomaticoRequest):
+    return _run_domain_action(
+        lambda: envio_automatico.enviar_automatico(
+            req.prompt, req.ia, req.navegador, aviso_aceito=req.aviso_aceito
+        )
     )
 
 

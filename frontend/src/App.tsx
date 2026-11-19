@@ -22,6 +22,7 @@ import {
   type RevisaoPedido,
   type ResultadoPrompt,
 } from './constants';
+import { montarLinkIa } from './abrirNaIa';
 import { styles } from './styles';
 
 const API_BASE = window.location.port === '5173' ? 'http://127.0.0.1:8000' : '';
@@ -122,6 +123,17 @@ export default function App() {
   });
   const [abrindoTerminal, setAbrindoTerminal] = useState<boolean>(false);
   const [avisoTerminal, setAvisoTerminal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+
+  // Envio automático pelo site da IA (experimental, desligado por padrão)
+  const [autoAtivado, setAutoAtivado] = useState<boolean>(false);
+  const [autoPerfis, setAutoPerfis] = useState<{ suportado: boolean; perfis: { chave: string; nome: string }[]; navegadores: string[] } | null>(null);
+  const [autoIa, setAutoIa] = useState<string>('claude');
+  const [autoNavegador, setAutoNavegador] = useState<string>('');
+  const [contagemAuto, setContagemAuto] = useState<number | null>(null);
+  const [autoEnviando, setAutoEnviando] = useState<boolean>(false);
+  const [autoAviso, setAutoAviso] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [autoTeste, setAutoTeste] = useState<{ ok: boolean; itens: { item: string; ok: boolean; detalhe: string }[] } | null>(null);
+  const [autoTestando, setAutoTestando] = useState<boolean>(false);
 
   const [contextoAberto, setContextoAberto] = useState<boolean>(false);
   const [contextoFixo, setContextoFixo] = useState<string>('');
@@ -463,6 +475,83 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    let ativo = true;
+    fetch(`${API_BASE}/api/envio-automatico/perfis`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (ativo && d) setAutoPerfis(d);
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const dispararEnvioAuto = async () => {
+    if (!resultado?.prompt_final) return;
+    setAutoEnviando(true);
+    setAutoAviso(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/envio-automatico`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: resultado.prompt_final,
+          ia: autoIa,
+          navegador: autoNavegador || null,
+          aviso_aceito: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAutoAviso({ tipo: 'erro', texto: String(data.detail || 'Não foi possível enviar pelo site.') });
+      } else {
+        setAutoAviso({ tipo: data.status === 'confirmado' ? 'ok' : 'erro', texto: String(data.mensagem || '') });
+      }
+    } catch {
+      setAutoAviso({ tipo: 'erro', texto: 'Não foi possível conectar ao servidor local.' });
+    } finally {
+      setAutoEnviando(false);
+    }
+  };
+
+  // Contagem regressiva de 3s antes de mexer no teclado; dá tempo de Cancelar.
+  useEffect(() => {
+    if (contagemAuto === null) return;
+    if (contagemAuto <= 0) {
+      setContagemAuto(null);
+      void dispararEnvioAuto();
+      return;
+    }
+    const t = window.setTimeout(() => setContagemAuto((c) => (c === null ? null : c - 1)), 1000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contagemAuto]);
+
+  const testarAutomacao = async () => {
+    if (autoTestando) return;
+    setAutoTestando(true);
+    setAutoTeste(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/envio-automatico/testar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ navegador: autoNavegador || null }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAutoTeste(data);
+      } else {
+        setAutoTeste({ ok: false, itens: [{ item: 'Teste', ok: false, detalhe: String(data.detail || 'Falhou.') }] });
+      }
+    } catch {
+      setAutoTeste({ ok: false, itens: [{ item: 'Servidor', ok: false, detalhe: 'Não foi possível conectar ao servidor local.' }] });
+    } finally {
+      setAutoTestando(false);
+    }
+  };
+
   const copiarResposta = async () => {
     if (!respostaIa?.texto) return;
     try {
@@ -648,15 +737,28 @@ export default function App() {
     }
   };
 
-  const copiarAbrirEm = async (nomeMarca: string, chatUrl: string) => {
+  const copiarAbrirEm = async (marca: (typeof BRANDS)[number]) => {
     if (!resultado?.prompt_final) return;
+    // Calcula o link ANTES de qualquer espera: o navegador só deixa abrir a aba logo após o clique.
+    const link = montarLinkIa(marca, resultado.prompt_final);
+    const atalhoColar = /Mac/i.test(navigator.platform) ? '⌘V' : 'Ctrl+V';
+    const aba = window.open(link.url, '_blank', 'noopener,noreferrer');
+    let copiou = true;
     try {
+      // Cópia de segurança: se o site não preencher sozinho, é só colar.
       await navigator.clipboard.writeText(resultado.prompt_final);
-      setCopiadoTexto(`Prompt copiado! Abrindo ${nomeMarca}...`);
     } catch {
-      setCopiadoTexto(`Abrindo ${nomeMarca} — se precisar, copie o prompt acima.`);
+      copiou = false;
     }
-    window.open(chatUrl, '_blank', 'noopener,noreferrer');
+    if (!aba) {
+      setCopiadoTexto(`O navegador bloqueou a nova aba. Abra ${marca.nome} e cole o prompt (${atalhoColar}).`);
+    } else if (link.preenchido) {
+      setCopiadoTexto(`Abrindo ${marca.nome} com o prompt já preenchido. Confira e aperte Enter. Se a caixa vier vazia, cole (${atalhoColar}).`);
+    } else if (copiou) {
+      setCopiadoTexto(`Prompt copiado! Em ${marca.nome}, clique na caixa de texto, cole (${atalhoColar}) e aperte Enter.`);
+    } else {
+      setCopiadoTexto(`Abrindo ${marca.nome} — copie o prompt do quadro acima e cole na caixa de texto.`);
+    }
   };
 
   const resetar = () => {
@@ -1497,6 +1599,123 @@ export default function App() {
                   </div>
                 )}
 
+                {autoPerfis && (
+                  <div
+                    data-testid="bloco-envio-automatico"
+                    style={{
+                      marginTop: '14px',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid #1e293b',
+                      backgroundColor: '#0b1220',
+                    }}
+                  >
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px', color: '#cbd5e1' }}>
+                      <input
+                        type="checkbox"
+                        checked={autoAtivado}
+                        onChange={(e) => {
+                          setAutoAtivado(e.target.checked);
+                          setContagemAuto(null);
+                          setAutoAviso(null);
+                        }}
+                      />
+                      <span>
+                        <strong>Abrir no site da IA</strong> (experimental): o app abre o site, cola o prompt e envia.
+                        A conversa fica no histórico da própria IA.
+                      </span>
+                    </label>
+
+                    {autoAtivado && !autoPerfis.suportado && (
+                      <div style={{ marginTop: '10px', fontSize: '13px', color: '#fde68a' }}>
+                        Ainda não funciona neste sistema (só macOS). Use <strong>Copiar Prompt</strong> e cole no site.
+                      </div>
+                    )}
+
+                    {autoAtivado && autoPerfis.suportado && (
+                      <>
+                        <div style={{ marginTop: '10px', fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+                          O macOS vai pedir permissão de <strong>Acessibilidade</strong> (para o app apertar ⌘V e
+                          Enter). Revise o prompt antes: ele pode ter dados de terceiros. Depois de clicar, aguarde
+                          3 segundos e não mexa no teclado até terminar. Se não der para confirmar o envio, o texto
+                          fica copiado.
+                        </div>
+                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <select
+                            aria-label="IA do site"
+                            style={{ ...styles.input, flex: '0 1 160px', minWidth: 0 }}
+                            value={autoIa}
+                            onChange={(e) => setAutoIa(e.target.value)}
+                          >
+                            {autoPerfis.perfis.map((p) => (
+                              <option key={p.chave} value={p.chave}>
+                                {p.nome}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            aria-label="Navegador"
+                            style={{ ...styles.input, flex: '0 1 180px', minWidth: 0 }}
+                            value={autoNavegador}
+                            onChange={(e) => setAutoNavegador(e.target.value)}
+                          >
+                            <option value="">Navegador: automático</option>
+                            {autoPerfis.navegadores.map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                          {contagemAuto === null ? (
+                            <button
+                              type="button"
+                              style={{ ...styles.btnSecondary, opacity: autoEnviando ? 0.7 : 1 }}
+                              onClick={() => {
+                                setAutoAviso(null);
+                                setContagemAuto(3);
+                              }}
+                              disabled={autoEnviando || !autoIa}
+                            >
+                              {autoEnviando ? 'Enviando...' : 'Enviar pelo site'}
+                            </button>
+                          ) : (
+                            <button type="button" style={styles.btnSecondary} onClick={() => setContagemAuto(null)}>
+                              Cancelar ({contagemAuto})
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            style={{ ...styles.btnSecondary, opacity: autoTestando ? 0.7 : 1 }}
+                            onClick={testarAutomacao}
+                            disabled={autoTestando || autoEnviando || contagemAuto !== null}
+                          >
+                            {autoTestando ? 'Testando...' : 'Testar automação'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {autoAviso && (
+                      <div
+                        role={autoAviso.tipo === 'erro' ? 'alert' : 'status'}
+                        data-testid="aviso-envio-automatico"
+                        style={{ marginTop: '10px', fontSize: '13px', color: autoAviso.tipo === 'erro' ? '#fecaca' : '#bbf7d0' }}
+                      >
+                        {autoAviso.texto}
+                      </div>
+                    )}
+                    {autoTeste && (
+                      <ul data-testid="resultado-teste-automacao" style={{ margin: '10px 0 0', paddingLeft: '18px', fontSize: '13px' }}>
+                        {autoTeste.itens.map((i) => (
+                          <li key={i.item} style={{ color: i.ok ? '#bbf7d0' : '#fecaca' }}>
+                            {i.ok ? '✓' : '✗'} {i.item}: {i.detalhe}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {erroEnvio && (
                   <div
                     role="alert"
@@ -1572,7 +1791,7 @@ export default function App() {
                 }}
               >
                 <div style={{ fontSize: '12.5px', color: '#94a3b8', marginBottom: '8px' }}>
-                  Ou copie e abra direto na sua IA favorita:
+                  Abrir direto na sua IA (o prompt vai na caixa de texto; você só confere e aperta Enter):
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {BRANDS.filter((b) => b.chatUrl).map((b) => (
@@ -1580,7 +1799,7 @@ export default function App() {
                       key={b.id}
                       type="button"
                       style={{ ...styles.btnSecondary, borderColor: b.cor, color: b.cor }}
-                      onClick={() => copiarAbrirEm(b.nome, b.chatUrl)}
+                      onClick={() => copiarAbrirEm(b)}
                     >
                       Abrir no {b.nome}
                     </button>
