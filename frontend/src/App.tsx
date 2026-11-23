@@ -17,6 +17,7 @@ import {
   type CategoriaId,
   type EstadoIa,
   type ItemHistorico,
+  type Rodada,
   type LocalToolStatus,
   type ProviderInfo,
   type RevisaoPedido,
@@ -112,6 +113,10 @@ export default function App() {
   const [respostaIa, setRespostaIa] = useState<{ texto: string; origem: string } | null>(null);
   const [erroEnvio, setErroEnvio] = useState<string>('');
   const [respostaCopiada, setRespostaCopiada] = useState<string>('');
+  // Sequenciar: rodadas já respondidas (a 1ª tem pedido vazio = o prompt original).
+  const [rodadas, setRodadas] = useState<Rodada[]>([]);
+  const [proximoPedido, setProximoPedido] = useState<string>('');
+  const [infoSequencia, setInfoSequencia] = useState<string>('');
   const envioAtual = useRef<number>(0);
 
   const [pastaTerminal, setPastaTerminal] = useState<string>(() => {
@@ -126,7 +131,7 @@ export default function App() {
 
   // Envio automático pelo site da IA (experimental, desligado por padrão)
   const [autoAtivado, setAutoAtivado] = useState<boolean>(false);
-  const [autoPerfis, setAutoPerfis] = useState<{ suportado: boolean; perfis: { chave: string; nome: string }[]; navegadores: string[] } | null>(null);
+  const [autoPerfis, setAutoPerfis] = useState<{ suportado: boolean; perfis: { chave: string; nome: string }[]; nao_validados?: string[]; navegadores: string[] } | null>(null);
   const [autoIa, setAutoIa] = useState<string>('claude');
   const [autoNavegador, setAutoNavegador] = useState<string>('');
   const [contagemAuto, setContagemAuto] = useState<number | null>(null);
@@ -402,6 +407,59 @@ export default function App() {
     setRespostaIa(null);
     setErroEnvio('');
     setRespostaCopiada('');
+    setRodadas([]);
+    setProximoPedido('');
+    setInfoSequencia('');
+  };
+
+  const sequenciar = async () => {
+    const novo = proximoPedido.trim();
+    if (!resultado?.prompt_final || enviando || !novo || rodadas.length === 0) return;
+    const cfg = montarAiConfigPayload();
+    if (!cfg) {
+      setErroEnvio('Informe a chave desta IA no Hub de IAs antes de enviar.');
+      setHubAberto(true);
+      return;
+    }
+    const id = ++envioAtual.current;
+    setEnviando(true);
+    setSegundosEnvio(0);
+    setErroEnvio('');
+    setRespostaCopiada('');
+    try {
+      const res = await fetch(`${API_BASE}/api/sequenciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt_base: resultado.prompt_final,
+          rodadas: rodadas.map((r) => ({ pedido: r.pedido, resposta: r.resposta })),
+          novo_pedido: novo,
+          ai_config: cfg,
+          ...(resultado.historico_id ? { pedido_id: resultado.historico_id } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (id !== envioAtual.current) return;
+      if (!res.ok) {
+        setErroEnvio(String(data.detail || 'Não foi possível sequenciar.'));
+      } else {
+        const origem = `${data.alias} (${data.model})`;
+        const texto = String(data.resposta || '');
+        setRespostaIa({ texto, origem });
+        setRodadas((prev) => [...prev, { pedido: novo, resposta: texto, origem }]);
+        setProximoPedido('');
+        const omitidas = Number(data.rodadas_omitidas || 0);
+        setInfoSequencia(
+          `Enviei o pedido original + ${data.rodadas_enviadas} resposta(s) anterior(es) + seu novo pedido (~${data.tokens_estimados} tokens).` +
+            (omitidas ? ` ${omitidas} rodada(s) mais antiga(s) ficaram de fora para economizar.` : ''),
+        );
+      }
+    } catch {
+      if (id !== envioAtual.current) return;
+      setErroEnvio('Não foi possível conectar ao servidor local.');
+    } finally {
+      if (id === envioAtual.current) setEnviando(false);
+    }
   };
 
   const enviarParaIa = async () => {
@@ -422,14 +480,23 @@ export default function App() {
       const res = await fetch(`${API_BASE}/api/enviar-prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: resultado.prompt_final, ai_config: cfg }),
+        body: JSON.stringify({
+          prompt: resultado.prompt_final,
+          ai_config: cfg,
+          ...(resultado.historico_id ? { pedido_id: resultado.historico_id } : {}),
+        }),
       });
       const data = await res.json();
       if (id !== envioAtual.current) return;
       if (!res.ok) {
         setErroEnvio(String(data.detail || 'Não foi possível enviar o prompt.'));
       } else {
-        setRespostaIa({ texto: String(data.resposta || ''), origem: `${data.alias} (${data.model})` });
+        const origem = `${data.alias} (${data.model})`;
+        const texto = String(data.resposta || '');
+        setRespostaIa({ texto, origem });
+        setRodadas([{ pedido: '', resposta: texto, origem }]);
+        setProximoPedido('');
+        setInfoSequencia('');
       }
     } catch {
       if (id !== envioAtual.current) return;
@@ -694,6 +761,23 @@ export default function App() {
     setRevisao(null);
     setErro('');
     limparEnvio();
+    const idItem = item.id;
+    fetch(`${API_BASE}/api/historico/${idItem}/rodadas`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const lista: Rodada[] = Array.isArray(d?.rodadas)
+          ? d.rodadas.map((r: { pedido_texto: string; resposta: string; origem: string }) => ({
+              pedido: r.pedido_texto || '',
+              resposta: r.resposta || '',
+              origem: r.origem || 'IA',
+            }))
+          : [];
+        if (lista.length === 0) return;
+        setRodadas(lista);
+        const ultima = lista[lista.length - 1];
+        setRespostaIa({ texto: ultima.resposta, origem: ultima.origem });
+      })
+      .catch(() => undefined);
     setEtapa(1);
     setHistoricoAberto(false);
   };
@@ -1650,6 +1734,7 @@ export default function App() {
                             {autoPerfis.perfis.map((p) => (
                               <option key={p.chave} value={p.chave}>
                                 {p.nome}
+                                {autoPerfis.nao_validados?.includes(p.chave) ? ' (ainda não validado)' : ''}
                               </option>
                             ))}
                           </select>
@@ -1778,6 +1863,78 @@ export default function App() {
                     </pre>
                     {respostaCopiada && (
                       <div style={{ marginTop: '8px', fontSize: '12.5px', color: '#bbf7d0' }}>{respostaCopiada}</div>
+                    )}
+                  </div>
+                )}
+
+                {rodadas.length > 0 && (
+                  <div
+                    data-testid="bloco-sequenciar"
+                    style={{
+                      marginTop: '12px',
+                      padding: '14px',
+                      borderRadius: '12px',
+                      border: '1px solid #334155',
+                      backgroundColor: '#0b1220',
+                    }}
+                  >
+                    <strong style={{ color: '#e2e8f0', fontSize: '14px' }}>
+                      Continuar a conversa (Sequenciar) · {rodadas.length} rodada(s)
+                    </strong>
+                    <p style={{ margin: '6px 0 10px', fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+                      Escreva o próximo pedido. O app reenvia o pedido original + as últimas 3 respostas + o novo pedido, e
+                      guarda tudo no Histórico.
+                    </p>
+                    <textarea
+                      data-testid="proximo-pedido"
+                      value={proximoPedido}
+                      onChange={(e) => setProximoPedido(e.target.value)}
+                      maxLength={2000}
+                      rows={3}
+                      disabled={enviando}
+                      placeholder="Ex.: Agora adicione login com e-mail e senha."
+                      style={{
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        backgroundColor: '#020617',
+                        color: '#e2e8f0',
+                        fontSize: '14px',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginTop: '8px' }}>
+                      <button
+                        type="button"
+                        data-testid="btn-sequenciar"
+                        style={styles.btnPrimary}
+                        disabled={enviando || !proximoPedido.trim()}
+                        onClick={sequenciar}
+                      >
+                        {enviando ? `Enviando... ${segundosEnvio}s` : 'Sequenciar'}
+                      </button>
+                      {infoSequencia && <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>{infoSequencia}</span>}
+                    </div>
+                    {rodadas.length > 1 && (
+                      <details style={{ marginTop: '10px' }}>
+                        <summary style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '12.5px' }}>
+                          Ver rodadas anteriores
+                        </summary>
+                        {rodadas.slice(0, -1).map((r, i) => (
+                          <div key={i} style={{ marginTop: '8px', fontSize: '12.5px', color: '#cbd5e1' }}>
+                            <div style={{ color: '#94a3b8' }}>
+                              Rodada {i + 1}
+                              {r.pedido ? ` — pedido: ${r.pedido}` : ' — prompt original'}
+                            </div>
+                            <pre style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '160px', overflow: 'auto' }}>
+                              {r.resposta}
+                            </pre>
+                          </div>
+                        ))}
+                      </details>
                     )}
                   </div>
                 )}

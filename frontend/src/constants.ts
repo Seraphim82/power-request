@@ -49,6 +49,13 @@ export interface ResultadoPrompt {
   aviso?: string;
 }
 
+/** Uma rodada do Sequenciar: o pedido (vazio na 1ª = prompt original) e a resposta da IA. */
+export interface Rodada {
+  pedido: string;
+  resposta: string;
+  origem: string;
+}
+
 export interface ItemHistorico {
   id: number;
   criado_em: string;

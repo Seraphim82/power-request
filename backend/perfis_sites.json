@@ -8,6 +8,19 @@
     "limite_parametro": 0,
     "espera_carregar_ms": 4000,
     "espera_apos_colar_ms": 1200,
-    "espera_confirmar_ms": 8000
+    "espera_confirmar_ms": 8000,
+    "validado_no_mac": true
+  },
+  "chatgpt": {
+    "nome": "ChatGPT",
+    "dominio": "chatgpt.com",
+    "url_nova": "https://chatgpt.com/",
+    "url_conversa_prefixo": "https://chatgpt.com/c/",
+    "parametro_texto": null,
+    "limite_parametro": 0,
+    "espera_carregar_ms": 4000,
+    "espera_apos_colar_ms": 1200,
+    "espera_confirmar_ms": 8000,
+    "validado_no_mac": false
   }
 }

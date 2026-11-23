@@ -109,6 +109,7 @@ def _validar_perfil(chave: str, bruto: Any) -> dict[str, Any]:
         "url_nova": bruto["url_nova"],
         "url_conversa_prefixo": bruto["url_conversa_prefixo"],
         "parametro_texto": parametro,
+        "validado_no_mac": bruto.get("validado_no_mac") is True,
         "limite_parametro": _inteiro(bruto.get("limite_parametro", 0), "limite_parametro", 0, MAX_PARAMETRO_URL),
         "espera_carregar_ms": _inteiro(bruto.get("espera_carregar_ms", 4000), "espera_carregar_ms", 0, MAX_ESPERA_MS),
         "espera_apos_colar_ms": _inteiro(bruto.get("espera_apos_colar_ms", 1000), "espera_apos_colar_ms", 0, MAX_ESPERA_MS),
@@ -131,6 +132,7 @@ def perfis_para_ui() -> dict[str, Any]:
     return {
         "suportado": sys.platform in ESTRATEGIAS,
         "perfis": [{"chave": c, "nome": p["nome"]} for c, p in perfis.items()],
+        "nao_validados": [c for c, p in perfis.items() if not p["validado_no_mac"]],
         "navegadores": list(NAVEGADORES),
     }
 

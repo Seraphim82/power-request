@@ -137,6 +137,20 @@ class AbrirTerminalRequest(BaseModel):
 class EnviarPromptRequest(BaseModel):
     prompt: str = Field(max_length=200_000)
     ai_config: AIConfigModel
+    pedido_id: Optional[int] = Field(default=None, ge=1)  # se vier, a resposta vira a rodada 1
+
+
+class RodadaModel(BaseModel):
+    pedido: str = Field(default="", max_length=2000)
+    resposta: str = Field(max_length=60_000)
+
+
+class SequenciarRequest(BaseModel):
+    prompt_base: str = Field(max_length=200_000)
+    rodadas: list[RodadaModel] = Field(default_factory=list, max_length=30)
+    novo_pedido: str = Field(min_length=1, max_length=2000)
+    ai_config: AIConfigModel
+    pedido_id: Optional[int] = Field(default=None, ge=1)
 
 
 class EnvioAutomaticoRequest(BaseModel):
@@ -326,11 +340,56 @@ def enviar_prompt(req: EnviarPromptRequest):
             status_code=429, detail="Já há envios em andamento. Aguarde um terminar e tente de novo."
         )
     try:
-        return _run_domain_action(
+        resultado = _run_domain_action(
             lambda: ai_hub.enviar_prompt(req.ai_config.model_dump(), req.prompt)
         )
     finally:
         envios_em_andamento.release()
+    if req.pedido_id:
+        # Novo envio do prompt original recomeça a sequência guardada deste pedido.
+        history_store.reiniciar_rodadas(req.pedido_id)
+        history_store.salvar_rodada(
+            req.pedido_id, "", resultado["resposta"], f"{resultado['alias']} ({resultado['model']})"
+        )
+    return resultado
+
+
+@app.post("/api/sequenciar")
+def sequenciar(req: SequenciarRequest):
+    """Próxima rodada: reenvia pedido original + últimas respostas + novo pedido."""
+    montado = _run_domain_action(
+        lambda: engine.montar_continuacao(
+            req.prompt_base, [r.model_dump() for r in req.rodadas], req.novo_pedido
+        )
+    )
+    if not envios_em_andamento.acquire(blocking=False):
+        raise HTTPException(
+            status_code=429, detail="Já há envios em andamento. Aguarde um terminar e tente de novo."
+        )
+    try:
+        resultado = _run_domain_action(
+            lambda: ai_hub.enviar_prompt(req.ai_config.model_dump(), montado["prompt"])
+        )
+    finally:
+        envios_em_andamento.release()
+    if req.pedido_id:
+        history_store.salvar_rodada(
+            req.pedido_id,
+            req.novo_pedido.strip(),
+            resultado["resposta"],
+            f"{resultado['alias']} ({resultado['model']})",
+        )
+    return {
+        **resultado,
+        "tokens_estimados": montado["tokens_estimados"],
+        "rodadas_enviadas": montado["rodadas_enviadas"],
+        "rodadas_omitidas": montado["rodadas_omitidas"],
+    }
+
+
+@app.get("/api/historico/{pedido_id}/rodadas")
+def listar_rodadas_do_pedido(pedido_id: int):
+    return {"rodadas": history_store.listar_rodadas(pedido_id)}
 
 
 @app.post("/api/abrir-terminal")
