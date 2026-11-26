@@ -23,6 +23,7 @@ from ai_hub import (
     providers_for_ui,
 )
 import envio_automatico
+import registro_local
 from history_store import HistoryStore, HistoryStoreError
 from prompt_engine import PowerRequestEngine, SecurityError, ValidationError
 
@@ -51,7 +52,7 @@ app = FastAPI(
 # ou do servidor de desenvolvimento do Vite. Impede que sites abertos no navegador
 # leiam/apaguem o histórico ou disparem o CLI local (CSRF / DNS rebinding).
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
-ALLOWED_ORIGIN_HOSTS = {"127.0.0.1", "localhost"}
+PORTA_PADRAO = 8765
 DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
@@ -65,13 +66,19 @@ app.add_middleware(
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 
 
-def _origin_permitida(origin: str) -> bool:
-    from urllib.parse import urlparse
+def _origin_permitida(origin: str, host: str) -> bool:
+    """Compara a origem inteira (protocolo, nome e porta): outro programa local não passa."""
+    porta = getattr(app.state, "porta", PORTA_PADRAO)
+    aceitas = {f"http://127.0.0.1:{porta}", f"http://localhost:{porta}", *DEV_ORIGINS}
+    if host:  # a própria origem do servidor; o nome já passou pelo TrustedHostMiddleware
+        aceitas.add(f"http://{host}")
+    return origin in aceitas
 
-    try:
-        return urlparse(origin).hostname in ALLOWED_ORIGIN_HOSTS
-    except ValueError:
-        return False
+
+def _registrar(request: Request, codigo: object, tipo: str) -> None:
+    """Rastro da falha. Usa o modelo da rota, nunca o endereço real (que pode levar busca)."""
+    rota = getattr(request.scope.get("route"), "path", "sem-rota")
+    registro_local.registrar_falha(request.method, rota, codigo, tipo)
 
 
 MAX_BODY_BYTES = 1_000_000
@@ -98,7 +105,8 @@ async def protecao_do_servidor_local(request: Request, call_next):
     if request.method not in SAFE_METHODS:
         origin = request.headers.get("origin")
         site = request.headers.get("sec-fetch-site")
-        if (origin and not _origin_permitida(origin)) or site == "cross-site":
+        host = request.headers.get("host", "")
+        if (origin is not None and not _origin_permitida(origin, host)) or site == "cross-site":
             resposta = JSONResponse(
                 status_code=403, content={"detail": "Origem não autorizada para esta operação."}
             )
@@ -109,7 +117,13 @@ async def protecao_do_servidor_local(request: Request, call_next):
                     status_code=413, content={"detail": "Requisição grande demais."}
                 )
     if resposta is None:
-        resposta = await call_next(request)
+        try:
+            resposta = await call_next(request)
+        except Exception as exc:
+            _registrar(request, 500, type(exc).__name__)
+            raise
+    if resposta.status_code >= 400:
+        _registrar(request, resposta.status_code, getattr(request.state, "tipo_erro", "-"))
     for nome, valor in SECURITY_HEADERS.items():
         resposta.headers[nome] = valor
     return resposta
@@ -221,7 +235,8 @@ def mensagem_publica(exc: Exception) -> str:
 
 
 def _erro_http(status: int):
-    def tratador(_request: Request, exc: Exception) -> JSONResponse:
+    def tratador(request: Request, exc: Exception) -> JSONResponse:
+        request.state.tipo_erro = type(exc).__name__  # só o nome do tipo vai para o log
         return JSONResponse(status_code=status, content={"detail": mensagem_publica(exc)})
 
     return tratador
@@ -437,12 +452,15 @@ def testar_envio_automatico(req: TestarAutomacaoRequest):
 
 
 @app.post("/api/envio-automatico")
-def enviar_automatico(req: EnvioAutomaticoRequest):
-    return _run_domain_action(
+def enviar_automatico(req: EnvioAutomaticoRequest, request: Request):
+    resultado = _run_domain_action(
         lambda: envio_automatico.enviar_automatico(
             req.prompt, req.ia, req.navegador, aviso_aceito=req.aviso_aceito
         )
     )
+    if resultado.get("status") != envio_automatico.STATUS_CONFIRMADO:
+        _registrar(request, 200, f"envio_{resultado.get('status')}")
+    return resultado
 
 
 @app.get("/api/contexto")

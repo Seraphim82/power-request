@@ -37,7 +37,9 @@ class PowerRequestEngine:
         r"ignore\s+(todas\s+as\s+)?instru[çc][õo]es\s+anteriores",
         r"desconsidere\s+(tudo|todas\s+as\s+regras)",
         r"<\s*script\b",
-        r"javascript\s*:",
+        # Endereço "javascript:" (colado ao código, ou com espaço antes de uma chamada).
+        # "Linguagem JavaScript: Node" é texto comum e passa. O filtro é básico.
+        r"javascript\s*:(?:(?=\S)|\s*(?:void\b|(?:window|document)\.|[\w.$]+\())",
         # Bloqueia expressões em {{ }} (ex: {{7*7}}, {{config.items()}}, {{__class__}}),
         # mas permite variáveis simples de template como {{nome}} ou {{cliente.email}}.
         r"(?s)\{\{(?!\s*(?![\w.]*__)[A-Za-z_][\w.]*\s*\}\}).*?\}\}",

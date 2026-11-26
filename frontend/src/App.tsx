@@ -24,6 +24,8 @@ import {
   type ResultadoPrompt,
 } from './constants';
 import { montarLinkIa } from './abrirNaIa';
+import { enderecoDaEscolha, precisaDeAviso, type EscolhaAviso } from './avisoLink';
+import { AvisoLinkPrompt } from './AvisoLinkPrompt';
 import { AguardandoIa } from './AguardandoIa';
 import { AvisoIaOffline } from './AvisoIaOffline';
 import { BotaoCopiarPrompt } from './BotaoCopiarPrompt';
@@ -169,6 +171,14 @@ export default function App() {
   });
   const [salvandoContexto, setSalvandoContexto] = useState<boolean>(false);
   const [statusContexto, setStatusContexto] = useState<string>('');
+
+  // Aviso antes de abrir a IA com o prompt no endereço (toda vez; nada fica guardado).
+  // Guarda o prompt do momento do clique: o que a pessoa confirmou é o que vai.
+  const [avisoLink, setAvisoLink] = useState<{
+    marca: (typeof BRANDS)[number];
+    prompt: string;
+    url: string;
+  } | null>(null);
 
   const iaOffline = iaOfflineBloqueiaEnvio(estadoIa);
 
@@ -849,28 +859,45 @@ export default function App() {
     }
   };
 
-  const copiarAbrirEm = async (marca: (typeof BRANDS)[number]) => {
-    if (!resultado?.prompt_final) return;
-    // Calcula o link ANTES de qualquer espera: o navegador só deixa abrir a aba logo após o clique.
-    const link = montarLinkIa(marca, resultado.prompt_final);
-    const atalhoColar = /Mac/i.test(navigator.platform) ? '⌘V' : 'Ctrl+V';
-    const aba = window.open(link.url, '_blank', 'noopener,noreferrer');
-    let copiou = true;
-    try {
-      // Cópia de segurança: se o site não preencher sozinho, é só colar.
-      await navigator.clipboard.writeText(resultado.prompt_final);
-    } catch {
-      copiou = false;
-    }
-    if (!aba) {
-      setCopiadoTexto(`O navegador bloqueou a nova aba. Abra ${marca.nome} e cole o prompt (${atalhoColar}).`);
-    } else if (link.preenchido) {
-      setCopiadoTexto(`Abrindo ${marca.nome} com o prompt já preenchido. Confira e aperte Enter. Se a caixa vier vazia, cole (${atalhoColar}).`);
+  const atalhoColar = /Mac/i.test(navigator.platform) ? '⌘V' : 'Ctrl+V';
+
+  // Chamar direto do clique: o navegador só deixa abrir a aba e copiar logo após o gesto.
+  const abrirECopiar = async (nome: string, url: string, prompt: string, preenchido: boolean) => {
+    // A cópia começa antes de abrir a aba, enquanto esta página ainda está em foco.
+    const copia = navigator.clipboard.writeText(prompt).then(
+      () => true,
+      () => false
+    );
+    // Com "noopener" o navegador não informa se a aba abriu, então o texto não afirma isso.
+    window.open(url, '_blank', 'noopener,noreferrer');
+    const copiou = await copia;
+    const seNaoAbrir = `Se a aba não abrir, abra o ${nome} no navegador.`;
+    if (preenchido) {
+      setCopiadoTexto(`Abrindo ${nome} com o prompt já preenchido. Confira e aperte Enter. Se a caixa vier vazia, cole (${atalhoColar}). ${seNaoAbrir}`);
     } else if (copiou) {
-      setCopiadoTexto(`Prompt copiado! Em ${marca.nome}, clique na caixa de texto, cole (${atalhoColar}) e aperte Enter.`);
+      setCopiadoTexto(`Prompt copiado! Em ${nome}, clique na caixa de texto, cole (${atalhoColar}) e aperte Enter. ${seNaoAbrir}`);
     } else {
-      setCopiadoTexto(`Abrindo ${marca.nome} — copie o prompt do quadro acima e cole na caixa de texto.`);
+      setCopiadoTexto(`Não consegui copiar. Copie o prompt do quadro acima e cole no ${nome}. ${seNaoAbrir}`);
     }
+  };
+
+  const copiarAbrirEm = (marca: (typeof BRANDS)[number]) => {
+    if (!resultado?.prompt_final) return;
+    const link = montarLinkIa(marca, resultado.prompt_final);
+    setCopiadoTexto('');
+    if (precisaDeAviso(link)) {
+      setAvisoLink({ marca, prompt: resultado.prompt_final, url: link.url });
+      return;
+    }
+    void abrirECopiar(marca.nome, link.url, resultado.prompt_final, false);
+  };
+
+  const escolherNoAviso = (escolha: EscolhaAviso, ciente: boolean) => {
+    if (!avisoLink) return;
+    const url = enderecoDaEscolha(escolha, ciente, avisoLink.marca.chatUrl, avisoLink.url);
+    if (!url) return;
+    setAvisoLink(null);
+    void abrirECopiar(avisoLink.marca.nome, url, avisoLink.prompt, escolha === 'preenchido');
   };
 
   const resetar = () => {
@@ -2038,7 +2065,7 @@ export default function App() {
                 }}
               >
                 <div style={{ fontSize: '12.5px', color: '#94a3b8', marginBottom: '8px' }}>
-                  Abrir direto na sua IA (o prompt vai na caixa de texto; você só confere e aperta Enter):
+                  Abrir direto na sua IA. Quando o prompt puder ir pelo endereço, aparece um aviso antes:
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {BRANDS.filter((b) => b.chatUrl).map((b) => (
@@ -2052,6 +2079,14 @@ export default function App() {
                     </button>
                   ))}
                 </div>
+                {avisoLink && (
+                  <AvisoLinkPrompt
+                    nome={avisoLink.marca.nome}
+                    atalhoColar={atalhoColar}
+                    onEscolher={escolherNoAviso}
+                    onCancelar={() => setAvisoLink(null)}
+                  />
+                )}
                 {copiadoTexto && (
                   <div style={{ marginTop: '8px', fontSize: '13px', color: '#4ade80', fontWeight: 600 }}>
                     {copiadoTexto}

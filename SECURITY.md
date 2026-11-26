@@ -14,6 +14,6 @@ Descreva o que encontrou, como reproduzir e o impacto. Respondo assim que possí
 - Execução de comandos ou leitura de arquivos além do esperado (Enviar e Abrir no Terminal)
 - Acesso ao servidor local por sites externos (CSRF, DNS rebinding)
 - Vazamento de chaves de API ou do histórico
-- Injeção em prompts que contorne os filtros do motor local
+- Injeção em prompts que contorne os filtros do motor local (o filtro é básico: uma lista de padrões, não uma garantia de proteção)
 
 Veja a seção **Segurança** do README para o modelo de proteção atual.

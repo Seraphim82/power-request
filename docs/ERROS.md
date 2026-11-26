@@ -28,45 +28,6 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
   revisar e otimizar. **O aviso não impede a gravação.** Não enviar dados de cliente.
 - **Não confirmado:** se algum pedido chegou a ser gravado.
 
-### 4. Conferência de origem do servidor incompleta (fase 4)
-- **Sintoma:** a proteção aceita mais origens locais do que deveria.
-- **Causa:** a origem é conferida pelo nome, sem a porta.
-- **Solução:** aceitar a origem exata do app e as duas do Vite. Teste novo.
-- **Evitar:** comparar a origem completa.
-
-### 5. Envio automático não confere a aba (fase 4)
-- **Sintoma possível:** texto colado fora do site da IA se a aba mudar durante a espera
-  (visto na leitura do código; não reproduzido no Mac).
-- **Causa:** as teclas são enviadas sem conferir o endereço da aba da frente.
-- **Solução:** conferir o domínio antes das teclas; se não bater, parar e deixar o texto copiado.
-- **Evitar:** nunca digitar sem confirmar o destino. **Até corrigir:** não trocar de aba nem de
-  janela durante o envio.
-
-### 6. Privacidade no link com `?q=` (fase 4)
-- **Sintoma:** o prompt vai dentro do endereço aberto no navegador.
-- **Causa:** forma de preencher a caixa de texto do site.
-- **Solução:** avisar na tela e oferecer "só copiar e abrir" (escolha pendente).
-- **Evitar:** não pôr dado de cliente em prompt aberto por link.
-
-### 7. Filtro anti-injeção é básico (fase 4)
-- **Sintoma:** bloqueia texto legítimo (ex.: "Linguagem JavaScript: Node") e não pega todas as
-  frases de injeção.
-- **Causa:** lista de padrões fixos.
-- **Solução:** corrigir o falso positivo e descrever o filtro como básico no README e no
-  SECURITY. Se um teste antigo depender do comportamento atual, parar e conversar.
-- **Evitar:** não tratar o filtro como garantia de proteção.
-
-### 12. Sem registro de erros (fase 4)
-- **Sintoma:** quando algo falha, não fica rastro.
-- **Causa:** o backend não usa `logging`.
-- **Solução:** log local curto, sem chave, prompt ou resposta.
-
-### Permissões do banco (fase 4)
-- **Sintoma:** numa cópia de teste em Linux, a pasta saiu com 755 e o arquivo com 644
-  (não conferido no Mac).
-- **Causa:** o app não define as permissões. O histórico não é criptografado pelo app.
-- **Solução:** 700 na pasta e 600 no arquivo.
-
 ### 8. Organizar prompt bagunça o prompt do próprio app (fase 5)
 - **Sintoma:** o Contexto entra no Objetivo e a seção Padrão vira regra.
 - **Causa:** essas seções não são reconhecidas à parte.
@@ -88,6 +49,49 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Sintoma (visto no código):** a partir da 51ª, a resposta aparece na tela, mas não é salva.
 - **Causa:** `salvar_rodada` devolve vazio no limite e a rota não avisa.
 - **Solução:** avisar na tela.
+
+## Corrigidos na fase 4 (26/11): testados em Linux e conferidos no Mac
+
+O que foi e o que não foi conferido no Mac está no `docs/STATUS.md`.
+
+### 4. Conferência de origem do servidor incompleta
+- **Causa:** a origem era conferida pelo nome, sem a porta.
+- **Solução:** compara a origem inteira: a do próprio app (porta em uso) e as duas do Vite.
+- **Efeito:** se o Vite subir em outra porta (ex.: 5174), as alterações são recusadas.
+- **Evitar:** comparar a origem completa.
+
+### 5. Envio automático não conferia a aba
+- **Solução:** o script confere, antes do ⌘V e antes do Enter, se o navegador está na frente e se a
+  aba tem o endereço do perfil (aceita `?` ou `#` no fim). Se não, para e deixa o texto copiado.
+- **Limites:** sobra um instante entre conferir e teclar; não sabe se o cursor está na caixa de
+  texto. No Mac, compilou para Safari e Chrome; envio e parada conferidos pelo dono.
+
+### 6. Privacidade no link com `?q=`
+- **Solução (escolha do dono):** janela de aviso **toda vez** que o prompt iria no endereço, com
+  ciência obrigatória para "Abrir preenchido", e as opções "Só copiar e abrir" e "Cancelar".
+- **Limites:** não impede dado de cliente no site. O envio automático tem aviso próprio.
+
+### 7. Filtro anti-injeção bloqueava texto comum
+- **Solução:** "Linguagem JavaScript: Node" passa; `javascript:` seguido de código continua
+  bloqueado. README e SECURITY chamam o filtro de básico.
+- **Limites:** continua uma lista de padrões, que não pega toda injeção. "JavaScript:Node", sem
+  espaço, ainda é bloqueado.
+
+### 12. Sem registro de erros
+- **Solução:** `~/.power_request/power_request.log` (cerca de 100 KB, mais uma cópia), com data,
+  método, rota, código e tipo. Sem mensagem, prompt, resposta ou chave.
+- **Limite:** só é ligado ao abrir pelo app ou `make run` (não no `make dev`). Falha antes do
+  servidor subir não é registrada.
+
+### Permissões do banco
+- **Solução:** 700 na pasta e 600 no banco e no log, inclusive nos antigos. Não é criptografia.
+
+### Aviso falso de "o navegador bloqueou a nova aba" (achado na fase 4)
+- **Causa:** com `noopener`, `window.open` devolve vazio mesmo quando a aba abre (confirmado em
+  Chromium). O app tratava isso como bloqueio.
+- **Solução:** a tela não afirma mais isso; diz o que fazer se a aba não abrir. Corrigido junto
+  porque a mensagem fazia parte do fluxo novo do item 6.
+- **Evitar:** não usar o retorno de `window.open` com `noopener`.
 
 ## Já resolvidos ou com solução conhecida
 
@@ -124,7 +128,7 @@ Os quatro primeiros são da fase 3 (26/11): testados com IA simulada, falta conf
   prova, a detecção só age quando uma ferramenta já tiver aparecido. `gemini` não é usado no app.
 - **Evitar:** não usar CLI com ferramentas sem provar a trava no programa real.
 
-### Confirmação do Copiar Prompt ficava fora da vista (corrigido em 26/11, falta conferir no Mac)
+### Confirmação do Copiar Prompt ficava fora da vista (corrigido em 26/11, aprovado pelo dono no Mac)
 - **Sintoma:** o prompt era copiado, mas parecia que não havia confirmação.
 - **Causa:** a mensagem aparecia no fim do quadro, longe do botão.
 - **Solução:** o próprio botão mostra "Copiado ✓" por 2 segundos; se a cópia falhar, o aviso

@@ -15,9 +15,26 @@ Atualizado em 26/11/2026.
 
 ## Próximo passo
 
-1. Conferir no Mac o "Copiado ✓" do Copiar Prompt.
-2. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
-3. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
+1. Push quando o dono pedir (a fase 4, condição para o push, já foi conferida).
+2. Em outro chat: seguir o `docs/PLANO.md`.
+
+## Fase 4 (26/11/2026): concluída, conferida no Mac e commitada (não enviada)
+
+Detalhes e limites em `docs/ERROS.md`.
+
+**Em cópia em Linux:** 330 testes de backend (288 antigos mais 42 novos) e 17 de frontend (14
+antigos mais 3 novos), nenhum teste antigo alterado; tipos e build OK. Janela de aviso vista em
+Chromium com servidor, área de transferência e sites **simulados**. `npm audit` não foi rodado.
+
+**No Mac:**
+- Prints do dono: `make check` passou (330 e 17, tipos e build); o AppleScript compilou para
+  Safari e Chrome; "Linguagem JavaScript: Node" gerou o prompt; pasta com `drwx------`, banco e
+  log com `-rw-------`; o log mostrou um `envio_nao_confirmado`, sem texto do prompt.
+- Informado pelo dono, sem detalhar: janela de aviso, envio automático normal e parada ao trocar
+  de aba funcionaram. O log não diz o motivo de um envio não confirmado.
+- O dono não informou em qual navegador fez o envio e a troca de aba. No Chrome, só há prova de que
+  o script compila.
+- Envio automático com o ChatGPT segue **não validado**.
 
 ## O que o app tem hoje
 
@@ -33,7 +50,9 @@ Atualizado em 26/11/2026.
 "Copiado ✓" no Copiar Prompt (26/11/2026): em cópia em Linux, backend, 14 de frontend, checagem de
 tipos e build OK. Em Chromium, com servidor e área de transferência **simulados**: confirma no botão,
 volta após 2 segundos e, se a cópia falha, avisa sem dizer que copiou. Commitado a pedido do dono
-antes da conferência no Mac. **Não visto no Mac.** Sem teste automático da tela.
+antes da conferência no Mac. **Depois, no Mac:** à lista de conferência (`make check` e copiar com
+confirmação), o dono respondeu "tudo certo", sem detalhar. A falha de cópia só foi simulada. Sem
+teste automático da tela.
 
 Botão vira animação e bloqueio com IA offline (26/11/2026): em cópia em Linux, os
 testes do backend, 14 de frontend (12 que já existiam, nenhum alterado, mais 2 novos), checagem de
@@ -97,5 +116,7 @@ O aviso do npm sobre o script de instalação do `fsevents` não impediu nada; e
 
 ## Pendências soltas
 
+- A pasta `teste-trava-agy/` está fora do Git e não foi aberta. Não commitar sem revisar; decidir
+  se fica, sai do projeto ou entra no `.gitignore`.
 - Testes de tela (Playwright) citados em anotações antigas não estão no repositório.
 - Nenhum Pull Request havia sido aberto até a última anotação (23/11); conferir no GitHub.

@@ -16,6 +16,7 @@ Segurança:
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -51,23 +52,62 @@ MSG_SEM_SUPORTE = "O envio automático ainda não funciona neste sistema. Use co
 
 _em_execucao = threading.Lock()
 
-# Textos fixos: nada do usuário é concatenado aqui; os valores chegam por argv.
-_SCRIPT_TECLAS = """
+MSG_ABA_ERRADA = (
+    "Parei antes de colar: a aba da frente não era a página esperada do {nome}. Nada foi digitado. "
+    "O texto está copiado: é só colar e enviar."
+)
+MSG_ABA_MUDOU = (
+    "Parei antes do Enter: a aba da frente mudou depois de colar. Confira onde o texto foi colado "
+    "antes de enviar. O texto continua copiado."
+)
+_ERRO_ANTES_DE_COLAR = "PR_ABA_ERRADA"
+_ERRO_ANTES_DO_ENTER = "PR_ABA_MUDOU"
+VARIAVEL_DESTINO = "PR_DESTINO"
+
+# Como cada navegador informa o endereço da aba da frente.
+_ABA_DA_FRENTE = {
+    "Google Chrome": "URL of active tab of front window",
+    "Safari": "URL of current tab of front window",
+}
+
+# Textos fixos: nada do usuário é concatenado aqui. Os valores chegam por argv, e o endereço
+# esperado (do perfil validado, nunca do prompt) por variável de ambiente. A conferência fica
+# dentro do próprio script para ficar o mais perto possível de cada tecla.
+_MODELO_TECLAS = """
+on abaCerta(destino)
+    if destino is "" then return false
+    tell application "System Events" to set naFrente to name of first application process whose frontmost is true
+    if naFrente is not "__NAVEGADOR__" then return false
+    tell application "__NAVEGADOR__" to set endereco to __ABA__
+    if endereco is destino then return true
+    if endereco starts with (destino & "?") then return true
+    if endereco starts with (destino & "#") then return true
+    return false
+end abaCerta
+
 on run argv
     set navegador to item 1 of argv
     set colar to item 2 of argv
     set pausaMs to (item 3 of argv) as integer
+    set destino to system attribute "PR_DESTINO"
     tell application navegador to activate
     delay 0.6
-    tell application "System Events"
-        if colar is "sim" then
-            keystroke "v" using command down
-            delay (pausaMs / 1000)
-        end if
-        key code 36
-    end tell
+    if colar is "sim" then
+        if not abaCerta(destino) then error "PR_ABA_ERRADA"
+        tell application "System Events" to keystroke "v" using command down
+        delay (pausaMs / 1000)
+        if not abaCerta(destino) then error "PR_ABA_MUDOU"
+    else
+        if not abaCerta(destino) then error "PR_ABA_ERRADA"
+    end if
+    tell application "System Events" to key code 36
 end run
 """
+# Um texto fixo por navegador: o AppleScript precisa do nome literal para entender "URL of ...".
+_SCRIPTS_TECLAS = {
+    nome: _MODELO_TECLAS.replace("__NAVEGADOR__", nome).replace("__ABA__", aba)
+    for nome, aba in _ABA_DA_FRENTE.items()
+}
 _SCRIPT_TECLA_INOFENSIVA = 'tell application "System Events" to key code 56'  # só a tecla Shift
 _SCRIPTS_URL = {
     "Google Chrome": 'tell application "Google Chrome" to return URL of active tab of front window',
@@ -140,10 +180,13 @@ def perfis_para_ui() -> dict[str, Any]:
 # --------------------------------------------------------------------------- macOS
 
 
-def _osascript(script: str, *args: str, timeout: int = 25) -> subprocess.CompletedProcess:
+def _osascript(
+    script: str, *args: str, timeout: int = 25, destino: Optional[str] = None
+) -> subprocess.CompletedProcess:
+    extra = {"env": {**os.environ, VARIAVEL_DESTINO: destino}} if destino else {}
     return subprocess.run(
         ["osascript", "-e", script, *args],
-        capture_output=True, text=True, timeout=timeout, shell=False, check=False,
+        capture_output=True, text=True, timeout=timeout, shell=False, check=False, **extra,
     )
 
 
@@ -220,7 +263,9 @@ def _enviar_macos(texto: str, perfil: dict[str, Any], navegador: str) -> dict[st
     time.sleep(perfil["espera_carregar_ms"] / 1000)
     try:
         r = _osascript(
-            _SCRIPT_TECLAS, navegador, "nao" if via_url else "sim", str(perfil["espera_apos_colar_ms"])
+            _SCRIPTS_TECLAS[navegador],
+            navegador, "nao" if via_url else "sim", str(perfil["espera_apos_colar_ms"]),
+            destino=perfil["url_nova"],
         )
     except subprocess.TimeoutExpired:
         return {
@@ -229,6 +274,11 @@ def _enviar_macos(texto: str, perfil: dict[str, Any], navegador: str) -> dict[st
         }
     except (OSError, subprocess.SubprocessError):
         return {"status": STATUS_NAO_CONFIRMADO, "mensagem": MSG_PLANO_B}
+    if r.returncode != 0 and _ERRO_ANTES_DE_COLAR in (r.stderr or ""):
+        # com o texto no link nada é colado, mas o Enter também não sai
+        return {"status": STATUS_NAO_CONFIRMADO, "mensagem": MSG_ABA_ERRADA.format(nome=perfil["nome"])}
+    if r.returncode != 0 and _ERRO_ANTES_DO_ENTER in (r.stderr or ""):
+        return {"status": STATUS_NAO_CONFIRMADO, "mensagem": MSG_ABA_MUDOU}
     if _sem_permissao(r):
         return {"status": STATUS_SEM_PERMISSAO, "mensagem": MSG_SEM_PERMISSAO}
     if _sem_automacao(r):

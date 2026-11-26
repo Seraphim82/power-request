@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,6 +12,14 @@ from typing import Any
 
 class HistoryStoreError(Exception):
     """Erro de validação ou operação no histórico local."""
+
+
+def _restringir(caminho: Path, modo: int) -> None:
+    """Deixa o acesso só para o dono. Se o sistema não permitir, o app continua funcionando."""
+    try:
+        os.chmod(caminho, modo)
+    except OSError:
+        pass
 
 
 class HistoryStore:
@@ -22,12 +31,26 @@ class HistoryStore:
     def __init__(self, db_path: Path | str | None = None) -> None:
         if db_path is None:
             base_dir = Path.home() / ".power_request"
-            base_dir.mkdir(parents=True, exist_ok=True)
+            base_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+            _restringir(base_dir, 0o700)
             self.db_path = base_dir / "history.db"
         else:
             self.db_path = Path(db_path)
-            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            pasta = self.db_path.parent
+            pasta_nova = not pasta.exists()
+            pasta.mkdir(mode=0o700, parents=True, exist_ok=True)
+            if pasta_nova:  # pasta que já existia e foi escolhida por quem chamou não é alterada
+                _restringir(pasta, 0o700)
+        self._criar_arquivo_privado()
         self._init_db()
+
+    def _criar_arquivo_privado(self) -> None:
+        """O banco nasce com 600; um banco antigo, mais aberto, é ajustado."""
+        try:
+            os.close(os.open(self.db_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600))
+        except OSError:
+            pass  # já existe (ou não pôde ser criado: o SQLite dirá o motivo)
+        _restringir(self.db_path, 0o600)
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=10)

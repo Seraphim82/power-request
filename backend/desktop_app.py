@@ -10,6 +10,7 @@ import webbrowser
 
 import uvicorn
 
+import registro_local
 from main import app
 
 
@@ -37,6 +38,8 @@ def wait_for_server(url: str, timeout: float = 10.0) -> bool:
 
 def main() -> None:
     port = find_free_port(8765)
+    app.state.porta = port  # a proteção de origem aceita só a porta em uso
+    registro_local.ativar()
     url = f"http://127.0.0.1:{port}"
 
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")

@@ -55,13 +55,16 @@ Feito em 26/11 junto com o item acima. **Conferido pelo dono no Mac.**
   volta com a resposta ou o erro.
 - **Pronto quando:** durante a espera não há botão para clicar de novo no lugar usado.
 
-## [ ] Fase 4: segurança (itens 4 a 7 e 12, e permissões do banco)
+## [x] Fase 4: segurança (itens 4 a 7 e 12, e permissões do banco)
+Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - **Objetivo:** fechar as brechas conhecidas.
 - **Tarefas:** origem exata; conferir a aba antes das teclas; aviso de privacidade; corrigir o
   falso positivo do filtro; log local sem dados sensíveis; permissões 700 e 600; testes novos.
 - **Pronto quando:** outra porta é recusada e as teclas não vão para outro site.
-- **Confirmar antes:** proposta de manter o `?q=` como padrão, com aviso e a opção "só copiar e
-  abrir". *Ainda sem OK.*
+- **Decidido (26/11):** manter o `?q=` com janela de aviso toda vez, ciência obrigatória e a opção
+  "só copiar e abrir".
+- [x] Código e testes novos.
+- [x] Conferir no Mac.
 
 ## [ ] Fase 5: Organizar prompt (item 8 e a tela)
 - **Objetivo:** terminar a função.
@@ -94,6 +97,8 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - **Fora:** liberar ferramentas ou arquivos no botão Enviar.
 
 ## Ajustes anotados, ainda sem fase (encaixar quando o dono decidir)
+- No log, separar o motivo do envio automático não confirmado (aba errada, aba mudou ou falta de
+  confirmação): hoje os três saem como `envio_nao_confirmado`.
 - Avaliar `--settings` do `agy` (visto na ajuda do 1.5.18, não testado) como segunda trava.
 - Investigar se dá para tirar os pedidos do app da captura de ganchos globais de memória.
 - Testar a trava com navegador, mensagens, subagentes e gancho travado por tempo.

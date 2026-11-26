@@ -70,7 +70,7 @@ Modo desenvolvimento (recarrega sozinho): `make dev` mostra os dois comandos (AP
 - O servidor só atende `127.0.0.1`/`localhost` (proteção contra DNS rebinding).
 - Operações que alteram dados rejeitam qualquer origem que não seja o próprio app (proteção contra sites abertos no navegador).
 - CORS liberado apenas para o Vite em desenvolvimento, sem credenciais.
-- Campos de texto passam por limite de tamanho e filtro de injeção; consultas SQL são parametrizadas.
+- Campos de texto passam por limite de tamanho e um filtro de injeção **básico** (não é garantia de proteção); consultas SQL são parametrizadas.
 - CLIs locais só rodam da lista fixa de comandos, sem shell, com limite de entrada e de tempo.
 - Chaves de API são mascaradas em mensagens de erro.
 - **Enviar para a IA:** o CLI local roda numa pasta temporária vazia (apagada ao fim) e, no Claude, sem ferramentas (`--tools ""`), então não lê seus arquivos nem executa comandos. No máximo 2 envios simultâneos; a resposta é exibida como texto puro.
