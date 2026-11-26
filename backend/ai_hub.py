@@ -16,6 +16,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+import agy_seguro
+
 
 class AIHubError(Exception):
     """Erro genérico de comunicação ou configuração no Hub de IAs."""
@@ -100,7 +102,7 @@ PROVIDERS_CATALOG: dict[str, dict[str, Any]] = {
     },
     "antigravity_cli": {
         "nome": "Gemini / Antigravity (Local)",
-        "descricao": "Usa o Antigravity (agy) ou Gemini CLI já autenticado neste computador, sem chave API.",
+        "descricao": "Usa o Antigravity (agy) já autenticado neste computador, sem chave API. O Gemini CLI funciona só no Abrir no Terminal.",
         "precisa_chave": False,
         "modelo_padrao": "antigravity-cli-local",
         "modelos_sugeridos": ["antigravity-cli-local"],
@@ -330,13 +332,17 @@ class AIHubClient:
                 "Por segurança, conectores locais do terminal não aceitam caminhos ou URLs personalizadas."
             )
 
-        return {
+        limpo = {
             "provider": provider,
             "api_key": api_key,
             "model": model,
             "alias": alias[:60],
             "base_url": validated_url,
         }
+        # Aceite do aviso de ganchos globais: só vale o booleano True.
+        if provider == "antigravity_cli" and config.get("aceito_ganchos") is True:
+            limpo["aceito_ganchos"] = True
+        return limpo
 
     def _call_local_cli(
         self,
@@ -371,10 +377,10 @@ class AIHubClient:
                 f"Entrada excede o limite de segurança ({MAX_CLI_PROMPT_CHARS} caracteres) para execução local."
             )
 
-        env = os.environ.copy()
-        env["PATH"] = _build_search_path()
-        env["NO_COLOR"] = "1"
-        env["TERM"] = "dumb"
+        env = self._ambiente_cli()
+
+        if provider == "antigravity_cli":
+            return self._call_agy(cfg, binary_name, binary_path, combined_prompt, env, timeout)
 
         cmd = [binary_path, *(cli_args or spec["args"])]
         limite = timeout or self.LOCAL_CLI_TIMEOUT
@@ -412,6 +418,63 @@ class AIHubClient:
             raise AIHubError(f"{cfg['alias']} não retornou texto na resposta.")
 
         return RespostaIA(stdout[:MAX_CLI_OUTPUT_CHARS], len(stdout) > MAX_CLI_OUTPUT_CHARS)
+
+    @staticmethod
+    def _ambiente_cli() -> dict[str, str]:
+        env = os.environ.copy()
+        env["PATH"] = _build_search_path()
+        env["NO_COLOR"] = "1"
+        env["TERM"] = "dumb"
+        return env
+
+    @staticmethod
+    def _exigir_agy(binary_name: str) -> None:
+        if binary_name != "agy":
+            raise AIHubError(
+                "O Gemini CLI não é usado dentro do app, porque a trava de ferramentas não foi "
+                "testada nele. Instale o Antigravity (agy) ou use Abrir no Terminal."
+            )
+
+    def _call_agy(
+        self,
+        cfg: dict[str, Any],
+        binary_name: str,
+        binary_path: str,
+        texto: str,
+        env: dict[str, str],
+        timeout: int | None,
+    ) -> str:
+        """Antigravity: sem argumentos com o pedido, pasta própria e ferramentas travadas."""
+        self._exigir_agy(binary_name)
+        if agy_seguro.tem_ganchos_globais() and cfg.get("aceito_ganchos") is not True:
+            raise AIHubError(agy_seguro.AVISO_GANCHOS)
+        try:
+            resposta = agy_seguro.enviar(binary_path, texto, timeout or self.LOCAL_CLI_TIMEOUT, env)
+        except agy_seguro.AgyFalha as exc:
+            raise AIHubError(str(exc)) from None
+        return RespostaIA(resposta[:MAX_CLI_OUTPUT_CHARS], len(resposta) > MAX_CLI_OUTPUT_CHARS)
+
+    def _testar_agy(self, cfg: dict[str, Any]) -> dict[str, Any]:
+        """O teste de conexão do Antigravity é a própria prova da trava (só dados falsos)."""
+        binary_name, binary_path = self._resolve_local_binary("antigravity_cli")
+        if not binary_path:
+            raise AIHubError(
+                "Antigravity não foi encontrado neste computador (comando esperado: agy)."
+            )
+        self._exigir_agy(binary_name)
+        try:
+            agy_seguro.provar_trava(binary_path, self.LOCAL_CLI_TIMEOUT, self._ambiente_cli())
+        except agy_seguro.AgyFalha as exc:
+            raise AIHubError(str(exc)) from None
+        return {
+            "conectado": True,
+            "alias": cfg["alias"],
+            "provider": cfg["provider"],
+            "model": cfg["model"],
+            "resposta": "OK",
+            "mensagem": f"{cfg['alias']} respondeu e a trava de ferramentas foi conferida.",
+            "ganchos_globais": agy_seguro.tem_ganchos_globais(),
+        }
 
     def _build_request(
         self,
@@ -574,6 +637,8 @@ class AIHubClient:
     def testar_conexao(self, config: dict[str, Any]) -> dict[str, Any]:
         """Envia um ping mínimo para confirmar se a IA (nuvem ou local) está respondendo."""
         cfg = self.validate_config(config)
+        if cfg["provider"] == "antigravity_cli":
+            return self._testar_agy(cfg)
         resposta = self.call_llm(
             cfg,
             system_prompt="Responda apenas com a palavra OK.",

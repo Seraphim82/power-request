@@ -63,6 +63,8 @@ Modo desenvolvimento (recarrega sozinho): `make dev` mostra os dois comandos (AP
 | Servidor local | Ollama | só `localhost`/`127.0.0.1` |
 | Chave de API | OpenRouter, Gemini, Claude, OpenAI | a chave fica só no navegador (`localStorage`) |
 
+**Antigravity dentro do app:** só o `agy` (o `gemini` funciona apenas no Abrir no Terminal). O **Testar Conexão** confere se um gancho que recusa ferramentas está valendo; sem isso, a IA não é usada, e a conferência é refeita quando o app reinicia ou a versão do `agy` muda. A trava não desliga ganchos globais do próprio `agy`: se existirem, o que você enviar pode ser guardado por eles, e o app pede o seu aceite.
+
 ## Segurança
 
 - O servidor só atende `127.0.0.1`/`localhost` (proteção contra DNS rebinding).

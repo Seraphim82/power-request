@@ -22,18 +22,17 @@ Nenhum teste existente é alterado. Detalhes de cada item em `docs/ERROS.md`.
 - **Decidido (26/11):** faltando espaço, cortar primeiro as respostas mais antigas e avisar na tela.
 
 ## [ ] Correção do Antigravity (item 13), em chat próprio
-- **Ordem:** depois do commit da fase 3; sugestão: antes da fase 4. *A confirmar com o dono.*
-- **Tarefas:** primeiro provar no Mac, com arquivo de teste sem valor, que a trava bloqueia as
-  ferramentas; usar `stream-json` pela entrada padrão (prompt fora dos argumentos); pasta
-  temporária também no teste de conexão e na revisão; recusar a resposta se aparecer uso de
-  ferramenta (só detecta, não impede); manter o caminho do `gemini` separado; testes novos.
-- **Mensagem de erro:** trocar o texto técnico (visto no app: erro código 2) por um aviso em
-  português que diga o que fazer.
-- **Pronto quando:** conecta e envia, com o bloqueio comprovado. Se não der para bloquear, o Enviar
-  fica desativado para o Antigravity.
+- [x] Provar no Mac, com dados falsos, que a trava recusa ferramentas.
+- [x] `stream-json` pela entrada padrão; pasta temporária com a trava em todo uso dentro do app;
+  prova no Testar Conexão (refeita se a versão mudar ou o app reiniciar); descarte e bloqueio se
+  aparecer ferramenta sem a recusa (só detecta); `gemini` fora do app; aviso em português;
+  aceite quando há ganchos globais (escolha do dono: avisar e liberar); testes novos.
+- [x] Conferir no Mac: `make check` e conexão online no app.
+- [ ] Conferir no Mac: aviso de ganchos, Enviar e Sequenciar com o Antigravity.
+- **Pronto quando:** conecta e envia no Mac, com o bloqueio comprovado.
 
 ## [ ] Enviar apagado com IA offline (sugestão do dono, 26/11)
-Sugestão de encaixe: junto da correção do Antigravity.
+Encaixe (26/11): depois de validar a correção do Antigravity no Mac.
 - **Tarefas:** desativar Enviar e Sequenciar só quando o estado for `offline` (não em
   `desconhecido` nem `verificando`, a decidir no plano); explicar o motivo em português simples,
   com opção de testar de novo; manter Copiar Prompt; teste novo.
@@ -78,6 +77,9 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - **Fora:** liberar ferramentas ou arquivos no botão Enviar.
 
 ## Ajustes anotados, ainda sem fase (encaixar quando o dono decidir)
+- Avaliar `--settings` do `agy` (visto na ajuda do 1.5.18, não testado) como segunda trava.
+- Investigar se dá para tirar os pedidos do app da captura de ganchos globais de memória.
+- Testar a trava com navegador, mensagens, subagentes e gancho travado por tempo.
 - Limpar o aviso do envio anterior ao iniciar um novo Sequenciar.
 - Avisar quando o histórico parar de guardar (50 rodadas).
 - Orientar sobre projeto grande: resposta acima de 24.000 e perda de contexto no Sequenciar.

@@ -113,6 +113,9 @@ export default function App() {
   const [testandoConexao, setTestandoConexao] = useState<boolean>(false);
   const [estadoIa, setEstadoIa] = useState<EstadoIa>('desconhecido');
   const [detalheIa, setDetalheIa] = useState<string>('');
+  // Ganchos globais do Antigravity podem guardar o que for enviado. O aceite fica só na memória.
+  const [ganchosGlobais, setGanchosGlobais] = useState<boolean>(false);
+  const [aceitoGanchos, setAceitoGanchos] = useState<boolean>(false);
   const verificacaoAtual = useRef<number>(0);
 
   const [enviando, setEnviando] = useState<boolean>(false);
@@ -286,6 +289,7 @@ export default function App() {
       model: model.trim(),
       alias: alias.trim(),
       base_url: baseUrl.trim(),
+      aceito_ganchos: providerId === 'antigravity_cli' && aceitoGanchos,
     };
   };
 
@@ -318,6 +322,7 @@ export default function App() {
         setStatusConexao(`Conectado: ${data.mensagem}`);
         setEstadoIa('online');
         setDetalheIa(String(data.mensagem || ''));
+        if (data.provider === 'antigravity_cli') setGanchosGlobais(data.ganchos_globais === true);
       }
     } catch {
       if (id !== verificacaoAtual.current) return;
@@ -1315,6 +1320,27 @@ export default function App() {
                   onChange={(e) => setBaseUrl(e.target.value)}
                   placeholder="http://127.0.0.1:11434"
                 />
+              </div>
+            )}
+
+            {providerId === 'antigravity_cli' && ganchosGlobais && (
+              <div style={styles.modeBox}>
+                <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '13px', color: '#cbd5e1', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={aceitoGanchos}
+                    onChange={(e) => setAceitoGanchos(e.target.checked)}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <span>
+                    Estou ciente: o que eu mandar ao Antigravity <strong>pode ser guardado</strong>
+                    <span style={{ display: 'block', color: '#94a3b8', fontSize: '12px' }}>
+                      Há ganchos globais ligados a ele (por exemplo, um programa de memória). A trava de
+                      ferramentas não os desliga. Não envie dados de cliente. Marque para liberar o envio
+                      e a revisão com esta IA.
+                    </span>
+                  </span>
+                </label>
               </div>
             )}
 

@@ -21,21 +21,25 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Sintoma:** enquanto o novo pedido roda, o rodapé ainda descreve o envio anterior.
 - **Solução:** limpar o aviso ao iniciar o envio.
 
-### 13. Antigravity aparece offline (correção própria, com segurança junto)
+### 13. Antigravity aparece offline (conexão corrigida no Mac; falta conferir o envio)
 - **Sintoma:** o teste de conexão do Antigravity (Local) falha, mesmo com o `agy` funcionando.
-- **Causa (confirmada no Mac, agy 1.5.18):** o app chama `agy -p` e manda o texto pela entrada
-  padrão; o `agy` responde `flag needs an argument: -p`. Os testes simulam o programa.
-- **Testado no Mac:** `agy -p "texto"` funciona. `--input-format stream-json --output-format
-  stream-json` aceita o pedido pela entrada padrão, uma linha
-  `{"event":"user","message":{"content":"..."}}`; a resposta vem no evento `result`
-  (`status`, `response`).
-- **Risco:** o evento `init` lista ferramentas de comando, arquivos, navegador, MCP e mensagens.
-  No teste, `permission_mode` foi `request-review`. O app não restringe o `agy`, e o teste de
-  conexão não usa pasta temporária. Não corrigir a chamada sem a trava.
-- **A investigar (documentação, não testado):** `--settings` com regras `deny` para
-  `read_file(*)`, `write_file(*)`, `command(*)`, `unsandboxed(*)`, `read_url(*)`,
-  `execute_url(*)` e `mcp(*)`. Não está confirmado que isso cubra todas as ferramentas, nem como
-  se combina com as regras já salvas. `gemini` (alternativa do app) não foi testado.
+- **Causa (confirmada no Mac, agy 1.5.18):** o app chamava `agy -p` e mandava o texto pela entrada
+  padrão; o `agy` responde `flag needs an argument: -p`.
+- **Risco que motivou a trava:** no Mac testado, sem o gancho, o `agy` criou arquivo e executou
+  comando sem pedir aprovação, mesmo informando `request-review`.
+- **Solução:** `backend/agy_seguro.py`: `stream-json` pela entrada padrão, gancho `PreToolUse` que
+  recusa tudo, prova no Testar Conexão e bloqueio se aparecer ferramenta sem a recusa.
+- **Limites:** o bloqueio por detecção não desfaz a ação e some ao reiniciar o app (a prova é
+  exigida de novo). Se o `agy` deixar de carregar o gancho sem mudar de versão, e depois da
+  prova, a detecção só age quando uma ferramenta já tiver aparecido. `gemini` não é usado no app.
+- **Evitar:** não usar CLI com ferramentas sem provar a trava no programa real.
+
+### Ganchos globais do Antigravity ficam fora da trava (limitação conhecida)
+- **Sintoma possível:** um programa de memória ligado ao `agy` pode guardar o que o app envia.
+- **Causa:** ganchos globais rodam independentemente do gancho da pasta temporária.
+- **O que o app faz:** detecta ganchos globais e de plugins, avisa e exige aceite para enviar,
+  revisar e otimizar. **O aviso não impede a gravação.** Não enviar dados de cliente.
+- **Não confirmado:** se algum pedido chegou a ser gravado.
 
 ### 4. Conferência de origem do servidor incompleta (fase 4)
 - **Sintoma:** a proteção aceita mais origens locais do que deveria.

@@ -126,6 +126,7 @@ class AIConfigModel(BaseModel):
     model: str = ""
     alias: str = ""
     base_url: str = ""
+    aceito_ganchos: bool = False
 
 
 class OAuthExchangeRequest(BaseModel):
