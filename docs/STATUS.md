@@ -15,10 +15,9 @@ Atualizado em 26/11/2026.
 
 ## Próximo passo
 
-1. Animação de espera (sugestão do dono; ordem a confirmar).
-2. Botão Enviar apagado com a IA offline (ver `docs/PLANO.md`).
-3. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
-4. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
+1. Botão Enviar apagado com a IA offline (ver `docs/PLANO.md`).
+2. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
+3. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
 
 ## O que o app tem hoje
 
@@ -30,6 +29,13 @@ Atualizado em 26/11/2026.
 - Organizar prompt: só no backend, ainda sem tela e com defeito conhecido.
 
 ## Testes
+
+Animação de espera (26/11/2026): em cópia em Linux, os testes do backend, 12 de
+frontend (10 antigos, nenhum alterado, mais 2 novos), checagem de tipos e build OK. O componente,
+isolado, foi visto em um navegador de teste (Chromium): o ponto se move e fica parado com redução
+de movimento. **No Mac (Safari):** os prints do dono mostram a animação dentro do app, abaixo do
+Enviar e do Sequenciar, e ele aprovou ao responder à lista de conferência (movimento, sumiço no fim
+e `make check`), sem detalhar item por item. A redução de movimento não foi testada no Mac.
 
 Antigravity (26/11/2026):
 

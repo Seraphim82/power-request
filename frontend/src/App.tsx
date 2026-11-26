@@ -24,6 +24,7 @@ import {
   type ResultadoPrompt,
 } from './constants';
 import { montarLinkIa } from './abrirNaIa';
+import { AguardandoIa } from './AguardandoIa';
 import {
   LIMITE_ENVIO_PADRAO,
   MARCA_RESPOSTA_CORTADA,
@@ -120,6 +121,8 @@ export default function App() {
 
   const [enviando, setEnviando] = useState<boolean>(false);
   const [segundosEnvio, setSegundosEnvio] = useState<number>(0);
+  // Qual botão iniciou a espera, para a animação aparecer perto dele.
+  const [origemEnvio, setOrigemEnvio] = useState<'enviar' | 'sequenciar'>('enviar');
   const [respostaIa, setRespostaIa] = useState<{ texto: string; origem: string } | null>(null);
   const [erroEnvio, setErroEnvio] = useState<string>('');
   const [respostaCopiada, setRespostaCopiada] = useState<string>('');
@@ -445,6 +448,7 @@ export default function App() {
     }
     const id = ++envioAtual.current;
     setEnviando(true);
+    setOrigemEnvio('sequenciar');
     setSegundosEnvio(0);
     setErroEnvio('');
     setRespostaCopiada('');
@@ -500,6 +504,7 @@ export default function App() {
     }
     const id = ++envioAtual.current;
     setEnviando(true);
+    setOrigemEnvio('enviar');
     setSegundosEnvio(0);
     setErroEnvio('');
     setRespostaIa(null);
@@ -1676,8 +1681,8 @@ export default function App() {
                     onClick={enviarParaIa}
                     disabled={enviando || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio}
                   >
-                    {enviando
-                      ? `Enviando... ${segundosEnvio}s`
+                    {enviando && origemEnvio === 'enviar'
+                      ? 'Enviando...'
                       : `Enviar para ${providerSelecionado?.nome ?? 'a IA ativa'}`}
                   </button>
                   <span style={{ fontSize: '12px', color: '#94a3b8' }}>
@@ -1686,6 +1691,7 @@ export default function App() {
                       : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
                   </span>
                 </div>
+                {enviando && origemEnvio === 'enviar' && <AguardandoIa segundos={segundosEnvio} />}
 
                 {tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? (
                   <div
@@ -1994,10 +2000,11 @@ export default function App() {
                         disabled={enviando || !proximoPedido.trim()}
                         onClick={sequenciar}
                       >
-                        {enviando ? `Enviando... ${segundosEnvio}s` : 'Sequenciar'}
+                        {enviando && origemEnvio === 'sequenciar' ? 'Enviando...' : 'Sequenciar'}
                       </button>
                       {infoSequencia && <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>{infoSequencia}</span>}
                     </div>
+                    {enviando && origemEnvio === 'sequenciar' && <AguardandoIa segundos={segundosEnvio} />}
                     {rodadas.length > 1 && (
                       <details style={{ marginTop: '10px' }}>
                         <summary style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '12.5px' }}>

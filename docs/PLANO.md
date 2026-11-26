@@ -38,8 +38,8 @@ Encaixe (26/11): depois de validar a correção do Antigravity no Mac.
   com opção de testar de novo; manter Copiar Prompt; teste novo.
 - **Pronto quando:** com a IA offline não dá para enviar, e a pessoa sabe o que fazer.
 
-## [ ] Animação de espera no Enviar e no Sequenciar (sugestão do dono, 26/11)
-Ordem a confirmar com o dono.
+## [x] Animação de espera no Enviar e no Sequenciar (sugestão do dono, 26/11)
+Feita em 26/11 no mesmo chat do Antigravity, por escolha do dono. **Aprovada pelo dono no Mac.**
 - **Motivo:** durante a espera pela resposta, a tela parece parada.
 - **Tarefas:** desenho de um prompt, uma linha com um ponto de luz indo até um computador (como um
   ping), perto do botão usado; texto de espera com o tempo decorrido; sumir quando chegar a
