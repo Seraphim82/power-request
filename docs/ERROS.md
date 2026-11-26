@@ -5,26 +5,37 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 
 ## Em aberto
 
-### 2. Sequenciar falha com resposta longa (fase 3)
-- **Sintoma:** erro ao sequenciar depois de uma resposta grande.
-- **Causa:** `montar_continuacao` aceita até 12.000 caracteres por resposta anterior (até 3), mas
-  o envio recusa acima de 11.000 no total (`MAX_SEND_PROMPT_CHARS`). O CLI local ainda limita a
-  12.000 já com as instruções.
-- **Solução:** orçamento único de tamanho que respeite os dois limites. Teste novo pela API.
-- **Evitar:** testar os limites das duas pontas juntos, não cada função sozinha.
+### Resposta acima de 24.000 caracteres: o excedente se perde (sem fase definida)
+- **Visto no Mac (26/11):** com Claude (Local), o aviso de resposta cortada apareceu.
+- **Causa (código):** o app descarta o que passa de 24.000; isso também não vai para o histórico.
+- **A avaliar:** orientar a usar Abrir no Terminal quando o projeto for grande.
 
-### 3. Prompt gerado pode não ser enviável (fase 3)
-- **Sintoma:** o app gera o prompt e depois o Enviar recusa pelo tamanho.
-- **Causa:** não há limite de quantidade de regras.
-- **Solução:** mostrar o tamanho na tela e avisar antes de enviar.
-- **Evitar:** todo limite de envio deve aparecer antes do clique em Enviar.
+### Sequenciar perde contexto em projeto grande (limitação conhecida)
+- **Visto no Mac (26/11):** na 3ª rodada, uma rodada ficou de fora e a outra foi sem o meio.
+- **Efeito:** a IA pode reescrever ou mudar o que não recebeu. O app não junta os arquivos das
+  respostas.
+- **A avaliar:** explicar isso na tela e no README. Ver a ideia da conversa na pasta do projeto,
+  no `docs/PLANO.md`.
 
-### 9. Resposta pode chegar cortada sem aviso (fase 3)
-- **Sintoma:** resposta incompleta, sem mensagem.
-- **Causa:** envio limitado a 4.096 tokens sem conferir o motivo da parada; no CLI, corte em
-  24.000 caracteres.
-- **Solução:** detectar o corte e avisar na tela.
-- **Evitar:** todo corte precisa ser informado.
+### Aviso do envio anterior fica na tela durante o Sequenciar (adiado pelo dono)
+- **Sintoma:** enquanto o novo pedido roda, o rodapé ainda descreve o envio anterior.
+- **Solução:** limpar o aviso ao iniciar o envio.
+
+### 13. Antigravity aparece offline (correção própria, com segurança junto)
+- **Sintoma:** o teste de conexão do Antigravity (Local) falha, mesmo com o `agy` funcionando.
+- **Causa (confirmada no Mac, agy 1.5.18):** o app chama `agy -p` e manda o texto pela entrada
+  padrão; o `agy` responde `flag needs an argument: -p`. Os testes simulam o programa.
+- **Testado no Mac:** `agy -p "texto"` funciona. `--input-format stream-json --output-format
+  stream-json` aceita o pedido pela entrada padrão, uma linha
+  `{"event":"user","message":{"content":"..."}}`; a resposta vem no evento `result`
+  (`status`, `response`).
+- **Risco:** o evento `init` lista ferramentas de comando, arquivos, navegador, MCP e mensagens.
+  No teste, `permission_mode` foi `request-review`. O app não restringe o `agy`, e o teste de
+  conexão não usa pasta temporária. Não corrigir a chamada sem a trava.
+- **A investigar (documentação, não testado):** `--settings` com regras `deny` para
+  `read_file(*)`, `write_file(*)`, `command(*)`, `unsandboxed(*)`, `read_url(*)`,
+  `execute_url(*)` e `mcp(*)`. Não está confirmado que isso cubra todas as ferramentas, nem como
+  se combina com as regras já salvas. `gemini` (alternativa do app) não foi testado.
 
 ### 4. Conferência de origem do servidor incompleta (fase 4)
 - **Sintoma:** a proteção aceita mais origens locais do que deveria.
@@ -82,7 +93,32 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Solução:** atualizar os dois, incluindo a permissão que o envio automático pede.
 - **Evitar:** atualizar a documentação na mesma fase da mudança.
 
+### Histórico para de guardar após 50 rodadas, sem aviso (sem fase definida)
+- **Sintoma (visto no código):** a partir da 51ª, a resposta aparece na tela, mas não é salva.
+- **Causa:** `salvar_rodada` devolve vazio no limite e a rota não avisa.
+- **Solução:** avisar na tela.
+
 ## Já resolvidos ou com solução conhecida
+
+Os quatro primeiros são da fase 3 (26/11): testados com IA simulada, falta conferir no Mac.
+
+### 2. Sequenciar falhava com resposta longa
+- **Solução:** orçamento único em `montar_continuacao`, com o limite do envio. Corta as respostas
+  antigas primeiro; se a mais recente não couber, mantém o começo e o fim.
+- **Evitar:** testar os limites das duas pontas juntos.
+
+### Sequenciar falhava depois de 30 rodadas
+- **Causa:** a tela reenviava todas as rodadas e o servidor aceita no máximo 30.
+- **Solução:** a tela reenvia só as 3 últimas e informa quantas são anteriores.
+
+### 3. Prompt gerado podia não ser enviável
+- **Solução:** a tela mostra o tamanho e desativa o Enviar acima do limite (`limite_envio`).
+- **Evitar:** todo limite aparece antes do clique.
+
+### 9. Resposta podia chegar cortada sem aviso
+- **Solução:** conferir o motivo da parada na API e o corte de 24.000 do CLI; aviso na tela e marca
+  no histórico.
+- **Limite:** se o próprio programa de IA local encurtar a resposta, o app pode não saber.
 
 ### Mensagens de erro podiam expor detalhes internos
 - **Solução:** filtro central `mensagem_publica` (commit `c619eb4`).

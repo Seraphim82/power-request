@@ -8,19 +8,36 @@ Nenhum teste existente é alterado. Detalhes de cada item em `docs/ERROS.md`.
 - **Tarefas:** ajustar o `.gitignore`, commitar e enviar.
 - **Pronto quando:** commit feito e branch no GitHub.
 
-## [ ] Fase 2: memória do projeto
+## [x] Fase 2: memória do projeto
 - **Objetivo:** um chat novo recuperar o contexto.
 - **Tarefas:** criar `CLAUDE.md`, `docs/STATUS.md`, `docs/ERROS.md` e `docs/PLANO.md`.
 - **Pronto quando:** um chat novo souber onde parou só lendo os arquivos, e eles estiverem
   commitados.
 
-## [ ] Fase 3: envio (itens 2, 3 e 9)
+## [x] Fase 3: envio (itens 2, 3 e 9)
 - **Objetivo:** envio previsível.
 - **Tarefas:** orçamento único no Sequenciar; mostrar o tamanho e avisar antes de enviar; detectar
   e avisar resposta cortada; testes novos.
 - **Pronto quando:** resposta longa não quebra o Sequenciar e todo corte é avisado.
-- **Confirmar antes:** proposta de, faltando espaço, cortar primeiro as respostas mais antigas e
-  avisar na tela. *Ainda sem OK.*
+- **Decidido (26/11):** faltando espaço, cortar primeiro as respostas mais antigas e avisar na tela.
+
+## [ ] Correção do Antigravity (item 13), em chat próprio
+- **Ordem:** depois do commit da fase 3; sugestão: antes da fase 4. *A confirmar com o dono.*
+- **Tarefas:** primeiro provar no Mac, com arquivo de teste sem valor, que a trava bloqueia as
+  ferramentas; usar `stream-json` pela entrada padrão (prompt fora dos argumentos); pasta
+  temporária também no teste de conexão e na revisão; recusar a resposta se aparecer uso de
+  ferramenta (só detecta, não impede); manter o caminho do `gemini` separado; testes novos.
+- **Mensagem de erro:** trocar o texto técnico (visto no app: erro código 2) por um aviso em
+  português que diga o que fazer.
+- **Pronto quando:** conecta e envia, com o bloqueio comprovado. Se não der para bloquear, o Enviar
+  fica desativado para o Antigravity.
+
+## [ ] Enviar apagado com IA offline (sugestão do dono, 26/11)
+Sugestão de encaixe: junto da correção do Antigravity.
+- **Tarefas:** desativar Enviar e Sequenciar só quando o estado for `offline` (não em
+  `desconhecido` nem `verificando`, a decidir no plano); explicar o motivo em português simples,
+  com opção de testar de novo; manter Copiar Prompt; teste novo.
+- **Pronto quando:** com a IA offline não dá para enviar, e a pessoa sabe o que fazer.
 
 ## [ ] Fase 4: segurança (itens 4 a 7 e 12, e permissões do banco)
 - **Objetivo:** fechar as brechas conhecidas.
@@ -50,6 +67,20 @@ Nenhum teste existente é alterado. Detalhes de cada item em `docs/ERROS.md`.
 - **Objetivo:** olhar de novo, em chat novo.
 - **Tarefas:** revisar o código e as proteções.
 - **Pronto quando:** relatório sem pendência crítica ou alta.
+
+## Depois da fase 4: conversa completa na pasta do projeto do cliente
+Ideia do dono (26/11), a fazer em chat próprio.
+- **Objetivo:** no Abrir no Terminal, a IA poder consultar respostas cortadas do Sequenciar.
+- **Como:** o app salva a conversa em um arquivo na pasta escolhida e o pedido aponta para ele.
+- **Cuidados:** só a pedido da pessoa; permissão 600; não sobrescrever arquivo alheio; não seguir
+  atalho (link simbólico); impedir que vá para o Git; tratar o conteúdo como dado, não instrução;
+  recusar a pasta do próprio repositório. Teste novo.
+- **Fora:** liberar ferramentas ou arquivos no botão Enviar.
+
+## Ajustes anotados, ainda sem fase (encaixar quando o dono decidir)
+- Limpar o aviso do envio anterior ao iniciar um novo Sequenciar.
+- Avisar quando o histórico parar de guardar (50 rodadas).
+- Orientar sobre projeto grande: resposta acima de 24.000 e perda de contexto no Sequenciar.
 
 ## Depois da fase 8
 - `docs/MANUTENCAO.md`, `docs/COMO-PEDIR-MUDANCAS.md`, documento curto de funcionamento (FSD)

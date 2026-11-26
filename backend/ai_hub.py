@@ -179,6 +179,33 @@ TERMINAL_PASTAS_PROIBIDAS = {"library", "applications", "system", "private", "vo
 SEND_SYSTEM_PROMPT = "Siga com precisão o pedido do usuário e entregue o resultado completo."
 
 
+class RespostaIA(str):
+    """Texto da resposta da IA, com a informação de se ele chegou cortado."""
+
+    cortada: bool = False
+
+    def __new__(cls, texto: str, cortada: bool = False) -> "RespostaIA":
+        obj = super().__new__(cls, texto)
+        obj.cortada = cortada
+        return obj
+
+
+def parou_no_limite(provider: str, data: dict[str, Any]) -> bool:
+    """True quando o provedor informa que parou por atingir o limite de tamanho."""
+    try:
+        if provider in {"openrouter", "openai"}:
+            return data["choices"][0].get("finish_reason") == "length"
+        if provider == "claude":
+            return data.get("stop_reason") == "max_tokens"
+        if provider == "gemini":
+            return data["candidates"][0].get("finishReason") == "MAX_TOKENS"
+        if provider == "ollama":
+            return data.get("done_reason") == "length"
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return False
+    return False
+
+
 def _build_search_path() -> str:
     """Inclui caminhos comuns do macOS (Homebrew, npm global, ~/.local/bin) no PATH de busca."""
     home = os.path.expanduser("~")
@@ -384,7 +411,7 @@ class AIHubClient:
         if not stdout:
             raise AIHubError(f"{cfg['alias']} não retornou texto na resposta.")
 
-        return stdout[:MAX_CLI_OUTPUT_CHARS]
+        return RespostaIA(stdout[:MAX_CLI_OUTPUT_CHARS], len(stdout) > MAX_CLI_OUTPUT_CHARS)
 
     def _build_request(
         self,
@@ -517,7 +544,10 @@ class AIHubClient:
             with urllib.request.urlopen(req, timeout=timeout or self.DEFAULT_TIMEOUT) as resp:
                 raw = resp.read().decode("utf-8", errors="replace")
                 data = json.loads(raw)
-                return self._extract_text(cfg["provider"], data)
+                return RespostaIA(
+                    self._extract_text(cfg["provider"], data),
+                    parou_no_limite(cfg["provider"], data),
+                )
         except urllib.error.HTTPError as exc:
             try:
                 detalhe = exc.read().decode("utf-8", errors="replace")[:250]
@@ -583,7 +613,8 @@ class AIHubClient:
                 cli_args=spec.get("send_args"),
             )
         return {
-            "resposta": resposta,
+            "resposta": str(resposta),
+            "cortada": bool(getattr(resposta, "cortada", False)),
             "alias": cfg["alias"],
             "provider": cfg["provider"],
             "model": cfg["model"],

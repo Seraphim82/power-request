@@ -18,6 +18,7 @@ from ai_hub import (
     AIHubClient,
     AIHubError,
     AIHubSecurityError,
+    MAX_SEND_PROMPT_CHARS,
     exchange_openrouter_oauth_code,
     providers_for_ui,
 )
@@ -26,6 +27,14 @@ from history_store import HistoryStore, HistoryStoreError
 from prompt_engine import PowerRequestEngine, SecurityError, ValidationError
 
 T = TypeVar("T")
+
+# Vai junto da resposta guardada no histórico, para o aviso não sumir ao reabrir.
+# A tela usa o mesmo texto (frontend/src/tamanhoEnvio.ts).
+MARCA_RESPOSTA_CORTADA = "\n\n[... resposta cortada pelo limite de tamanho ...]"
+
+
+def _resposta_para_historico(resultado: dict) -> str:
+    return resultado["resposta"] + (MARCA_RESPOSTA_CORTADA if resultado.get("cortada") else "")
 
 APP_VERSION = "2.0.0"
 CONTEXTO_CHAVE = "contexto_fixo"
@@ -149,6 +158,8 @@ class SequenciarRequest(BaseModel):
     prompt_base: str = Field(max_length=200_000)
     rodadas: list[RodadaModel] = Field(default_factory=list, max_length=30)
     novo_pedido: str = Field(min_length=1, max_length=2000)
+    # Rodadas mais antigas que a tela não reenvia (só para numerar e contar certo).
+    rodadas_anteriores: int = Field(default=0, ge=0, le=1000)
     ai_config: AIConfigModel
     pedido_id: Optional[int] = Field(default=None, ge=1)
 
@@ -231,6 +242,7 @@ def health_check():
         "status": "ok",
         "version": APP_VERSION,
         "frontend_ready": (FRONTEND_DIST / "index.html").is_file(),
+        "limite_envio": MAX_SEND_PROMPT_CHARS,
     }
 
 
@@ -359,7 +371,7 @@ def enviar_prompt(req: EnviarPromptRequest):
         # Novo envio do prompt original recomeça a sequência guardada deste pedido.
         history_store.reiniciar_rodadas(req.pedido_id)
         history_store.salvar_rodada(
-            req.pedido_id, "", resultado["resposta"], f"{resultado['alias']} ({resultado['model']})"
+            req.pedido_id, "", _resposta_para_historico(resultado), f"{resultado['alias']} ({resultado['model']})"
         )
     return resultado
 
@@ -369,7 +381,10 @@ def sequenciar(req: SequenciarRequest):
     """Próxima rodada: reenvia pedido original + últimas respostas + novo pedido."""
     montado = _run_domain_action(
         lambda: engine.montar_continuacao(
-            req.prompt_base, [r.model_dump() for r in req.rodadas], req.novo_pedido
+            req.prompt_base,
+            [r.model_dump() for r in req.rodadas],
+            req.novo_pedido,
+            req.rodadas_anteriores,
         )
     )
     if not envios_em_andamento.acquire(blocking=False):
@@ -386,7 +401,7 @@ def sequenciar(req: SequenciarRequest):
         history_store.salvar_rodada(
             req.pedido_id,
             req.novo_pedido.strip(),
-            resultado["resposta"],
+            _resposta_para_historico(resultado),
             f"{resultado['alias']} ({resultado['model']})",
         )
     return {
@@ -394,6 +409,7 @@ def sequenciar(req: SequenciarRequest):
         "tokens_estimados": montado["tokens_estimados"],
         "rodadas_enviadas": montado["rodadas_enviadas"],
         "rodadas_omitidas": montado["rodadas_omitidas"],
+        "rodadas_cortadas": montado["rodadas_cortadas"],
     }
 
 

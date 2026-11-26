@@ -4,30 +4,46 @@ Atualizado em 26/11/2026.
 
 ## Onde parou
 
-- **Fase 1 (salvar):** concluída. Branch `feat/organizar-prompt` enviada ao GitHub
-  (commits `265133b` e `cc7b0a4`).
-- **Fase 2 (memória do projeto):** documentos criados (`CLAUDE.md` e `docs/`).
-  Conferir no `git log` e no `git status` se já foram commitados e enviados.
+- **Fases 1 e 2:** concluídas. A fase 2 está no commit local `a90d94c`, **não enviado**.
+- **Fase 3 (envio):** concluída na branch `feat/organizar-prompt`. Conferir o commit no `git log`.
+  Sequenciar com orçamento único de tamanho, contador de caracteres e aviso de resposta cortada.
+  Escolha confirmada pelo dono em 26/11: faltando espaço, cortar primeiro as respostas mais antigas.
+- **Antigravity offline (item 13 do ERROS):** causa confirmada no Mac em 26/11. Código ainda
+  não alterado.
 - **`main`:** ainda sem merge (parada no commit `b21ce46`).
 
 ## Próximo passo
 
-**Fase 3 (envio)**, em um chat novo. Antes de codar, confirmar a escolha pendente do Sequenciar
-(ver `docs/PLANO.md`).
+1. Commit da fase 3, quando o dono pedir.
+2. Em chat novo: correção do Antigravity (sugestão, antes da fase 4; a confirmar).
+3. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
+4. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
 
 ## O que o app tem hoje
 
 - Gerar prompt, revisão (avisa Stack, Input e Output vagos), histórico e Contexto fixo.
 - Hub de IAs, Enviar e Abrir no Terminal (macOS).
-- Sequenciar (continuar a conversa com as respostas guardadas). Falha com resposta longa.
+- Sequenciar (continuar a conversa com as respostas guardadas), dentro do limite de envio.
 - Abrir a IA no navegador por link com o prompt, quando o site e o tamanho permitem.
 - Envio automático (opcional, macOS): perfis do Claude e do ChatGPT.
 - Organizar prompt: só no backend, ainda sem tela e com defeito conhecido.
 
 ## Testes
 
-Última conferência no Mac (26/11/2026, depois do `npm ci`): 239 testes de backend e 7 de frontend,
-checagem de tipos e build OK, `npm audit` sem vulnerabilidades. Vite 8.3.8.
+Fase 3 (26/11/2026), em **cópia do projeto em Linux**, com IA simulada: 265 testes de backend
+(239 antigos, nenhum alterado, mais 26 novos) e 10 de frontend (7 antigos mais 3 novos),
+checagem de tipos e build OK. A tela nova **não foi vista no navegador**.
+
+Uso real no Mac, com Claude (Local), em 26/11 (prints do dono): contador de tamanho; Sequenciar
+até 3 rodadas sem erro de tamanho; aviso de resposta enviada sem o meio; aviso de rodada antiga de
+fora; aviso de resposta que chegou cortada. **Não conferidos no Mac:** Enviar bloqueado acima do
+limite, aviso ao reabrir pelo histórico e provedores por API. O código gerado pela IA no teste não
+foi executado. **`make check` no Mac: passou** (informado pelo dono em 26/11).
+
+Ajuste de tela deixado para depois pelo dono (ver `docs/ERROS.md`).
+
+Última conferência no Mac (26/11/2026, antes da fase 3): 239 de backend e 7 de frontend, checagem
+de tipos e build OK, `npm audit` sem vulnerabilidades. Vite 8.3.8.
 O aviso do npm sobre o script de instalação do `fsevents` não impediu nada; ele não foi aprovado.
 
 ## Validado e não validado

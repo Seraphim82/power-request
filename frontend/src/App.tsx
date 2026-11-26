@@ -24,6 +24,13 @@ import {
   type ResultadoPrompt,
 } from './constants';
 import { montarLinkIa } from './abrirNaIa';
+import {
+  LIMITE_ENVIO_PADRAO,
+  MARCA_RESPOSTA_CORTADA,
+  recortarRodadas,
+  respostaFoiCortada,
+  tamanhoDoPrompt,
+} from './tamanhoEnvio';
 import { styles } from './styles';
 
 const API_BASE = window.location.port === '5173' ? 'http://127.0.0.1:8000' : '';
@@ -118,6 +125,7 @@ export default function App() {
   const [proximoPedido, setProximoPedido] = useState<string>('');
   const [infoSequencia, setInfoSequencia] = useState<string>('');
   const envioAtual = useRef<number>(0);
+  const [limiteEnvio, setLimiteEnvio] = useState<number>(LIMITE_ENVIO_PADRAO);
 
   const [pastaTerminal, setPastaTerminal] = useState<string>(() => {
     try {
@@ -190,6 +198,15 @@ export default function App() {
       setCarregandoHistorico(false);
     }
   };
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/health`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (Number(d?.limite_envio) > 0) setLimiteEnvio(Number(d.limite_envio));
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     carregarHistorico();
@@ -426,13 +443,15 @@ export default function App() {
     setSegundosEnvio(0);
     setErroEnvio('');
     setRespostaCopiada('');
+    const { enviadas, anteriores } = recortarRodadas(rodadas);
     try {
       const res = await fetch(`${API_BASE}/api/sequenciar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt_base: resultado.prompt_final,
-          rodadas: rodadas.map((r) => ({ pedido: r.pedido, resposta: r.resposta })),
+          rodadas: enviadas.map((r) => ({ pedido: r.pedido, resposta: r.resposta })),
+          rodadas_anteriores: anteriores,
           novo_pedido: novo,
           ai_config: cfg,
           ...(resultado.historico_id ? { pedido_id: resultado.historico_id } : {}),
@@ -444,14 +463,18 @@ export default function App() {
         setErroEnvio(String(data.detail || 'Não foi possível sequenciar.'));
       } else {
         const origem = `${data.alias} (${data.model})`;
-        const texto = String(data.resposta || '');
+        const texto = String(data.resposta || '') + (data.cortada ? MARCA_RESPOSTA_CORTADA : '');
         setRespostaIa({ texto, origem });
         setRodadas((prev) => [...prev, { pedido: novo, resposta: texto, origem }]);
         setProximoPedido('');
         const omitidas = Number(data.rodadas_omitidas || 0);
+        const cortadas: number[] = Array.isArray(data.rodadas_cortadas) ? data.rodadas_cortadas : [];
         setInfoSequencia(
           `Enviei o pedido original + ${data.rodadas_enviadas} resposta(s) anterior(es) + seu novo pedido (~${data.tokens_estimados} tokens).` +
-            (omitidas ? ` ${omitidas} rodada(s) mais antiga(s) ficaram de fora para economizar.` : ''),
+            (omitidas ? ` ${omitidas} rodada(s) mais antiga(s) ficaram de fora.` : '') +
+            (cortadas.length
+              ? ` Atenção: a resposta da(s) rodada(s) ${cortadas.join(', ')} foi enviada sem o meio, por falta de espaço.`
+              : ''),
         );
       }
     } catch {
@@ -492,7 +515,7 @@ export default function App() {
         setErroEnvio(String(data.detail || 'Não foi possível enviar o prompt.'));
       } else {
         const origem = `${data.alias} (${data.model})`;
-        const texto = String(data.resposta || '');
+        const texto = String(data.resposta || '') + (data.cortada ? MARCA_RESPOSTA_CORTADA : '');
         setRespostaIa({ texto, origem });
         setRodadas([{ pedido: '', resposta: texto, origem }]);
         setProximoPedido('');
@@ -1620,9 +1643,12 @@ export default function App() {
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    style={{ ...styles.btnPrimary, opacity: enviando ? 0.7 : 1 }}
+                    style={{
+                      ...styles.btnPrimary,
+                      opacity: enviando || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? 0.5 : 1,
+                    }}
                     onClick={enviarParaIa}
-                    disabled={enviando}
+                    disabled={enviando || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio}
                   >
                     {enviando
                       ? `Enviando... ${segundosEnvio}s`
@@ -1634,6 +1660,24 @@ export default function App() {
                       : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
                   </span>
                 </div>
+
+                {tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? (
+                  <div
+                    role="status"
+                    data-testid="tamanho-prompt"
+                    style={{ marginTop: '8px', fontSize: '13px', color: '#fde68a', lineHeight: 1.5 }}
+                  >
+                    Prompt com {tamanhoDoPrompt(resultado.prompt_final).toLocaleString('pt-BR')} caracteres: passa do
+                    limite de {limiteEnvio.toLocaleString('pt-BR')} do botão Enviar. Reduza o pedido (menos regras ou
+                    textos menores) ou use <strong>Copiar Prompt</strong>
+                    {modoAuth === 'local_cli' ? ' ou Abrir no Terminal' : ''}.
+                  </div>
+                ) : (
+                  <div data-testid="tamanho-prompt" style={{ marginTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
+                    Tamanho: {tamanhoDoPrompt(resultado.prompt_final).toLocaleString('pt-BR')} de{' '}
+                    {limiteEnvio.toLocaleString('pt-BR')} caracteres para o botão Enviar.
+                  </div>
+                )}
 
                 {modoAuth === 'local_cli' && (
                   <div
@@ -1845,6 +1889,15 @@ export default function App() {
                         Copiar resposta
                       </button>
                     </div>
+                    {respostaFoiCortada(respostaIa.texto) && (
+                      <div
+                        role="alert"
+                        data-testid="aviso-resposta-cortada"
+                        style={{ marginBottom: '10px', fontSize: '13px', color: '#fde68a' }}
+                      >
+                        Atenção: esta resposta chegou <strong>cortada</strong> pelo limite de tamanho. Está incompleta.
+                      </div>
+                    )}
                     <pre
                       data-testid="resposta-ia"
                       style={{
@@ -1882,8 +1935,9 @@ export default function App() {
                       Continuar a conversa (Sequenciar) · {rodadas.length} rodada(s)
                     </strong>
                     <p style={{ margin: '6px 0 10px', fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
-                      Escreva o próximo pedido. O app reenvia o pedido original + as últimas 3 respostas + o novo pedido, e
-                      guarda tudo no Histórico.
+                      Escreva o próximo pedido. O app reenvia o pedido original, o novo pedido e até as 3 últimas respostas
+                      que couberem no limite (as mais antigas são cortadas primeiro, com aviso). O Histórico guarda até 50
+                      rodadas por pedido.
                     </p>
                     <textarea
                       data-testid="proximo-pedido"

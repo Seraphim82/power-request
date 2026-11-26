@@ -18,6 +18,8 @@ Se não bater, avise antes de mexer.
 - **Nunca altere um teste existente para fazê-lo passar.** Se o teste parecer errado, pare e explique.
 - Explique o plano e espere o OK antes de editar o código.
 - Uma fase por chat. Não misture fases.
+- Achado ou sugestão nova: anotar em `docs/ERROS.md` (falha) e `docs/PLANO.md` (ação).
+  Anotar não é executar: nada é feito fora da ordem do plano.
 - Mudança de segurança (filtro, Origin/Host, execução de CLI, envio automático) exige teste novo.
 - Fale em português do Brasil, informal e direto. O dono não é técnico e usa o Terminal:
   dê os comandos passo a passo e diga o resultado esperado.
