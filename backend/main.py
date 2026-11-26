@@ -164,6 +164,10 @@ class TestarAutomacaoRequest(BaseModel):
     navegador: Optional[str] = Field(default=None, max_length=40)
 
 
+class OrganizarPromptRequest(BaseModel):
+    texto: str = Field(max_length=20_000)
+
+
 class ContextoRequest(BaseModel):
     contexto: str = ""
 
@@ -255,6 +259,12 @@ def testar_conexao_ia(cfg: AIConfigModel):
 @app.post("/api/analisar-intencao")
 def analisar_intencao(req: IntencaoRequest):
     return _run_domain_action(lambda: engine.analisar_intencao(req.intencao))
+
+
+@app.post("/api/organizar-prompt")
+def organizar_prompt(req: OrganizarPromptRequest):
+    """Lê um prompt já escrito, encaixa nos campos e devolve perguntas sobre o que falta."""
+    return _run_domain_action(lambda: engine.organizar_prompt(req.texto))
 
 
 @app.post("/api/revisar-pedido")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Any
 
 
@@ -525,14 +526,8 @@ class PowerRequestEngine:
 
         return texto_limpo
 
-    def analisar_intencao(self, intencao: str) -> dict[str, Any]:
-        """Regra 1: Identifica o perfil do projeto e devolve o formulário guiado passo a passo."""
-        texto = self._sanitizar_e_validar_seguranca(intencao, "intencao")
-        if len(texto) < 5:
-            raise ValidationError(
-                "Descreva sua ideia com pelo menos 5 caracteres para montarmos o formulário."
-            )
-
+    def _detectar_categoria(self, texto: str) -> str:
+        """Escolhe a categoria da base educacional pelas palavras-chave do texto."""
         lower = texto.lower()
         if self._contem_palavra(
             lower,
@@ -561,6 +556,17 @@ class PowerRequestEngine:
             categoria = "web"
         else:
             categoria = "geral"
+        return categoria
+
+    def analisar_intencao(self, intencao: str) -> dict[str, Any]:
+        """Regra 1: Identifica o perfil do projeto e devolve o formulário guiado passo a passo."""
+        texto = self._sanitizar_e_validar_seguranca(intencao, "intencao")
+        if len(texto) < 5:
+            raise ValidationError(
+                "Descreva sua ideia com pelo menos 5 caracteres para montarmos o formulário."
+            )
+
+        categoria = self._detectar_categoria(texto)
 
         perfil = self.BASE_EDUCACIONAL[categoria]
         identificada = categoria != "geral"
@@ -789,3 +795,238 @@ class PowerRequestEngine:
             "rodadas_enviadas": len(usadas),
             "rodadas_omitidas": omitidas,
         }
+
+    # ---------- Organizar um prompt que a pessoa já escreveu ----------
+    MAX_TEXTO_ORGANIZAR = 8000
+    ORDEM_CAMPOS = ["objetivo", "stack", "entrada", "saida", "regras", "tratamento_erros"]
+
+    # Títulos reconhecidos (sem acento, minúsculos) -> campo do app.
+    TITULOS = {
+        "objetivo": "objetivo", "objetivos": "objetivo", "meta": "objetivo", "tarefa": "objetivo",
+        "problema": "objetivo", "descricao": "objetivo", "resumo": "objetivo", "ideia": "objetivo",
+        "o que quero": "objetivo", "pedido": "objetivo", "contexto": "objetivo",
+        "stack": "stack", "tecnologia": "stack", "tecnologias": "stack", "linguagem": "stack",
+        "linguagens": "stack", "ferramenta": "stack", "ferramentas": "stack", "framework": "stack",
+        "plataforma": "stack",
+        "input": "entrada", "entrada": "entrada", "entradas": "entrada", "dados de entrada": "entrada",
+        "o que entra": "entrada",
+        "output": "saida", "saida": "saida", "saidas": "saida", "resultado": "saida",
+        "resultado esperado": "saida", "retorno": "saida", "entrega": "saida", "o que sai": "saida",
+        "regras": "regras", "regra": "regras", "restricoes": "regras", "requisitos": "regras",
+        "condicoes": "regras", "criterios": "regras", "padrao": "regras", "observacoes": "regras",
+        "erros": "tratamento_erros", "erro": "tratamento_erros", "tratamento de erros": "tratamento_erros",
+        "erros e edge cases": "tratamento_erros", "edge cases": "tratamento_erros",
+        "casos de borda": "tratamento_erros", "excecoes": "tratamento_erros", "falhas": "tratamento_erros",
+    }
+    TECNOLOGIAS = [
+        "Python", "FastAPI", "Django", "Flask", "Node.js", "Express", "TypeScript", "JavaScript",
+        "React Native", "React", "Next.js", "Vue", "Angular", "Flutter", "Dart", "SwiftUI", "Swift",
+        "Kotlin", "Jetpack Compose", "Java", "PHP", "Laravel", "WordPress", "C#", ".NET", "Go", "Rust",
+        "SQLite", "PostgreSQL", "MySQL", "MongoDB", "Firebase", "Supabase", "Godot", "Unity",
+        "HTML", "CSS", "Tailwind", "Pandas", "Selenium", "Playwright", "AppleScript", "Excel VBA",
+        "Google Apps Script", "WhatsApp Cloud API", "Evolution API", "Telegram Bot API",
+    ]
+    _RE_MARCADOR = re.compile(r"^\s*(?:[-*•]|\d{1,2}[.)])\s+")
+
+    @staticmethod
+    def _normalizar(texto: str) -> str:
+        sem_acento = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+        return re.sub(r"\s+", " ", sem_acento).strip().lower()
+
+    def _titulo_da_linha(self, linha: str) -> tuple[str, str] | None:
+        """Se a linha é um título conhecido ('### Stack', 'Objetivo: ...', '**Regras**', 'Regras'),
+        devolve (campo, resto_da_linha)."""
+        limpa = linha.strip().lstrip("#").strip()
+        if not limpa or len(limpa) > 400:
+            return None
+        if ":" in limpa or "：" in limpa:
+            rotulo, _, resto = limpa.replace("：", ":").partition(":")
+        else:
+            rotulo, resto = limpa, ""
+        rotulo = rotulo.strip().strip("*_").strip()
+        if len(rotulo) > 40:
+            return None
+        campo = self.TITULOS.get(self._normalizar(rotulo))
+        if campo is None:
+            return None
+        return campo, resto.strip().strip("*_").strip()
+
+    def _detectar_tecnologias(self, texto: str) -> list[str]:
+        achadas: list[str] = []
+        for tec in self.TECNOLOGIAS:
+            padrao = r"(?<![\w.])" + re.escape(tec) + r"(?![\w])"
+            if re.search(padrao, texto, flags=re.IGNORECASE) and not any(
+                tec.lower() in a.lower() for a in achadas
+            ):
+                achadas.append(tec)
+        return achadas
+
+    def _linhas_em_regras(self, texto: str) -> list[str]:
+        itens: list[str] = []
+        for linha in texto.splitlines():
+            limpa = self._RE_MARCADOR.sub("", linha).strip()
+            if not limpa:
+                continue
+            partes = [p.strip() for p in limpa.split(";")] if ";" in limpa else [limpa]
+            itens.extend(p for p in partes if p)
+        return itens
+
+    def _classificar_texto_corrido(self, texto: str, campos: dict[str, Any]) -> None:
+        """Sem títulos: separa marcadores (viram regras) e frases (por palavras-pista)."""
+        prosa: list[str] = []
+        for linha in texto.splitlines():
+            if self._RE_MARCADOR.match(linha):
+                campos["regras"].extend(self._linhas_em_regras(linha))
+            elif linha.strip():
+                prosa.append(linha.strip())
+        frases = [f.strip() for f in re.split(r"(?<=[.!?])\s+|\n", " ".join(prosa)) if f.strip()]
+        pistas = [
+            ("tratamento_erros", ["se der erro", "se falhar", "em caso de erro", "caso de erro", "se o arquivo nao", "se nao encontrar", "se faltar", "erro"]),
+            ("entrada", ["recebe", "a entrada", "o usuario envia", "o usuario digita", "vou enviar", "a partir de", "le um", "le os", "ler um", "ler os", "importa"]),
+            ("saida", ["deve gerar", "deve retornar", "retorne", "devolva", "a saida", "o resultado", "gerar um", "gere um", "exportar", "salvar em", "mostrar na tela", "deve mostrar"]),
+            ("regras", ["nao deve", "nunca", "sempre", "obrigatorio", "precisa ter", "nao pode", "sem usar"]),
+        ]
+        sobras: list[str] = []
+        for frase in frases:
+            norm = self._normalizar(frase)
+            destino = next((c for c, chaves in pistas if any(k in norm for k in chaves)), None)
+            if destino == "regras":
+                campos["regras"].append(frase)
+            elif destino:
+                campos[destino] = (campos[destino] + " " + frase).strip()
+            else:
+                sobras.append(frase)
+        campos["objetivo"] = (" ".join(sobras) + " " + campos["objetivo"]).strip()
+
+    def organizar_prompt(self, texto: str) -> dict[str, Any]:
+        """Lê um prompt escrito livremente, encaixa nos campos do app e pergunta o que falta."""
+        if not isinstance(texto, str):
+            raise ValidationError("Cole o texto do seu prompt.")
+        bruto = re.sub(r"[ \t]+", " ", texto.replace("\r\n", "\n")).strip()
+        if len(bruto) < 10:
+            raise ValidationError("Cole um prompt com pelo menos 10 caracteres para organizar.")
+        if len(bruto) > self.MAX_TEXTO_ORGANIZAR:
+            raise SecurityError(
+                f"O texto passa do limite de {self.MAX_TEXTO_ORGANIZAR} caracteres. Divida em partes."
+            )
+        for pattern in self.INJECTION_PATTERNS:
+            if re.search(pattern, bruto, flags=re.IGNORECASE):
+                raise SecurityError("Conteúdo suspeito ou tentativa de injeção detectada no texto colado.")
+
+        campos: dict[str, Any] = {c: "" for c in self.ORDEM_CAMPOS}
+        campos["regras"] = []
+        encontrados: list[str] = []
+
+        # 1) Texto com títulos: cada bloco vai para o campo do título.
+        blocos: list[tuple[str | None, list[str]]] = [(None, [])]
+        for linha in bruto.splitlines():
+            titulo = self._titulo_da_linha(linha)
+            if titulo:
+                blocos.append((titulo[0], [titulo[1]] if titulo[1] else []))
+            else:
+                blocos[-1][1].append(linha)
+        com_titulo = [b for b in blocos if b[0]]
+        if com_titulo:
+            preambulo = "\n".join(blocos[0][1]).strip()
+            if preambulo:
+                campos["objetivo"] = preambulo
+            for campo, linhas in com_titulo:
+                conteudo = "\n".join(linhas).strip()
+                if not conteudo:
+                    continue
+                if campo == "regras":
+                    campos["regras"].extend(self._linhas_em_regras(conteudo))
+                else:
+                    junto = " ".join(l.strip() for l in conteudo.splitlines() if l.strip())
+                    campos[campo] = (campos[campo] + " " + junto).strip()
+                if campo not in encontrados:
+                    encontrados.append(campo)
+            modo = "titulos"
+        else:
+            self._classificar_texto_corrido(bruto, campos)
+            modo = "texto_corrido"
+
+        # 2) Stack: se não veio, procura tecnologias citadas em qualquer parte.
+        if not campos["stack"]:
+            tecs = self._detectar_tecnologias(bruto)
+            if tecs:
+                campos["stack"] = " + ".join(tecs)
+
+        # 3) Limpeza e limites (sem perder conteúdo: avisa se cortou).
+        avisos: list[str] = []
+        for c in self.ORDEM_CAMPOS:
+            if c == "regras":
+                vistos: list[str] = []
+                for r in campos["regras"]:
+                    r = r.strip()[: self.MAX_FIELD_LENGTH]
+                    if r and r not in vistos:
+                        vistos.append(r)
+                campos["regras"] = vistos[:20]
+            elif len(campos[c]) > self.MAX_FIELD_LENGTH:
+                campos[c] = campos[c][: self.MAX_FIELD_LENGTH].rstrip()
+                avisos.append(f"O campo '{c}' passou de {self.MAX_FIELD_LENGTH} caracteres e foi cortado.")
+        if modo == "texto_corrido":
+            encontrados = [
+                c for c in self.ORDEM_CAMPOS if (campos[c] if c != "regras" else campos["regras"])
+            ]
+        elif campos["stack"] and "stack" not in encontrados:
+            encontrados.append("stack")
+
+        # 4) Perguntas para o que falta ou está vago.
+        categoria = self._detectar_categoria(bruto)
+        guia = self.BASE_EDUCACIONAL[categoria]["guia_campos"]
+        perguntas: list[dict[str, Any]] = []
+
+        def perguntar(campo: str, motivo: str) -> None:
+            g = guia.get(campo, {})
+            perguntas.append({
+                "campo": campo,
+                "pergunta": g.get("titulo", campo),
+                "explicacao": g.get("explicacao", ""),
+                "sugestoes": list(g.get("sugestoes", []))[:4],
+                "motivo": motivo,
+                "atual": campos[campo] if campo != "regras" else "; ".join(campos["regras"]),
+            })
+
+        obj = campos["objetivo"]
+        if not obj:
+            perguntar("objetivo", "Não encontrei o objetivo no texto.")
+        elif len(obj.split()) < 4:
+            perguntar("objetivo", "O objetivo está curto demais para a IA entender o problema.")
+        st = campos["stack"]
+        if not st:
+            perguntar("stack", "Não encontrei a tecnologia (linguagem ou ferramenta).")
+        elif self._stack_vaga(st) or st.lower() in {"qualquer", "tanto faz", "nao sei", "não sei"}:
+            perguntar("stack", f"A tecnologia está genérica ('{st}').")
+        for campo, nome in (("entrada", "o que entra no sistema"), ("saida", "o resultado esperado")):
+            if not campos[campo]:
+                perguntar(campo, f"Não encontrei {nome}.")
+            elif self._resposta_vaga(campos[campo]):
+                perguntar(campo, f"Está vago ('{campos[campo]}'): diga formato e detalhes.")
+        if not campos["regras"]:
+            perguntar("regras", "Não encontrei regras ou restrições.")
+        elif len(campos["regras"]) < 2:
+            perguntar("regras", "Só encontrei 1 regra; com pelo menos 2 a IA erra menos.")
+        if not campos["tratamento_erros"]:
+            perguntar("tratamento_erros", "Não encontrei o que fazer quando algo der errado.")
+
+        incoerencias: list[str] = []
+        if self._contem_palavra(obj, ["bot", "chatbot", "whatsapp", "telegram"]) and self._contem_palavra(
+            st, ["flutter", "swiftui", "jetpack"]
+        ):
+            incoerencias.append(
+                "Incoerência: bots de WhatsApp/Telegram rodam em servidor (ex: Python ou Node.js), não em Flutter/SwiftUI."
+            )
+
+        nota = max(40, 100 - 15 * (len(perguntas) + len(incoerencias)))
+        return {
+            "campos": campos,
+            "categoria_sugerida": self.CATEGORIA_UI[categoria],
+            "modo_leitura": modo,
+            "campos_encontrados": encontrados,
+            "perguntas": perguntas,
+            "incoerencias": incoerencias,
+            "nota_previa": nota,
+            "avisos": avisos,
+        }
+
