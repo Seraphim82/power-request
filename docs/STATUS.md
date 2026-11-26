@@ -9,13 +9,13 @@ Atualizado em 26/11/2026.
   Sequenciar com orçamento único de tamanho, contador de caracteres e aviso de resposta cortada.
   Escolha confirmada pelo dono em 26/11: faltando espaço, cortar primeiro as respostas mais antigas.
 - **Correção do Antigravity (item 13 do ERROS):** commitada em 26/11, não enviada. No Mac:
-  `make check` passou e o Antigravity ficou online no app (informado pelo dono). Enviar, aviso de
-  ganchos e Sequenciar com ele **ainda não conferidos**.
+  `make check` passou e o Antigravity ficou online no app (informado pelo dono).
+  Aviso de ganchos, Enviar e Sequenciar conferidos (ver Testes).
 - **`main`:** ainda sem merge (parada no commit `b21ce46`).
 
 ## Próximo passo
 
-1. Conferir no app, no Mac, com o Antigravity: aviso de ganchos, Enviar e Sequenciar.
+1. Animação de espera (sugestão do dono; ordem a confirmar).
 2. Botão Enviar apagado com a IA offline (ver `docs/PLANO.md`).
 3. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
 4. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
@@ -42,7 +42,12 @@ Antigravity (26/11/2026):
   nenhum alterado, mais 23 novos), 10 de frontend, checagem de tipos e build OK.
 - **No Mac (informado pelo dono):** `make check` passou; depois, com `make run`, o Antigravity
   ficou online.
-- **Falta no Mac:** aceite do aviso, Enviar e Sequenciar com o Antigravity.
+- **Uso real no Mac, com o Antigravity (26/11, relato e print do dono):** com o aviso desmarcado,
+  o envio foi recusado; marcado, foi liberado. Enviar e Sequenciar responderam, até a 4ª rodada.
+  Apareceram os avisos de resposta cortada, de rodadas antigas de fora e de rodada enviada sem o
+  meio. O código gerado pela IA não foi executado.
+- **Não conferidos no Mac com o Antigravity:** revisão e otimização com IA, e o bloqueio por
+  ferramenta sem a recusa (só em teste simulado).
 
 Fase 3 (26/11/2026), em **cópia do projeto em Linux**, com IA simulada: 265 testes de backend
 (239 antigos, nenhum alterado, mais 26 novos) e 10 de frontend (7 antigos mais 3 novos),

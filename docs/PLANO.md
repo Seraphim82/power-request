@@ -21,14 +21,14 @@ Nenhum teste existente é alterado. Detalhes de cada item em `docs/ERROS.md`.
 - **Pronto quando:** resposta longa não quebra o Sequenciar e todo corte é avisado.
 - **Decidido (26/11):** faltando espaço, cortar primeiro as respostas mais antigas e avisar na tela.
 
-## [ ] Correção do Antigravity (item 13), em chat próprio
+## [x] Correção do Antigravity (item 13), em chat próprio
 - [x] Provar no Mac, com dados falsos, que a trava recusa ferramentas.
 - [x] `stream-json` pela entrada padrão; pasta temporária com a trava em todo uso dentro do app;
   prova no Testar Conexão (refeita se a versão mudar ou o app reiniciar); descarte e bloqueio se
   aparecer ferramenta sem a recusa (só detecta); `gemini` fora do app; aviso em português;
   aceite quando há ganchos globais (escolha do dono: avisar e liberar); testes novos.
 - [x] Conferir no Mac: `make check` e conexão online no app.
-- [ ] Conferir no Mac: aviso de ganchos, Enviar e Sequenciar com o Antigravity.
+- [x] Conferir no Mac: aviso de ganchos, Enviar e Sequenciar com o Antigravity.
 - **Pronto quando:** conecta e envia no Mac, com o bloqueio comprovado.
 
 ## [ ] Enviar apagado com IA offline (sugestão do dono, 26/11)
@@ -37,6 +37,15 @@ Encaixe (26/11): depois de validar a correção do Antigravity no Mac.
   `desconhecido` nem `verificando`, a decidir no plano); explicar o motivo em português simples,
   com opção de testar de novo; manter Copiar Prompt; teste novo.
 - **Pronto quando:** com a IA offline não dá para enviar, e a pessoa sabe o que fazer.
+
+## [ ] Animação de espera no Enviar e no Sequenciar (sugestão do dono, 26/11)
+Ordem a confirmar com o dono.
+- **Motivo:** durante a espera pela resposta, a tela parece parada.
+- **Tarefas:** desenho de um prompt, uma linha com um ponto de luz indo até um computador (como um
+  ping), perto do botão usado; texto de espera com o tempo decorrido; sumir quando chegar a
+  resposta ou o erro; só SVG e CSS, sem biblioteca nova; parar o movimento quando o sistema pedir
+  menos animação; não sugerir porcentagem nem progresso real.
+- **Pronto quando:** nas duas esperas dá para ver que o pedido está em andamento.
 
 ## [ ] Fase 4: segurança (itens 4 a 7 e 12, e permissões do banco)
 - **Objetivo:** fechar as brechas conhecidas.

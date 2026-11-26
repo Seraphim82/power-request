@@ -6,7 +6,7 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 ## Em aberto
 
 ### Resposta acima de 24.000 caracteres: o excedente se perde (sem fase definida)
-- **Visto no Mac (26/11):** com Claude (Local), o aviso de resposta cortada apareceu.
+- **Visto no Mac (26/11):** com Claude (Local) e com Antigravity, o aviso de resposta cortada apareceu.
 - **Causa (código):** o app descarta o que passa de 24.000; isso também não vai para o histórico.
 - **A avaliar:** orientar a usar Abrir no Terminal quando o projeto for grande.
 
@@ -20,19 +20,6 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 ### Aviso do envio anterior fica na tela durante o Sequenciar (adiado pelo dono)
 - **Sintoma:** enquanto o novo pedido roda, o rodapé ainda descreve o envio anterior.
 - **Solução:** limpar o aviso ao iniciar o envio.
-
-### 13. Antigravity aparece offline (conexão corrigida no Mac; falta conferir o envio)
-- **Sintoma:** o teste de conexão do Antigravity (Local) falha, mesmo com o `agy` funcionando.
-- **Causa (confirmada no Mac, agy 1.5.18):** o app chamava `agy -p` e mandava o texto pela entrada
-  padrão; o `agy` responde `flag needs an argument: -p`.
-- **Risco que motivou a trava:** no Mac testado, sem o gancho, o `agy` criou arquivo e executou
-  comando sem pedir aprovação, mesmo informando `request-review`.
-- **Solução:** `backend/agy_seguro.py`: `stream-json` pela entrada padrão, gancho `PreToolUse` que
-  recusa tudo, prova no Testar Conexão e bloqueio se aparecer ferramenta sem a recusa.
-- **Limites:** o bloqueio por detecção não desfaz a ação e some ao reiniciar o app (a prova é
-  exigida de novo). Se o `agy` deixar de carregar o gancho sem mudar de versão, e depois da
-  prova, a detecção só age quando uma ferramenta já tiver aparecido. `gemini` não é usado no app.
-- **Evitar:** não usar CLI com ferramentas sem provar a trava no programa real.
 
 ### Ganchos globais do Antigravity ficam fora da trava (limitação conhecida)
 - **Sintoma possível:** um programa de memória ligado ao `agy` pode guardar o que o app envia.
@@ -123,6 +110,19 @@ Os quatro primeiros são da fase 3 (26/11): testados com IA simulada, falta conf
 - **Solução:** conferir o motivo da parada na API e o corte de 24.000 do CLI; aviso na tela e marca
   no histórico.
 - **Limite:** se o próprio programa de IA local encurtar a resposta, o app pode não saber.
+
+### 13. Antigravity aparece offline (resolvido, conferido no Mac em 26/11)
+- **Sintoma:** o teste de conexão do Antigravity (Local) falha, mesmo com o `agy` funcionando.
+- **Causa (confirmada no Mac, agy 1.5.18):** o app chamava `agy -p` e mandava o texto pela entrada
+  padrão; o `agy` responde `flag needs an argument: -p`.
+- **Risco que motivou a trava:** no Mac testado, sem o gancho, o `agy` criou arquivo e executou
+  comando sem pedir aprovação, mesmo informando `request-review`.
+- **Solução:** `backend/agy_seguro.py`: `stream-json` pela entrada padrão, gancho `PreToolUse` que
+  recusa tudo, prova no Testar Conexão e bloqueio se aparecer ferramenta sem a recusa.
+- **Limites:** o bloqueio por detecção não desfaz a ação e some ao reiniciar o app (a prova é
+  exigida de novo). Se o `agy` deixar de carregar o gancho sem mudar de versão, e depois da
+  prova, a detecção só age quando uma ferramenta já tiver aparecido. `gemini` não é usado no app.
+- **Evitar:** não usar CLI com ferramentas sem provar a trava no programa real.
 
 ### Mensagens de erro podiam expor detalhes internos
 - **Solução:** filtro central `mensagem_publica` (commit `c619eb4`).
