@@ -10,12 +10,14 @@ export function AguardandoIa({ segundos }: { segundos: number }) {
     <div
       data-testid="aguardando-ia"
       style={{
-        marginTop: '12px',
+        width: '100%',
+        boxSizing: 'border-box',
         padding: '14px 16px',
         borderRadius: '10px',
         border: '1px solid #334155',
         backgroundColor: '#020617',
         maxWidth: '440px',
+        flexShrink: 0,
       }}
     >
       <div aria-hidden="true" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

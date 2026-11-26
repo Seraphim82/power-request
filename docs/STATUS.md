@@ -15,9 +15,8 @@ Atualizado em 26/11/2026.
 
 ## Próximo passo
 
-1. Botão Enviar apagado com a IA offline (ver `docs/PLANO.md`).
-2. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
-3. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
+1. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
+2. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
 
 ## O que o app tem hoje
 
@@ -30,12 +29,22 @@ Atualizado em 26/11/2026.
 
 ## Testes
 
+Botão vira animação e bloqueio com IA offline (26/11/2026): em cópia em Linux, os
+testes do backend, 14 de frontend (12 que já existiam, nenhum alterado, mais 2 novos), checagem de
+tipos e build OK. A tela compilada rodou em Chromium com **servidor simulado**: o botão usado some e
+volta; o outro fica bloqueado e apagado; offline bloqueia Enviar e Sequenciar, mostra o motivo e
+libera depois de Testar de novo; Copiar Prompt continua liberado. O novo teste automático cobre só a
+regra de quando bloquear, não a tela. **Conferido pelo dono no Mac (Safari, com prints):** o
+Enviar e o Sequenciar viram a animação; o Enviar fica apagado durante o Sequenciar; com o Ollama
+offline aparecem os botões apagados, o motivo e Testar de novo, e o Copiar Prompt copia; de volta
+ao Antigravity, o dono informou que tudo funcionou.
+
 Animação de espera (26/11/2026): em cópia em Linux, os testes do backend, 12 de
 frontend (10 antigos, nenhum alterado, mais 2 novos), checagem de tipos e build OK. O componente,
 isolado, foi visto em um navegador de teste (Chromium): o ponto se move e fica parado com redução
 de movimento. **No Mac (Safari):** os prints do dono mostram a animação dentro do app, abaixo do
-Enviar e do Sequenciar, e ele aprovou ao responder à lista de conferência (movimento, sumiço no fim
-e `make check`), sem detalhar item por item. A redução de movimento não foi testada no Mac.
+Enviar e do Sequenciar, e ele aprovou ao responder à lista de conferência (movimento e sumiço no
+fim), sem detalhar item por item. Depois do commit, confirmou que o `make check` passou no Mac. A redução de movimento não foi testada no Mac.
 
 Antigravity (26/11/2026):
 

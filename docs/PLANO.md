@@ -31,10 +31,11 @@ Nenhum teste existente é alterado. Detalhes de cada item em `docs/ERROS.md`.
 - [x] Conferir no Mac: aviso de ganchos, Enviar e Sequenciar com o Antigravity.
 - **Pronto quando:** conecta e envia no Mac, com o bloqueio comprovado.
 
-## [ ] Enviar apagado com IA offline (sugestão do dono, 26/11)
+## [x] Enviar apagado com IA offline (sugestão do dono, 26/11)
 Encaixe (26/11): depois de validar a correção do Antigravity no Mac.
+Feito em 26/11 no mesmo chat, por escolha do dono. **Conferido pelo dono no Mac.**
 - **Tarefas:** desativar Enviar e Sequenciar só quando o estado for `offline` (não em
-  `desconhecido` nem `verificando`, a decidir no plano); explicar o motivo em português simples,
+  `desconhecido` nem `verificando`, decidido em 26/11); explicar o motivo em português simples,
   com opção de testar de novo; manter Copiar Prompt; teste novo.
 - **Pronto quando:** com a IA offline não dá para enviar, e a pessoa sabe o que fazer.
 
@@ -46,6 +47,13 @@ Feita em 26/11 no mesmo chat do Antigravity, por escolha do dono. **Aprovada pel
   resposta ou o erro; só SVG e CSS, sem biblioteca nova; parar o movimento quando o sistema pedir
   menos animação; não sugerir porcentagem nem progresso real.
 - **Pronto quando:** nas duas esperas dá para ver que o pedido está em andamento.
+
+## [x] Botão vira a animação durante a espera (sugestão do dono, 26/11)
+Feito em 26/11 junto com o item acima. **Conferido pelo dono no Mac.**
+- **Motivo:** evitar clique por engano enquanto a IA responde.
+- **Tarefas:** a animação ocupa o lugar do botão usado; o outro fica bloqueado e apagado; o botão
+  volta com a resposta ou o erro.
+- **Pronto quando:** durante a espera não há botão para clicar de novo no lugar usado.
 
 ## [ ] Fase 4: segurança (itens 4 a 7 e 12, e permissões do banco)
 - **Objetivo:** fechar as brechas conhecidas.
@@ -90,6 +98,7 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - Investigar se dá para tirar os pedidos do app da captura de ganchos globais de memória.
 - Testar a trava com navegador, mensagens, subagentes e gancho travado por tempo.
 - Limpar o aviso do envio anterior ao iniciar um novo Sequenciar.
+- Mostrar a confirmação do Copiar Prompt junto do botão (ver `docs/ERROS.md`).
 - Avisar quando o histórico parar de guardar (50 rodadas).
 - Orientar sobre projeto grande: resposta acima de 24.000 e perda de contexto no Sequenciar.
 

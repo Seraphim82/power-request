@@ -25,6 +25,8 @@ import {
 } from './constants';
 import { montarLinkIa } from './abrirNaIa';
 import { AguardandoIa } from './AguardandoIa';
+import { AvisoIaOffline } from './AvisoIaOffline';
+import { iaOfflineBloqueiaEnvio } from './bloqueioEnvio';
 import {
   LIMITE_ENVIO_PADRAO,
   MARCA_RESPOSTA_CORTADA,
@@ -166,6 +168,8 @@ export default function App() {
   });
   const [salvandoContexto, setSalvandoContexto] = useState<boolean>(false);
   const [statusContexto, setStatusContexto] = useState<string>('');
+
+  const iaOffline = iaOfflineBloqueiaEnvio(estadoIa);
 
   const catConfig: CategoriaConfig =
     CATEGORIES.find((c) => c.id === categoria) || CATEGORIES[0];
@@ -1672,26 +1676,32 @@ export default function App() {
                 }}
               >
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    style={{
-                      ...styles.btnPrimary,
-                      opacity: enviando || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? 0.5 : 1,
-                    }}
-                    onClick={enviarParaIa}
-                    disabled={enviando || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio}
-                  >
-                    {enviando && origemEnvio === 'enviar'
-                      ? 'Enviando...'
-                      : `Enviar para ${providerSelecionado?.nome ?? 'a IA ativa'}`}
-                  </button>
-                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                    {modoAuth === 'api_key'
-                      ? 'Usa a sua chave de API (consome a sua cota). A resposta aparece aqui.'
-                      : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
-                  </span>
+                  {enviando && origemEnvio === 'enviar' ? (
+                    <AguardandoIa segundos={segundosEnvio} />
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        data-testid="btn-enviar"
+                        style={{
+                          ...styles.btnPrimary,
+                          opacity:
+                            enviando || iaOffline || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? 0.5 : 1,
+                        }}
+                        onClick={enviarParaIa}
+                        disabled={enviando || iaOffline || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio}
+                      >
+                        {`Enviar para ${providerSelecionado?.nome ?? 'a IA ativa'}`}
+                      </button>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                        {modoAuth === 'api_key'
+                          ? 'Usa a sua chave de API (consome a sua cota). A resposta aparece aqui.'
+                          : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
+                      </span>
+                    </>
+                  )}
                 </div>
-                {enviando && origemEnvio === 'enviar' && <AguardandoIa segundos={segundosEnvio} />}
+                {iaOffline && !enviando && <AvisoIaOffline motivo={detalheIa} aoTestar={testarConexaoIa} />}
 
                 {tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? (
                   <div
@@ -1993,18 +2003,22 @@ export default function App() {
                       }}
                     />
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginTop: '8px' }}>
-                      <button
-                        type="button"
-                        data-testid="btn-sequenciar"
-                        style={styles.btnPrimary}
-                        disabled={enviando || !proximoPedido.trim()}
-                        onClick={sequenciar}
-                      >
-                        {enviando && origemEnvio === 'sequenciar' ? 'Enviando...' : 'Sequenciar'}
-                      </button>
+                      {enviando && origemEnvio === 'sequenciar' ? (
+                        <AguardandoIa segundos={segundosEnvio} />
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid="btn-sequenciar"
+                          style={{ ...styles.btnPrimary, opacity: enviando || iaOffline ? 0.5 : 1 }}
+                          disabled={enviando || iaOffline || !proximoPedido.trim()}
+                          onClick={sequenciar}
+                        >
+                          Sequenciar
+                        </button>
+                      )}
                       {infoSequencia && <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>{infoSequencia}</span>}
                     </div>
-                    {enviando && origemEnvio === 'sequenciar' && <AguardandoIa segundos={segundosEnvio} />}
+                    {iaOffline && !enviando && <AvisoIaOffline motivo={detalheIa} aoTestar={testarConexaoIa} />}
                     {rodadas.length > 1 && (
                       <details style={{ marginTop: '10px' }}>
                         <summary style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '12.5px' }}>

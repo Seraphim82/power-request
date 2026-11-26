@@ -21,6 +21,12 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Sintoma:** enquanto o novo pedido roda, o rodapé ainda descreve o envio anterior.
 - **Solução:** limpar o aviso ao iniciar o envio.
 
+### Mensagem de "copiado" do Copiar Prompt fica fora da vista (visto no Mac, 26/11)
+- **Sintoma:** o prompt é copiado, mas parece que não há confirmação.
+- **Causa (código):** a mensagem aparece no fim do quadro, abaixo dos botões "Abrir no...", longe
+  do botão Copiar Prompt, que fica no topo. Isso já era assim antes das mudanças de hoje nos botões.
+- **Solução:** mostrar a confirmação junto do botão usado.
+
 ### Ganchos globais do Antigravity ficam fora da trava (limitação conhecida)
 - **Sintoma possível:** um programa de memória ligado ao `agy` pode guardar o que o app envia.
 - **Causa:** ganchos globais rodam independentemente do gancho da pasta temporária.
