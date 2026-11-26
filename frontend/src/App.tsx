@@ -26,6 +26,7 @@ import {
 import { montarLinkIa } from './abrirNaIa';
 import { AguardandoIa } from './AguardandoIa';
 import { AvisoIaOffline } from './AvisoIaOffline';
+import { BotaoCopiarPrompt } from './BotaoCopiarPrompt';
 import { iaOfflineBloqueiaEnvio } from './bloqueioEnvio';
 import {
   LIMITE_ENVIO_PADRAO,
@@ -848,16 +849,6 @@ export default function App() {
     }
   };
 
-  const copiarPrompt = async () => {
-    if (!resultado?.prompt_final) return;
-    try {
-      await navigator.clipboard.writeText(resultado.prompt_final);
-      setCopiadoTexto('Prompt copiado para a área de transferência.');
-    } catch {
-      setCopiadoTexto('Selecione e copie o texto do quadro acima.');
-    }
-  };
-
   const copiarAbrirEm = async (marca: (typeof BRANDS)[number]) => {
     if (!resultado?.prompt_final) return;
     // Calcula o link ANTES de qualquer espera: o navegador só deixa abrir a aba logo após o clique.
@@ -1650,9 +1641,7 @@ export default function App() {
                     {resultado.aviso ? ` • ${resultado.aviso}` : ''}
                   </div>
                 </div>
-                <button type="button" style={styles.btnPrimary} onClick={copiarPrompt}>
-                  Copiar Prompt
-                </button>
+                <BotaoCopiarPrompt key={resultado.prompt_final} texto={resultado.prompt_final} />
               </div>
 
               <pre

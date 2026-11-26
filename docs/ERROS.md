@@ -21,12 +21,6 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Sintoma:** enquanto o novo pedido roda, o rodapé ainda descreve o envio anterior.
 - **Solução:** limpar o aviso ao iniciar o envio.
 
-### Mensagem de "copiado" do Copiar Prompt fica fora da vista (visto no Mac, 26/11)
-- **Sintoma:** o prompt é copiado, mas parece que não há confirmação.
-- **Causa (código):** a mensagem aparece no fim do quadro, abaixo dos botões "Abrir no...", longe
-  do botão Copiar Prompt, que fica no topo. Isso já era assim antes das mudanças de hoje nos botões.
-- **Solução:** mostrar a confirmação junto do botão usado.
-
 ### Ganchos globais do Antigravity ficam fora da trava (limitação conhecida)
 - **Sintoma possível:** um programa de memória ligado ao `agy` pode guardar o que o app envia.
 - **Causa:** ganchos globais rodam independentemente do gancho da pasta temporária.
@@ -129,6 +123,12 @@ Os quatro primeiros são da fase 3 (26/11): testados com IA simulada, falta conf
   exigida de novo). Se o `agy` deixar de carregar o gancho sem mudar de versão, e depois da
   prova, a detecção só age quando uma ferramenta já tiver aparecido. `gemini` não é usado no app.
 - **Evitar:** não usar CLI com ferramentas sem provar a trava no programa real.
+
+### Confirmação do Copiar Prompt ficava fora da vista (corrigido em 26/11, falta conferir no Mac)
+- **Sintoma:** o prompt era copiado, mas parecia que não havia confirmação.
+- **Causa:** a mensagem aparecia no fim do quadro, longe do botão.
+- **Solução:** o próprio botão mostra "Copiado ✓" por 2 segundos; se a cópia falhar, o aviso
+  aparece logo abaixo dele.
 
 ### Mensagens de erro podiam expor detalhes internos
 - **Solução:** filtro central `mensagem_publica` (commit `c619eb4`).

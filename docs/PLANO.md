@@ -98,7 +98,6 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - Investigar se dá para tirar os pedidos do app da captura de ganchos globais de memória.
 - Testar a trava com navegador, mensagens, subagentes e gancho travado por tempo.
 - Limpar o aviso do envio anterior ao iniciar um novo Sequenciar.
-- Mostrar a confirmação do Copiar Prompt junto do botão (ver `docs/ERROS.md`).
 - Avisar quando o histórico parar de guardar (50 rodadas).
 - Orientar sobre projeto grande: resposta acima de 24.000 e perda de contexto no Sequenciar.
 

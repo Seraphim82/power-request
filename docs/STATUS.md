@@ -15,8 +15,9 @@ Atualizado em 26/11/2026.
 
 ## Próximo passo
 
-1. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
-2. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
+1. Conferir no Mac o "Copiado ✓" do Copiar Prompt.
+2. **Fase 4 (segurança)**, em outro chat. Antes, confirmar a escolha pendente do `?q=`.
+3. Push só depois da fase 4 (o repositório é público e os documentos citam falhas abertas).
 
 ## O que o app tem hoje
 
@@ -28,6 +29,11 @@ Atualizado em 26/11/2026.
 - Organizar prompt: só no backend, ainda sem tela e com defeito conhecido.
 
 ## Testes
+
+"Copiado ✓" no Copiar Prompt (26/11/2026): em cópia em Linux, backend, 14 de frontend, checagem de
+tipos e build OK. Em Chromium, com servidor e área de transferência **simulados**: confirma no botão,
+volta após 2 segundos e, se a cópia falha, avisa sem dizer que copiou. Commitado a pedido do dono
+antes da conferência no Mac. **Não visto no Mac.** Sem teste automático da tela.
 
 Botão vira animação e bloqueio com IA offline (26/11/2026): em cópia em Linux, os
 testes do backend, 14 de frontend (12 que já existiam, nenhum alterado, mais 2 novos), checagem de
