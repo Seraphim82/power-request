@@ -6,8 +6,8 @@ Atualizado em 27/11/2026.
 
 - **Fases 1 a 4:** concluídas. Em 27/11, o registro do Git no Mac mostrou `origin/feat/organizar-prompt`
   no mesmo commit da fase 4 (`a919e4e`), ou seja, enviadas.
-- **Fase 5 (Organizar prompt):** pronta e conferida no Mac em 27/11 (ver a seção da fase). Commit feito, **ainda não enviada**
-  (sem push).
+- **Fase 5 (Organizar prompt):** pronta e conferida no Mac em 27/11 (ver a seção da fase). Commit `38bea67` **enviado** ao GitHub
+  (branch `feat/organizar-prompt`).
 - **Correção do Antigravity (item 13 do ERROS):** no Mac, `make check` passou e o Antigravity ficou
   online no app (informado pelo dono em 26/11). Aviso de ganchos, Enviar e Sequenciar conferidos
   (ver Testes).
@@ -15,10 +15,26 @@ Atualizado em 27/11/2026.
 
 ## Próximo passo
 
-1. Push da fase 5, quando o dono pedir.
-2. Em outro chat: fase 6 do `docs/PLANO.md`.
+1. Em chat novo, a pedido do dono (27/11): primeiro corrigir o Claude local (ver `docs/ERROS.md`),
+   com teste novo e commit próprio; só depois do OK dele, a fase 7 do `docs/PLANO.md`.
+2. Fase 7: confirmar o CI no Pull Request antes do merge.
+3. A fase 6 ainda não foi enviada (sem push).
 
-## Fase 5 (27/11/2026): conferida no Mac, commitada (não enviada)
+## Fase 6 (27/11/2026): CI e documentos, commitada (não enviada)
+
+- `npm test` no CI; README, SECURITY e CONTRIBUTING atualizados; ajuste de uma linha no `CLAUDE.md`.
+- Nenhum teste alterado.
+- **Em cópia isolada em Linux** (arquivos versionados com as mudanças da fase e o
+  `prompt_engine.py` do último commit): 401 testes de backend, 22 de frontend, tipos e build OK.
+  Conferidos por script: links locais do README, rotas e arquivos `.py` do `backend/`.
+- O restante do texto foi conferido por leitura do código, não por uso do app.
+- **CI no GitHub: não confirmado** (opção A do dono: confirmar no Pull Request).
+- O `prompt_engine.py`, alterado por engano (ver `docs/ERROS.md`), foi restaurado: conferido que está
+  igual ao do último commit.
+- **No Mac (print do dono, 27/11):** `make check` passou: 401 testes de backend, 22 de frontend,
+  checagem de tipos e build. O app não foi usado nesta conferência.
+
+## Fase 5 (27/11/2026): conferida no Mac, commitada e enviada
 
 - **No Mac, visto em prints do dono (dados inventados):** texto corrido de exemplo com os 6 campos
   separados; 53 regras com 50 no formulário, aviso das 3 que ficaram de fora, confirmação e

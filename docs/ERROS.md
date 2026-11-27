@@ -5,6 +5,43 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 
 ## Em aberto
 
+### Claude local usa ferramentas no Testar Conexão, na revisão e na otimização (SEGURANÇA, achado na fase 6)
+- **Causa (visto no código, não reproduzido):** `testar_conexao`, `revisar_com_ia` e `otimizar_prompt_com_ia`
+  chamam `call_llm` sem `cli_args` e sem `cwd`: roda `claude -p` sem `--tools ""` e fora da pasta
+  temporária. Só o Enviar e o Sequenciar usam o modo sem ferramentas.
+- **Efeito possível:** valem as ferramentas e permissões configuradas no Claude da máquina. O texto
+  da revisão e da otimização vem do formulário. O teste de conexão roda sozinho ao selecionar a IA.
+- **Situação:** descrito no README e no SECURITY. Código não alterado. Sugestão: corrigir antes da
+  fase 7, com teste novo.
+
+### Script temporário antigo executado por engano (incidente na fase 6, 27/11)
+- **O que houve:** a gravação de `/tmp/ed.py` falhou (já existia um arquivo de outra sessão), e o
+  comando seguinte executou o antigo. Ele inseriu trechos repetidos em `backend/prompt_engine.py`
+  e parou em erro. Pelo `git status`, nenhum outro arquivo do projeto mudou.
+- **Situação:** resolvido em 27/11. A restauração pela IA foi bloqueada pela trava de segurança da
+  ferramenta; depois do passo a passo dado ao dono, o arquivo ficou igual ao do último commit
+  (assinatura do Git conferida).
+- **Evitar:** não usar arquivo de nome fixo em `/tmp`; só executar depois de a gravação dar certo.
+
+### Login OpenRouter sem uso na tela (achado na fase 6, sem fase definida)
+- **Visto no código:** existe a rota `/api/hub/openrouter/exchange`, mas o `App.tsx` não a chama.
+- **A avaliar:** criar o botão ou remover a rota.
+
+### Mensagem de permissão de Automação com caminho suspeito (achado na fase 6, sem fase definida)
+- **Visto no código:** `MSG_SEM_AUTOMACAO` cita "System & App Protection Override > Terminal".
+  O esperado é Privacidade e Segurança > Automação. Ela também cita só o Terminal.
+- **Não conferido no Mac.**
+
+### Testes do frontend não rodam no Node 20 (achado na fase 6)
+- **Causa (código e documentação do Node, não testado):** `--experimental-strip-types` surgiu no
+  Node 22.6; o `package.json` e o `Makefile` ainda aceitam 20.19.
+- **Feito:** README e CONTRIBUTING pedem 22.12+ para o `make check`.
+- **A avaliar:** ajustar a conferência de versão do `Makefile`.
+
+### Botão "Estruturar com IA" não usa IA (achado na fase 6, sem fase definida)
+- **Visto no código:** ele chama `/api/analisar-intencao`, que usa só o motor local.
+- **A avaliar:** trocar o texto do botão.
+
 ### Resposta acima de 24.000 caracteres: o excedente se perde (sem fase definida)
 - **Visto no Mac (26/11):** com Claude (Local) e com Antigravity, o aviso de resposta cortada apareceu.
 - **Causa (código):** o app descarta o que passa de 24.000; isso também não vai para o histórico.
@@ -43,21 +80,21 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **A avaliar:** aumentar o limite (a rota aceita até 20.000), com teste novo.
 
 
-### 10. CI não roda os testes do frontend (fase 6)
-- **Causa:** `.github/workflows/ci.yml` não chama `npm test`.
-- **Solução:** acrescentar ao job do frontend.
-- **Evitar:** o CI deve cobrir o mesmo que o `make check`.
-
-### 11. README e SECURITY desatualizados (fase 6)
-- **Sintoma:** dizem que a chave de API fica no `localStorage`; o padrão atual é só na memória.
-  O README não explica o Sequenciar nem o envio automático.
-- **Solução:** atualizar os dois, incluindo a permissão que o envio automático pede.
-- **Evitar:** atualizar a documentação na mesma fase da mudança.
-
 ### Histórico para de guardar após 50 rodadas, sem aviso (sem fase definida)
 - **Sintoma (visto no código):** a partir da 51ª, a resposta aparece na tela, mas não é salva.
 - **Causa:** `salvar_rodada` devolve vazio no limite e a rota não avisa.
 - **Solução:** avisar na tela.
+
+## Corrigido na fase 6 (27/11)
+
+### 10. CI não rodava os testes do frontend
+- **Solução:** `npm test` no job do frontend.
+- **Não confirmado no GitHub:** o CI só roda em Pull Request ou push na `main` (confirmar na fase 7).
+
+### 11. README e SECURITY desatualizados
+- **Solução:** atualizados a partir do código (chave de API, Sequenciar, link com o prompt, envio
+  automático, Já tenho um prompt, segurança, estrutura e rotas).
+- **Evitar:** atualizar a documentação na mesma fase da mudança.
 
 ## Corrigido na fase 5 (27/11): testado em Linux e conferido no Mac pelo dono
 

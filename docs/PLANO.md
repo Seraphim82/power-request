@@ -66,7 +66,7 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] Código e testes novos.
 - [x] Conferir no Mac.
 
-## [ ] Fase 5: Organizar prompt (item 8 e a tela)
+## [x] Fase 5: Organizar prompt (item 8 e a tela)
 - **Objetivo:** terminar a função.
 - **Tarefas:** reconhecer Contexto e Padrão à parte; depois criar a tela.
 - **Pronto quando:** gerar e organizar devolve os campos sem misturar.
@@ -82,6 +82,11 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - **Objetivo:** verificação e documentação fiéis ao app.
 - **Tarefas:** `npm test` no CI; atualizar README e SECURITY.
 - **Pronto quando:** o CI roda tudo e o README bate com o app.
+- **Decidido (27/11):** opção A: sem mudar quando o CI dispara; a confirmação no GitHub vem com o
+  Pull Request da fase 7, antes do merge.
+- [x] `npm test` no CI.
+- [x] README, SECURITY e CONTRIBUTING.
+- [ ] Confirmar o CI no GitHub (no Pull Request).
 
 ## [ ] Fase 7: versão
 - **Objetivo:** publicar uma versão marcada.
@@ -104,6 +109,12 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - **Fora:** liberar ferramentas ou arquivos no botão Enviar.
 
 ## Ajustes anotados, ainda sem fase (encaixar quando o dono decidir)
+- **Segurança (sugestão: antes da fase 7):** Claude local sem ferramentas e em pasta temporária
+  também no Testar Conexão, na revisão e na otimização, com teste novo.
+- Login OpenRouter: criar o botão ou remover a rota.
+- Conferir no Mac e corrigir a mensagem de permissão de Automação.
+- Alinhar a conferência de versão do Node (`Makefile`) com o que os testes exigem.
+- Trocar o texto do botão "Estruturar com IA" ou ligá-lo à IA.
 - No log, separar o motivo do envio automático não confirmado (aba errada, aba mudou ou falta de
   confirmação): hoje os três saem como `envio_nao_confirmado`.
 - Avaliar `--settings` do `agy` (visto na ajuda do 1.5.18, não testado) como segunda trava.
@@ -113,7 +124,6 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - Biblioteca: nova rodada com frases do dono e de quem testar (escrever antes um grupo
   inédito; há 115 pistas sem exemplo que as exercite); avaliar a IA ativa como opção; dividir texto ditado sem pontuação.
 - Organizar: revisar o limite de 8.000 caracteres (prompt grande do próprio app pode passar).
-- Fase 6: explicar no README a tela "Já tenho um prompt".
 - Avisar quando o histórico parar de guardar (50 rodadas).
 - Orientar sobre projeto grande: resposta acima de 24.000 e perda de contexto no Sequenciar.
 

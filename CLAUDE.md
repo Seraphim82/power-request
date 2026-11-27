@@ -7,7 +7,7 @@ App local (FastAPI + React/Vite), usado no macOS, que transforma uma ideia em um
 1. `docs/STATUS.md`: onde o projeto parou.
 2. `docs/PLANO.md`: qual é a fase da vez.
 3. `docs/ERROS.md`: problemas conhecidos e já resolvidos.
-4. `README.md`: como o app funciona (há trechos desatualizados, ver `docs/ERROS.md`).
+4. `README.md`: como o app funciona.
 
 Confira com `git status` e `git log --oneline -5` se o STATUS ainda bate com o repositório.
 Se não bater, avise antes de mexer.
