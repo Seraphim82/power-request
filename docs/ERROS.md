@@ -140,7 +140,7 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 
 ### 10. CI não rodava os testes do frontend
 - **Solução:** `npm test` no job do frontend.
-- **Não confirmado no GitHub:** o CI só roda em Pull Request ou push na `main` (confirmar na fase 7).
+- **Confirmado no GitHub (27/11):** `frontend` verde no Pull Request #1 e na `main` após o merge.
 
 ### 11. README e SECURITY desatualizados
 - **Solução:** atualizados a partir do código (chave de API, Sequenciar, link com o prompt, envio

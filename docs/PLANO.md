@@ -78,7 +78,7 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] Máximo de regras do Organizar de 20 para 50, sem mexer nos outros limites (OK do dono, 27/11).
 - [x] Conferir no Mac (27/11: prints e informação do dono; detalhes no `docs/STATUS.md`).
 
-## [ ] Fase 6: CI e documentos (itens 10 e 11)
+## [x] Fase 6: CI e documentos (itens 10 e 11)
 - **Objetivo:** verificação e documentação fiéis ao app.
 - **Tarefas:** `npm test` no CI; atualizar README e SECURITY.
 - **Pronto quando:** o CI roda tudo e o README bate com o app.
@@ -86,9 +86,9 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
   Pull Request da fase 7, antes do merge.
 - [x] `npm test` no CI.
 - [x] README, SECURITY e CONTRIBUTING.
-- [ ] Confirmar o CI no GitHub (no Pull Request).
+- [x] Confirmar o CI no GitHub (no Pull Request #1, 27/11).
 
-## [ ] Correção do Claude local (antes da fase 7, pedido do dono em 27/11)
+## [x] Correção do Claude local (antes da fase 7, pedido do dono em 27/11)
 - **Objetivo:** todo uso do Claude (Local) dentro do app sem ferramentas e em pasta temporária vazia.
 - **Decidido (27/11):** opção B: proteção num ponto único, com `--safe-mode`, `--tools ""`,
   `--strict-mcp-config` e `--disallowedTools "mcp__*"`; versão sem essas opções é bloqueada;
@@ -99,11 +99,11 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] Commit próprio, a pedido do dono (`3f32023`).
 - **Pronto quando:** a prova no Mac mostrar que gancho e ferramentas não rodam pelo app.
 
-## [ ] Fase 7: versão
+## [x] Fase 7: versão
 - **Decidido (27/11):** versão 2.1.0 (funções novas sem quebrar o que existia); merge por
   "Create a merge commit"; tag só depois do merge.
 - [x] Versão 2.1.0 no código e `CHANGELOG.md`.
-- [ ] Pull Request, CI verde (backend e frontend), merge com OK do dono, tag `v2.1.0`.
+- [x] Pull Request #1, CI verde (backend e frontend), merge pelo dono (`31b4277`), tag `v2.1.0` (27/11).
 - **Objetivo:** publicar uma versão marcada.
 - **Tarefas:** Pull Request e merge, tag, `CHANGELOG.md`. Para desfazer algo publicado,
   usar `git revert`.
