@@ -4,28 +4,26 @@ Atualizado em 27/11/2026.
 
 ## Onde parou
 
-- **Fases 1 a 4:** concluídas. Em 27/11, o registro do Git no Mac mostrou `origin/feat/organizar-prompt`
-  no mesmo commit da fase 4 (`a919e4e`), ou seja, enviadas.
-- **Fase 5 (Organizar prompt):** pronta e conferida no Mac em 27/11 (ver a seção da fase). Commit `38bea67` **enviado** ao GitHub
-  (branch `feat/organizar-prompt`).
-- **Correção do Antigravity (item 13 do ERROS):** no Mac, `make check` passou e o Antigravity ficou
-  online no app (informado pelo dono em 26/11). Aviso de ganchos, Enviar e Sequenciar conferidos
-  (ver Testes).
-- **`main`:** ainda sem merge (última anotação: parada no commit `b21ce46`).
+- **Fases 1 a 7:** concluídas. **Versão 2.1.0 publicada em 27/11.**
+- **Pull Request #1:** merge feito pelo dono em 27/11 (commit `31b4277`).
+- **Tag `v2.1.0`:** publicada pelo dono; aponta para `31b4277`.
+- **CI no GitHub:** verde. Conferido em 27/11 pela API pública do GitHub: no último commit do PR
+  (`1281e5c`), `backend`, `frontend`, as três análises CodeQL e o resultado do CodeQL com sucesso;
+  na `main` depois do merge (`31b4277`), `backend`, `frontend` e as três análises com sucesso.
+  Isso fecha a pendência da fase 6. Os alertas do CodeQL analisados no PR estão em `docs/ERROS.md`.
+- **Conferido em 27/11:** `main` local e do GitHub em `31b4277`, e a tag igual nos dois.
+- **Branches:** em 27/11 o dono apagou `feat/organizar-prompt`, `feat/envio-direto-site` e
+  `feat/evolucao-revisao-sequenciar-chatgpt`. Antes deste registro, só a `main` aparecia no Mac e no
+  GitHub, e os commits `1281e5c`, `33654cb` e `265133b` (os últimos conhecidos de cada uma) estão
+  na `main`.
 
 ## Próximo passo
 
-1. Fase 7 em andamento (27/11, OK do dono): versão **2.1.0** e `CHANGELOG.md` no código; falta
-   commit, push, Pull Request para a `main`, CI verde, merge (com OK do dono) e tag `v2.1.0`.
-2. Depois do merge: registrar aqui o CI confirmado, o merge e a tag.
+1. Levar este registro para a `main` (branch `docs/fechamento-2.1.0`, com Pull Request e CI).
+2. Decidir o destino de `teste-trava-agy/` e `teste-claude-protegido/`.
+3. Fase 8 (revisão de segurança), só com o OK do dono.
 
-- **Pull Request #1 aberto (27/11):** CI `backend` e `frontend` verdes, e as 3 análises CodeQL OK
-  (print do dono). O CodeQL apontou 7 alertas; correção do filtro de erros na revisão e na
-  otimização com teste novo; análise dos demais em `docs/ERROS.md`.
-- Correção do Claude local: commit `3f32023`. Fase 6 e essa correção foram enviadas ao GitHub
-  (push feito pelo dono em 27/11; `git status` sem "ahead").
-
-## Correção do Claude local (27/11/2026): conferida no Mac, sem commit
+## Correção do Claude local (27/11/2026): conferida no Mac, commit `3f32023`, na `main`
 
 - Todo uso do Claude (Local) dentro do app (Testar Conexão, revisão, otimização, Enviar e
   Sequenciar) passa por um ponto único: `-p --safe-mode --tools "" --strict-mcp-config
@@ -52,7 +50,7 @@ Atualizado em 27/11/2026.
   --disallowedTools mcp__*`. Um "continue" no Sequenciar deu tempo esgotado (600 s); o pedido
   "Resuma em 3 linhas" respondeu (ver ERROS). O código gerado pela IA não foi executado.
 
-## Fase 6 (27/11/2026): CI e documentos, commitada (não enviada)
+## Fase 6 (27/11/2026): CI e documentos, concluída
 
 - `npm test` no CI; README, SECURITY e CONTRIBUTING atualizados; ajuste de uma linha no `CLAUDE.md`.
 - Nenhum teste alterado.
@@ -60,7 +58,7 @@ Atualizado em 27/11/2026.
   `prompt_engine.py` do último commit): 401 testes de backend, 22 de frontend, tipos e build OK.
   Conferidos por script: links locais do README, rotas e arquivos `.py` do `backend/`.
 - O restante do texto foi conferido por leitura do código, não por uso do app.
-- **CI no GitHub: não confirmado** (opção A do dono: confirmar no Pull Request).
+- **CI no GitHub: confirmado** no Pull Request #1 (opção A do dono; ver "Onde parou").
 - O `prompt_engine.py`, alterado por engano (ver `docs/ERROS.md`), foi restaurado: conferido que está
   igual ao do último commit.
 - **No Mac (print do dono, 27/11):** `make check` passou: 401 testes de backend, 22 de frontend,
@@ -198,7 +196,6 @@ O aviso do npm sobre o script de instalação do `fsevents` não impediu nada; e
 
 ## Pendências soltas
 
-- A pasta `teste-trava-agy/` está fora do Git e não foi aberta. Não commitar sem revisar; decidir
-  se fica, sai do projeto ou entra no `.gitignore`.
+- `teste-trava-agy/` e `teste-claude-protegido/` (provas feitas no Mac) estão fora do Git, mas não
+  no `.gitignore`. Falta o dono decidir o destino. Não commitar sem revisar.
 - Testes de tela (Playwright) citados em anotações antigas não estão no repositório.
-- Nenhum Pull Request havia sido aberto até a última anotação (23/11); conferir no GitHub.
