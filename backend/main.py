@@ -37,7 +37,7 @@ MARCA_RESPOSTA_CORTADA = "\n\n[... resposta cortada pelo limite de tamanho ...]"
 def _resposta_para_historico(resultado: dict) -> str:
     return resultado["resposta"] + (MARCA_RESPOSTA_CORTADA if resultado.get("cortada") else "")
 
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 CONTEXTO_CHAVE = "contexto_fixo"
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 

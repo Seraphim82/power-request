@@ -95,11 +95,15 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
   3 testes antigos ajustados com autorização do dono (lista no `docs/ERROS.md`).
 - [x] Código e testes novos (em cópia em Linux, Claude simulado).
 - [x] Conferir no Mac: `make check` e prova com o Claude real, fora do app (dados falsos, 27/11).
-- [ ] Conferir no Mac: os cinco usos pelo app com o Claude real.
-- [ ] Commit próprio, a pedido do dono.
+- [x] Conferir no Mac: os cinco usos pelo app com o Claude real (27/11, prints do dono).
+- [x] Commit próprio, a pedido do dono (`3f32023`).
 - **Pronto quando:** a prova no Mac mostrar que gancho e ferramentas não rodam pelo app.
 
 ## [ ] Fase 7: versão
+- **Decidido (27/11):** versão 2.1.0 (funções novas sem quebrar o que existia); merge por
+  "Create a merge commit"; tag só depois do merge.
+- [x] Versão 2.1.0 no código e `CHANGELOG.md`.
+- [ ] Pull Request, CI verde (backend e frontend), merge com OK do dono, tag `v2.1.0`.
 - **Objetivo:** publicar uma versão marcada.
 - **Tarefas:** Pull Request e merge, tag, `CHANGELOG.md`. Para desfazer algo publicado,
   usar `git revert`.
@@ -122,6 +126,7 @@ Ideia do dono (26/11), a fazer em chat próprio.
 ## Ajustes anotados, ainda sem fase (encaixar quando o dono decidir)
 - Privacidade: avaliar `--no-session-persistence` no Claude local dentro do app, para o texto não
   ficar no histórico do Claude Code (achado em 27/11).
+- Sequenciar com "continue" estoura 600 s no Claude local (ver ERROS): orientar ou ajustar o tempo.
 - Testes: versão mínima do Python, ou ajustar o `monkeypatch` do `test_api_contract.py` (ver ERROS).
 - Login OpenRouter: criar o botão ou remover a rota.
 - Conferir no Mac e corrigir a mensagem de permissão de Automação.

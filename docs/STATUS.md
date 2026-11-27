@@ -15,9 +15,12 @@ Atualizado em 27/11/2026.
 
 ## Próximo passo
 
-1. Correção do Claude local: conferida no Mac; falta o commit próprio, quando o dono pedir.
-2. Só depois do OK do dono: fase 7 do `docs/PLANO.md` (confirmar o CI no Pull Request antes do merge).
-3. A fase 6 ainda não foi enviada (sem push).
+1. Fase 7 em andamento (27/11, OK do dono): versão **2.1.0** e `CHANGELOG.md` no código; falta
+   commit, push, Pull Request para a `main`, CI verde, merge (com OK do dono) e tag `v2.1.0`.
+2. Depois do merge: registrar aqui o CI confirmado, o merge e a tag.
+
+- Correção do Claude local: commit `3f32023`. Fase 6 e essa correção foram enviadas ao GitHub
+  (push feito pelo dono em 27/11; `git status` sem "ahead").
 
 ## Correção do Claude local (27/11/2026): conferida no Mac, sem commit
 
