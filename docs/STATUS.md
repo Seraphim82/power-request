@@ -19,9 +19,23 @@ Atualizado em 27/11/2026.
 
 ## Próximo passo
 
-1. Levar este registro para a `main` (branch `docs/fechamento-2.1.0`, com Pull Request e CI).
-2. Decidir o destino de `teste-trava-agy/` e `teste-claude-protegido/`.
-3. Fase 8 (revisão de segurança), só com o OK do dono.
+1. Versão 2.1.1 decidida pelo dono e colocada no código (27/11); ainda não publicada. Com o
+   número novo, o `make check` passou no Mac (print do dono): 435 testes de backend, 22 de
+   frontend, tipos e build. Falta publicar: Pull Request, CI, merge e tag. Os testes manuais
+   abaixo são de antes da troca do número.
+2. Fase 8 em andamento (27/11): revisão feita; duas falhas altas corrigidas com OK do dono (ver
+   ERROS). No Mac (prints do dono): 435 testes de backend; no `make check`, 22 de
+   frontend, tipos e build; os dois bloqueios responderam 403 e a pasta do teste não foi criada.
+   O Abrir no Terminal com prompt comum abriu o
+   Claude real com o texto (relato e print do dono). O histórico apareceu no app (relato do
+   dono). Em cópia em Linux (Python 3.13): 435 testes de backend
+   (423 antigos, nenhum alterado, e 12 novos), 22 de frontend, tipos e build OK; o servidor aberto
+   pelo `desktop_app.py` recusou alterações da porta 5173; `npm audit` e `pip-audit` sem vulnerabilidades conhecidas; busca por padrões de chave e token
+   no histórico do Git sem resultado. No Mac não foram feitos o teste do
+   servidor pelo `desktop_app.py`, as auditorias nem a busca no histórico do Git.
+
+- **Pull Request #2** (registro do fechamento): merge feito em 27/11 (`c13c48a`), com o CI verde no
+  PR e na `main`.
 
 ## Correção do Claude local (27/11/2026): conferida no Mac, commit `3f32023`, na `main`
 
@@ -196,6 +210,6 @@ O aviso do npm sobre o script de instalação do `fsevents` não impediu nada; e
 
 ## Pendências soltas
 
-- `teste-trava-agy/` e `teste-claude-protegido/` (provas feitas no Mac) estão fora do Git, mas não
-  no `.gitignore`. Falta o dono decidir o destino. Não commitar sem revisar.
+- `teste-trava-agy/` e `teste-claude-protegido/` (provas feitas no Mac): por decisão do dono
+  (27/11), ficam no Mac e entraram no `.gitignore`.
 - Testes de tela (Playwright) citados em anotações antigas não estão no repositório.

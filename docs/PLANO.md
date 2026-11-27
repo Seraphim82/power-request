@@ -113,6 +113,22 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - **Objetivo:** olhar de novo, em chat novo.
 - **Tarefas:** revisar o código e as proteções.
 - **Pronto quando:** relatório sem pendência crítica ou alta.
+- [x] Revisão do código e provas em cópia em Linux (27/11).
+- [x] Falhas altas (porta 5173 e prompt com "-"): corrigidas com teste novo, com OK do dono; em
+  cópia em Linux.
+- [x] Conferir os dois bloqueios no Mac (27/11, prints do dono).
+- [x] Confirmar no Mac o Abrir no Terminal com prompt comum (27/11, Claude real; dono).
+- [x] Confirmar no Mac que o histórico aparece no app (27/11, relato do dono).
+- [ ] Avaliar a origem `localhost` quando outro programa usa a mesma porta em IPv6 (ver ERROS).
+- [x] Decidido pelo dono (27/11): versão 2.1.1, porque a 2.1.0 publicada tem as falhas. Número
+  atualizado no código e no `CHANGELOG.md`.
+- [ ] Commit, Pull Request, CI, merge e tag `v2.1.1`.
+- [ ] Avaliar código de acesso nas rotas e o prompt de uma palavra só no Abrir no Terminal.
+- [ ] Itens baixos (ver `docs/ERROS.md`), cada correção com teste novo e só com OK: tirar
+  `testserver` da produção (há teste antigo que usa esse nome), limitar o corpo lido, restringir o
+  endereço do Ollama, não seguir redirecionamento com chave, limpar o erro 422, apagar de fato o
+  histórico, fixar as ações do CI e remover a rota do OpenRouter.
+- [ ] Conferências no Mac.
 
 ## Depois da fase 4: conversa completa na pasta do projeto do cliente
 Ideia do dono (26/11), a fazer em chat próprio.

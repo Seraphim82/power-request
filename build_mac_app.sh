@@ -19,7 +19,7 @@ cat << PLIST > "$APP_PATH/Contents/Info.plist"
     <key>CFBundleIdentifier</key>
     <string>br.com.seraphim.powerrequest</string>
     <key>CFBundleVersion</key>
-    <string>2.1.0</string>
+    <string>2.1.1</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleExecutable</key>

@@ -39,6 +39,7 @@ def wait_for_server(url: str, timeout: float = 10.0) -> bool:
 def main() -> None:
     port = find_free_port(8765)
     app.state.porta = port  # a proteção de origem aceita só a porta em uso
+    app.state.origens_dev = False  # no uso normal, a porta 5173 não é de confiança
     registro_local.ativar()
     url = f"http://127.0.0.1:{port}"
 

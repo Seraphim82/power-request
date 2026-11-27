@@ -761,8 +761,16 @@ class AIHubClient:
         binary_name, binary_path = self._resolve_local_binary(provider)
         if not binary_path:
             raise AIHubError(f"{spec['nome']} não foi encontrado neste computador.")
-        destino = self.validar_pasta_terminal(pasta)
         modo = spec["terminal_mode"]
+        # Como argumento, um texto que começa com "-" seria lido pelo programa como opção
+        # (ex.: uma que desliga os pedidos de permissão). Recusa antes de criar qualquer coisa.
+        if modo == "argumento" and texto.startswith("-"):
+            raise AIHubSecurityError(
+                'Por segurança, o Abrir no Terminal não aceita um prompt que começa com "-", porque '
+                "o programa poderia entender o texto como um comando dele. Apague o \"-\" do começo "
+                "ou escreva uma frase antes."
+            )
+        destino = self.validar_pasta_terminal(pasta)
 
         env_path = _build_search_path()
         if modo == "area_de_transferencia":

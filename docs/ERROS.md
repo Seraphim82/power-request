@@ -3,7 +3,72 @@
 Formato: sintoma, causa, solução e como evitar. Nunca colar aqui chave, prompt, resposta ou dado de cliente.
 Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi resolvido na fase 1).
 
+## Corrigido na fase 8 (27/11): gravidade ALTA, testado em Linux e conferido no Mac em parte
+
+**No Mac (prints do dono, 27/11):** 435 testes de backend passaram; no app, `curl` com origem
+`localhost:5173` recebeu 403 (rota que não altera dados) e o prompt `-teste` no Abrir no Terminal
+recebeu 403, sem criar a pasta. Leitura (CORS) e demais ações: só nos testes automáticos. Uso
+normal: o Abrir no Terminal com prompt comum abriu o Claude real com o texto (relato e print do
+dono). O histórico apareceu no app (relato do dono).
+
+Atinge a versão 2.1.0 publicada. As duas falhas se somavam: uma página na porta 5173 podia abrir o
+Terminal com uma opção do Claude escolhida por ela. Reproduzido com Claude e envio falsos. Não foi
+testado se o Claude real executaria um comando por essas opções.
+
+### O app em uso normal confiava na porta 5173 (desenvolvimento)
+- **Causa:** as origens do Vite valiam sempre; dava para ler o histórico, alterar e apagar dados e
+  chamar o envio automático e o Abrir no Terminal.
+- **Solução:** o `desktop_app.py` (`make run` e `.app`) desliga essas origens, nas alterações e na
+  leitura (CORS). No `make dev` continuam valendo.
+- **Limite:** quem subir a API sem o `desktop_app.py` continua aceitando a porta 5173.
+
+### Abrir no Terminal: prompt começando com "-" virava opção do Claude
+- **Causa:** o prompt é passado como argumento, sem separação.
+- **Solução:** prompt que começa com "-" é recusado (403) antes de criar pasta ou arquivo. Um `--`
+  mudaria a linha que um teste antigo exige.
+- **Evitar:** teste novo em `backend/tests/test_fase8_seguranca.py`.
+
+### Teste que troca valor do `app.state` (aprendido ao criar os testes da fase 8)
+- Com pytest 9.2, `monkeypatch.setattr` em `app.state` apaga o valor ao desfazer. Usar
+  `monkeypatch.setitem(main.app.state._state, ...)`.
+- `test_script_gerado_entrega_prompt_intacto_e_apaga_temporarios` falha se sobrarem pastas
+  `power-request-term-*` de execuções anteriores na pasta temporária (visto em Linux).
+
 ## Em aberto
+
+### Fase 8, revisão de segurança (27/11): itens de gravidade baixa
+Conferidos sobre o código da `main` (`c13c48a`), em cópia em Linux, com dados e programas falsos.
+Estes itens não foram corrigidos.
+- **`localhost` na mesma porta, em IPv6** (visto no Mac e no código, risco não reproduzido): o app
+  escuta só em `127.0.0.1`, mas aceita a origem `http://localhost:<porta>`. No Mac, outro programa
+  escutava em `[::1]:8765`; `localhost` pode levar a ele, e uma página servida por ele seria aceita.
+  Avaliar aceitar só `127.0.0.1` ou escolher porta livre nos dois endereços.
+- **Sem senha nas rotas** (visto no código, limite do desenho): um programa no computador que acesse
+  o servidor pode chamá-lo sem informar origem. Avaliar um código de acesso.
+- **Abrir no Terminal com uma palavra só** (não testado): um prompt igual ao nome de um subcomando
+  do Claude (ex.: `update`) pode ser entendido como comando.
+- **Nome `testserver` aceito fora dos testes** (reproduzido): está em `ALLOWED_HOSTS`.
+- **Limite de 1 MB depende do `Content-Length`** (reproduzido): 3 MB enviados em partes passaram.
+- **Endereço do Ollama pouco restrito** (reproduzido na validação): aceita outra porta local,
+  caminho e consulta próprios, e um nome com `\` antes de `@localhost`. Neste último, o programa
+  tentou resolver o texto inteiro como nome (resolução bloqueada na prova); não vi conexão externa.
+- **Redirecionamento leva o cabeçalho da chave** (comportamento do `urllib`, reproduzido entre dois
+  servidores locais falsos). No app, as chaves vão para endereços HTTPS fixos; o Ollama não usa chave.
+- **Erro 422 devolve o que foi enviado**, inclusive um campo de chave, a quem fez a chamada
+  (reproduzido). O log do app não grava o corpo.
+- **Apagar o histórico** (visto no código): o banco não liga `secure_delete` nem roda `VACUUM`;
+  não testei se o texto apagado continua no arquivo.
+- **CI** (visto no código): ações fixadas por versão (`@v4`, `@v5`), não pelo commit.
+- **Login OpenRouter:** a tela não chama a rota. Não vi a rota guardar a chave; ela a devolve a
+  quem chamou. Recomendação: remover a rota e a linha do README, mantendo a função e seus testes
+  (nenhum teste que encontrei chama a rota). Chave de API do OpenRouter não muda.
+
+### CodeQL revisto na fase 8 (27/11)
+- **#13:** confirmo falso positivo pelo código: o log recebe método, modelo da rota, código e o
+  status do envio, e filtra os caracteres.
+- **#19:** confirmo que é só em teste; em produção o host é comparado por inteiro.
+- **#14 a #18:** os dois textos passam por `mensagem_publica`; o teste da correção passa.
+- A situação atual dos alertas no painel do GitHub não foi conferida.
 
 ### Claude local usa ferramentas no Testar Conexão, na revisão e na otimização (SEGURANÇA, achado na fase 6)
 - **Causa (visto no código, não reproduzido):** `testar_conexao`, `revisar_com_ia` e `otimizar_prompt_com_ia`
