@@ -19,6 +19,9 @@ Atualizado em 27/11/2026.
    commit, push, Pull Request para a `main`, CI verde, merge (com OK do dono) e tag `v2.1.0`.
 2. Depois do merge: registrar aqui o CI confirmado, o merge e a tag.
 
+- **Pull Request #1 aberto (27/11):** CI `backend` e `frontend` verdes, e as 3 análises CodeQL OK
+  (print do dono). O CodeQL apontou 7 alertas; correção do filtro de erros na revisão e na
+  otimização com teste novo; análise dos demais em `docs/ERROS.md`.
 - Correção do Claude local: commit `3f32023`. Fase 6 e essa correção foram enviadas ao GitHub
   (push feito pelo dono em 27/11; `git status` sem "ahead").
 

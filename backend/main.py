@@ -310,7 +310,7 @@ def revisar_pedido(req: PayloadRequest):
             except AIHubError as exc:
                 return {
                     **revisao_local,
-                    "dica_extra": f"IA indisponível, usei a revisão local. Motivo: {exc}"[:400],
+                    "dica_extra": f"IA indisponível, usei a revisão local. Motivo: {mensagem_publica(exc)}"[:400],
                     "revisado_por": "Motor Local (IA indisponível)",
                 }
 
@@ -342,7 +342,7 @@ def gerar_prompt(req: PayloadRequest):
                 resultado = {
                     **base,
                     "gerado_por": "Motor Local (IA indisponível)",
-                    "aviso": f"Não foi possível otimizar com a IA: {exc}"[:400],
+                    "aviso": f"Não foi possível otimizar com a IA: {mensagem_publica(exc)}"[:400],
                 }
         if resultado is None:
             resultado = {

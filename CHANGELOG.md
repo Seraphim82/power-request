@@ -32,6 +32,7 @@ seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
   aceite quando há ganchos globais. O Gemini CLI fica só no Abrir no Terminal.
 - O servidor compara a origem inteira (protocolo, nome e porta).
 - O envio automático confere a aba antes de colar e de enviar.
+- Revisão e otimização com IA: o motivo da falha passa pelo filtro de mensagens (sem caminhos de pasta).
 - Pasta de dados com permissão 700; banco e log com 600 (não é criptografia).
 - Filtro anti-injeção deixou de bloquear texto comum como "Linguagem JavaScript: Node".
 

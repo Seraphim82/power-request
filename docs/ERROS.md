@@ -116,6 +116,26 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Causa:** `salvar_rodada` devolve vazio no limite e a rota não avisa.
 - **Solução:** avisar na tela.
 
+## Corrigido na fase 7 (27/11): alertas do CodeQL no Pull Request #1
+
+### Motivo do erro da IA ia para a tela sem filtro (CodeQL #14 a #18)
+- **Causa:** na revisão e na otimização com IA, quando a IA falhava, o texto do erro entrava em
+  `dica_extra` e `aviso` sem passar por `mensagem_publica` (podia mostrar caminho de pasta).
+- **Solução:** os dois textos passam por `mensagem_publica`. Teste novo:
+  `backend/tests/test_erro_ia_filtrado.py` (falha sem a correção, conferido em cópia em Linux).
+- **Limite:** o CodeQL pode continuar apontando, porque não reconhece o filtro; aí o alerta é
+  dispensado com justificativa. Os 5 alertas vêm da mesma origem, porque as rotas usam a mesma
+  função auxiliar (`_run_domain_action`).
+
+### Alertas dispensados por análise (falso positivo ou só em teste)
+- **#13 "Clear-text logging" (High):** o caminho do CodeQL começa na rota de login do OpenRouter
+  e chega ao log do envio automático pela função auxiliar comum. Na prática o log grava só o
+  status fixo do envio. A rota do OpenRouter segue sem uso na tela (item já anotado acima).
+- **#19 "Incomplete URL substring sanitization" (High, teste):** só no teste; o código de
+  produção compara o host inteiro (`envio_automatico._host_ok`).
+- **Check "Code scanning results / CodeQL" com "1 configuration not found":** não obrigatório;
+  causa não confirmada.
+
 ## Corrigido na fase 6 (27/11)
 
 ### 10. CI não rodava os testes do frontend
