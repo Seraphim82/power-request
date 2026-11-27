@@ -6,6 +6,7 @@ import re
 import unicodedata
 from typing import Any
 
+import classificador_texto
 from ai_hub import MAX_SEND_PROMPT_CHARS
 
 
@@ -719,13 +720,17 @@ class PowerRequestEngine:
             "pendencias": pendencias,
         }
 
+    # Textos que o próprio app escreve no prompt; o Organizar não os trata como resposta da pessoa.
+    TEXTO_ERROS_PADRAO = "Validar entradas e retornar mensagens claras sem quebrar a execução."
+    TEXTO_PADRAO = "Código limpo, tipado, documentado e acompanhado de testes automatizados."
+
     def gerar_prompt_final(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Regra 4: Gera o prompt compactado, estruturado e pronto para copiar e colar."""
         limpo = self.validar_sequencia(payload)
         regras_md = "\n".join(f"- {r}" for r in limpo["regras"])
         erros_md = (
             limpo["tratamento_erros"]
-            or "Validar entradas e retornar mensagens claras sem quebrar a execução."
+            or self.TEXTO_ERROS_PADRAO
         )
 
         contexto_md = (
@@ -740,7 +745,7 @@ class PowerRequestEngine:
             f"### Output\n{limpo['saida']}\n\n"
             f"### Regras\n{regras_md}\n\n"
             f"### Erros e Edge Cases\n{erros_md}\n\n"
-            f"### Padrão\nCódigo limpo, tipado, documentado e acompanhado de testes automatizados."
+            f"### Padrão\n{self.TEXTO_PADRAO}"
         )
 
         tokens_estimados = max(1, int(len(prompt.split()) * 1.35))
@@ -846,6 +851,11 @@ class PowerRequestEngine:
 
     # ---------- Organizar um prompt que a pessoa já escreveu ----------
     MAX_TEXTO_ORGANIZAR = 8000
+    MAX_REGRAS_ORGANIZAR = 50
+    NOMES_NA_TELA = {
+        "objetivo": "Objetivo", "stack": "Tecnologia", "entrada": "O que entra",
+        "saida": "O que sai", "regras": "Regras", "tratamento_erros": "Erros",
+    }
     ORDEM_CAMPOS = ["objetivo", "stack", "entrada", "saida", "regras", "tratamento_erros"]
 
     # Títulos reconhecidos (sem acento, minúsculos) -> campo do app.
@@ -866,15 +876,53 @@ class PowerRequestEngine:
         "erros e edge cases": "tratamento_erros", "edge cases": "tratamento_erros",
         "casos de borda": "tratamento_erros", "excecoes": "tratamento_erros", "falhas": "tratamento_erros",
     }
-    TECNOLOGIAS = [
-        "Python", "FastAPI", "Django", "Flask", "Node.js", "Express", "TypeScript", "JavaScript",
-        "React Native", "React", "Next.js", "Vue", "Angular", "Flutter", "Dart", "SwiftUI", "Swift",
-        "Kotlin", "Jetpack Compose", "Java", "PHP", "Laravel", "WordPress", "C#", ".NET", "Go", "Rust",
-        "SQLite", "PostgreSQL", "MySQL", "MongoDB", "Firebase", "Supabase", "Godot", "Unity",
-        "HTML", "CSS", "Tailwind", "Pandas", "Selenium", "Playwright", "AppleScript", "Excel VBA",
-        "Google Apps Script", "WhatsApp Cloud API", "Evolution API", "Telegram Bot API",
-    ]
     _RE_MARCADOR = re.compile(r"^\s*(?:[-*•]|\d{1,2}[.)])\s+")
+
+    # Contexto fixo no formato do app: do começo do texto até o ÚLTIMO "### Objetivo".
+    _RE_CONTEXTO_APP = re.compile(r"\A### Contexto\n(?P<contexto>.*)\n\n(?=### Objetivo\n)", re.DOTALL)
+    # Corpo exatamente como o gerar_prompt_final escreve (sem o Contexto).
+    _SECOES_APP = (
+        ("objetivo", "Objetivo"), ("stack", "Stack"), ("entrada", "Input"), ("saida", "Output"),
+        ("regras", "Regras"), ("tratamento_erros", "Erros e Edge Cases"),
+    )
+    _RE_CORPO_APP = re.compile(
+        r"\A"
+        + "".join(rf"### {titulo}\n(?P<{campo}>.*?)\n\n" for campo, titulo in _SECOES_APP)
+        + r"### Padrão\n"
+        + re.escape(TEXTO_PADRAO)
+        + r"\Z",
+        re.DOTALL,
+    )
+
+    def _separar_contexto(self, texto: str) -> tuple[str, str]:
+        """Devolve (contexto, restante). Só separa o Contexto no formato gerado pelo app."""
+        achado = self._RE_CONTEXTO_APP.match(texto)
+        if not achado:
+            return "", texto
+        return achado["contexto"].strip(), texto[achado.end():]
+
+    def _ler_formato_do_app(self, texto: str) -> dict[str, str] | None:
+        """Se o texto é um prompt gerado pelo app, devolve cada seção inteira, sem reinterpretar."""
+        achado = self._RE_CORPO_APP.match(texto)
+        if not achado:
+            return None
+        secoes = {campo: valor.strip() for campo, valor in achado.groupdict().items()}
+        titulos = {f"### {t}" for _, t in self._SECOES_APP} | {"### Padrão"}
+        # Título repetido dentro de uma seção deixa a divisão ambígua: usa a leitura comum.
+        if any(linha in titulos for v in secoes.values() for linha in v.splitlines()):
+            return None
+        return secoes
+
+    @staticmethod
+    def _regras_do_app(bloco: str) -> list[str]:
+        """No formato do app, cada '- ' é uma regra; linhas seguintes continuam a mesma."""
+        regras: list[str] = []
+        for linha in bloco.splitlines():
+            if linha.startswith("- ") or not regras:
+                regras.append(linha.removeprefix("- ").strip())
+            elif linha.strip():
+                regras[-1] += " " + linha.strip()
+        return regras
 
     @staticmethod
     def _normalizar(texto: str) -> str:
@@ -901,8 +949,9 @@ class PowerRequestEngine:
 
     def _detectar_tecnologias(self, texto: str) -> list[str]:
         achadas: list[str] = []
-        for tec in self.TECNOLOGIAS:
-            padrao = r"(?<![\w.])" + re.escape(tec) + r"(?![\w])"
+        for tec, apelidos in classificador_texto.TECNOLOGIAS:
+            formas = "|".join(re.escape(f) for f in (tec, *apelidos))
+            padrao = rf"(?<![\w.])(?:{formas})(?![\w+#])"
             if re.search(padrao, texto, flags=re.IGNORECASE) and not any(
                 tec.lower() in a.lower() for a in achadas
             ):
@@ -920,7 +969,7 @@ class PowerRequestEngine:
         return itens
 
     def _classificar_texto_corrido(self, texto: str, campos: dict[str, Any]) -> None:
-        """Sem títulos: separa marcadores (viram regras) e frases (por palavras-pista)."""
+        """Sem títulos: marcadores viram regras; cada frase é classificada pela biblioteca regras_prompt."""
         prosa: list[str] = []
         for linha in texto.splitlines():
             if self._RE_MARCADOR.match(linha):
@@ -928,23 +977,57 @@ class PowerRequestEngine:
             elif linha.strip():
                 prosa.append(linha.strip())
         frases = [f.strip() for f in re.split(r"(?<=[.!?])\s+|\n", " ".join(prosa)) if f.strip()]
-        pistas = [
-            ("tratamento_erros", ["se der erro", "se falhar", "em caso de erro", "caso de erro", "se o arquivo nao", "se nao encontrar", "se faltar", "erro"]),
-            ("entrada", ["recebe", "a entrada", "o usuario envia", "o usuario digita", "vou enviar", "a partir de", "le um", "le os", "ler um", "ler os", "importa"]),
-            ("saida", ["deve gerar", "deve retornar", "retorne", "devolva", "a saida", "o resultado", "gerar um", "gere um", "exportar", "salvar em", "mostrar na tela", "deve mostrar"]),
-            ("regras", ["nao deve", "nunca", "sempre", "obrigatorio", "precisa ter", "nao pode", "sem usar"]),
-        ]
         sobras: list[str] = []
         for frase in frases:
-            norm = self._normalizar(frase)
-            destino = next((c for c, chaves in pistas if any(k in norm for k in chaves)), None)
+            destino = classificador_texto.classificar_frase(frase)
             if destino == "regras":
                 campos["regras"].append(frase)
-            elif destino:
+            elif destino and destino != "objetivo":
                 campos[destino] = (campos[destino] + " " + frase).strip()
             else:
                 sobras.append(frase)
         campos["objetivo"] = (" ".join(sobras) + " " + campos["objetivo"]).strip()
+
+    def _aplicar_limites(self, campos: dict[str, Any]) -> tuple[list[str], list[dict[str, str]]]:
+        """Corta o que passa dos limites. Nada some sem aviso: devolve (avisos, ficou_de_fora)."""
+        limite = self.MAX_FIELD_LENGTH
+        avisos: list[str] = []
+        fora: list[dict[str, str]] = []
+
+        for c in self.ORDEM_CAMPOS:
+            if c != "regras" and len(campos[c]) > limite:
+                nome = self.NOMES_NA_TELA[c]
+                fora.append({"campo": c, "titulo": f"Final do campo {nome}", "texto": campos[c][limite:].strip()})
+                campos[c] = campos[c][:limite].rstrip()
+                avisos.append(f"O campo '{nome}' passou de {limite} caracteres e foi cortado.")
+
+        regras: list[str] = []
+        excedentes: list[str] = []
+        longas = 0
+        for inteira in dict.fromkeys(r.strip() for r in campos["regras"] if r.strip()):
+            curta = inteira[:limite].rstrip()
+            if curta not in regras and len(regras) >= self.MAX_REGRAS_ORGANIZAR:
+                excedentes.append(inteira)
+                continue
+            if len(inteira) > limite:
+                longas += 1
+                fora.append({"campo": "regras", "titulo": "Final de uma regra comprida", "texto": inteira[limite:].strip()})
+            if curta not in regras:
+                regras.append(curta)
+        campos["regras"] = regras
+
+        if longas:
+            avisos.append(f"Regras cortadas por passarem de {limite} caracteres: {longas}.")
+        if excedentes:
+            avisos.append(
+                f"O Organizar leva no máximo {self.MAX_REGRAS_ORGANIZAR} regras. "
+                f"Regras que ficaram de fora: {len(excedentes)}."
+            )
+            fora.extend(
+                {"campo": "regras", "titulo": f"Regra que não coube ({n})", "texto": r}
+                for n, r in enumerate(excedentes, 1)
+            )
+        return avisos, fora
 
     def organizar_prompt(self, texto: str) -> dict[str, Any]:
         """Lê um prompt escrito livremente, encaixa nos campos do app e pergunta o que falta."""
@@ -965,54 +1048,65 @@ class PowerRequestEngine:
         campos["regras"] = []
         encontrados: list[str] = []
 
-        # 1) Texto com títulos: cada bloco vai para o campo do título.
-        blocos: list[tuple[str | None, list[str]]] = [(None, [])]
-        for linha in bruto.splitlines():
-            titulo = self._titulo_da_linha(linha)
-            if titulo:
-                blocos.append((titulo[0], [titulo[1]] if titulo[1] else []))
-            else:
-                blocos[-1][1].append(linha)
-        com_titulo = [b for b in blocos if b[0]]
-        if com_titulo:
-            preambulo = "\n".join(blocos[0][1]).strip()
-            if preambulo:
-                campos["objetivo"] = preambulo
-            for campo, linhas in com_titulo:
-                conteudo = "\n".join(linhas).strip()
-                if not conteudo:
-                    continue
+        # O Contexto fica à parte: não entra em nenhum campo nem na detecção de tecnologia.
+        sem_espaco_no_fim = "\n".join(linha.rstrip() for linha in bruto.split("\n"))
+        contexto, corpo = self._separar_contexto(sem_espaco_no_fim)
+        secoes_app = self._ler_formato_do_app(corpo)
+
+        # 1) Prompt do próprio app: cada seção vai direto para o seu campo.
+        if secoes_app:
+            for campo, conteudo in secoes_app.items():
                 if campo == "regras":
-                    campos["regras"].extend(self._linhas_em_regras(conteudo))
+                    campos["regras"] = self._regras_do_app(conteudo)
                 else:
-                    junto = " ".join(l.strip() for l in conteudo.splitlines() if l.strip())
-                    campos[campo] = (campos[campo] + " " + junto).strip()
-                if campo not in encontrados:
-                    encontrados.append(campo)
+                    campos[campo] = " ".join(l.strip() for l in conteudo.splitlines() if l.strip())
+                encontrados.append(campo)
             modo = "titulos"
         else:
-            self._classificar_texto_corrido(bruto, campos)
-            modo = "texto_corrido"
+            # Texto com títulos: cada bloco vai para o campo do título.
+            blocos: list[tuple[str | None, list[str]]] = [(None, [])]
+            for linha in corpo.splitlines():
+                titulo = self._titulo_da_linha(linha)
+                if titulo:
+                    blocos.append((titulo[0], [titulo[1]] if titulo[1] else []))
+                else:
+                    blocos[-1][1].append(linha)
+            com_titulo = [b for b in blocos if b[0]]
+            if com_titulo:
+                preambulo = "\n".join(blocos[0][1]).strip()
+                if preambulo:
+                    campos["objetivo"] = preambulo
+                for campo, linhas in com_titulo:
+                    conteudo = "\n".join(linhas).strip()
+                    if not conteudo:
+                        continue
+                    if campo == "regras":
+                        campos["regras"].extend(self._linhas_em_regras(conteudo))
+                    else:
+                        junto = " ".join(l.strip() for l in conteudo.splitlines() if l.strip())
+                        campos[campo] = (campos[campo] + " " + junto).strip()
+                    if campo not in encontrados:
+                        encontrados.append(campo)
+                modo = "titulos"
+            else:
+                self._classificar_texto_corrido(corpo, campos)
+                modo = "texto_corrido"
+
+        # Frases que o app escreve sozinho não contam como resposta da pessoa.
+        campos["regras"] = [r for r in campos["regras"] if r.strip() != self.TEXTO_PADRAO]
+        if campos["tratamento_erros"].strip() == self.TEXTO_ERROS_PADRAO:
+            campos["tratamento_erros"] = ""
+            if "tratamento_erros" in encontrados:
+                encontrados.remove("tratamento_erros")
 
         # 2) Stack: se não veio, procura tecnologias citadas em qualquer parte.
         if not campos["stack"]:
-            tecs = self._detectar_tecnologias(bruto)
+            tecs = self._detectar_tecnologias(corpo)
             if tecs:
                 campos["stack"] = " + ".join(tecs)
 
-        # 3) Limpeza e limites (sem perder conteúdo: avisa se cortou).
-        avisos: list[str] = []
-        for c in self.ORDEM_CAMPOS:
-            if c == "regras":
-                vistos: list[str] = []
-                for r in campos["regras"]:
-                    r = r.strip()[: self.MAX_FIELD_LENGTH]
-                    if r and r not in vistos:
-                        vistos.append(r)
-                campos["regras"] = vistos[:20]
-            elif len(campos[c]) > self.MAX_FIELD_LENGTH:
-                campos[c] = campos[c][: self.MAX_FIELD_LENGTH].rstrip()
-                avisos.append(f"O campo '{c}' passou de {self.MAX_FIELD_LENGTH} caracteres e foi cortado.")
+        # 3) Limpeza e limites (o que for cortado volta em "ficou_de_fora").
+        avisos, ficou_de_fora = self._aplicar_limites(campos)
         if modo == "texto_corrido":
             encontrados = [
                 c for c in self.ORDEM_CAMPOS if (campos[c] if c != "regras" else campos["regras"])
@@ -1021,7 +1115,7 @@ class PowerRequestEngine:
             encontrados.append("stack")
 
         # 4) Perguntas para o que falta ou está vago.
-        categoria = self._detectar_categoria(bruto)
+        categoria = self._detectar_categoria(corpo)
         guia = self.BASE_EDUCACIONAL[categoria]["guia_campos"]
         perguntas: list[dict[str, Any]] = []
 
@@ -1069,6 +1163,7 @@ class PowerRequestEngine:
         nota = max(40, 100 - 15 * (len(perguntas) + len(incoerencias)))
         return {
             "campos": campos,
+            "contexto": contexto,
             "categoria_sugerida": self.CATEGORIA_UI[categoria],
             "modo_leitura": modo,
             "campos_encontrados": encontrados,
@@ -1076,5 +1171,6 @@ class PowerRequestEngine:
             "incoerencias": incoerencias,
             "nota_previa": nota,
             "avisos": avisos,
+            "ficou_de_fora": ficou_de_fora,
         }
 

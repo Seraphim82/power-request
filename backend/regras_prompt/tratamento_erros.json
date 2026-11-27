@@ -1,0 +1,42 @@
+{
+  "campo": "tratamento_erros",
+  "descricao": "O que fazer quando algo falha, falta ou vem errado. Precisa citar a falha, não só um 'se'.",
+  "fortes": [
+    "^{se|caso|quando|na hipotese de|sempre que} ..10 {falt*|falh*|der erro|de erro|dando erro|erro|errad*|invalid*|incorret*|incomplet*|vazi*|duplicad*|repetid*|corrompid*|danificad*|ilegivel|inexistente|negativ*|acima do limite|fora do ar|offline|sem internet|sem conexao|sem sinal|cair|caiu|travar|travou|expirar|expirad*|lotar|lotad*|esgotad*|ocupad*|indisponivel|acabar o espaco|sem estoque|sem saldo|esquec*|desistir|cancelar no meio|nao conseguir|nao conseguirem}",
+    "^{se|caso|quando|na hipotese de|sempre que} ..10 nao {existir|existe|encontrar|encontrado|encontrada|encontrou|achar|achado|entender|entende|entendeu|carregar|carrega|carregou|abrir|abre|abriu|responder|responde|salvar|enviar|funcionar|reconhecer|reconhece|bater|conferir|tiver|houver|for possivel|der certo|for encontrado|for valido|for aceito|passar}",
+    "^{se|caso|quando|na hipotese de|sempre que} ..10 {ja tiver dono|ja estiver|ja existir|ja foi usado|ja foi cadastrado|ja estiver cadastrado|ja estiver reservado|ja estiver em uso}",
+    "^{em caso de|no caso de|na falta de|havendo|ocorrendo} ..4 {falt*|falh*|der erro|de erro|dando erro|erro|errad*|invalid*|incorret*|incomplet*|vazi*|duplicad*|repetid*|corrompid*|danificad*|ilegivel|inexistente|negativ*|acima do limite|fora do ar|offline|sem internet|sem conexao|sem sinal|cair|caiu|travar|travou|expirar|expirad*|lotar|lotad*|esgotad*|ocupad*|indisponivel|acabar o espaco|sem estoque|sem saldo|esquec*|desistir|cancelar no meio|nao conseguir|nao conseguirem|voto|falha|problema|queda|duplicidade}",
+    "^{erro|erros|falha|falhas|em erro} {de|ao|no|na|devem|deve|precisam}",
+    "{se der erro|se der problema|se der errado|se algo der errado|se alguma coisa der errado|se nao der certo|caso de erro|em caso de erro|em caso de falha|quando der erro|quando falhar|se falhar}",
+    "^{tratar|trate|trata} ..3 {erro|erros|excecao|excecoes|falha|falhas}",
+    "{mensagem de erro|mensagens de erro|tratamento de erro|tratamento de erros}",
+    "^{dados|campos|valores|arquivos|entradas} {invalidos|invalidas|incorretos|vazios|corrompidos|incompletos} {devem|sao|serao|precisam}",
+    "^{se|caso|quando} ..10 {errar|errei|errou|errarem|vier errad*|vierem errad*|encher|enche|encheu|lotar|desistir|desiste|desistiu|sumir|sumiu|perder|perdeu|atrasar demais|der ruim|quebrar|quebrou|bugar}",
+    "^{se|caso|quando} ..10 nao {leia|ler|le|lido|suba|subir|sobe|subiu|va|ir|foi|chegar|chega|chegou|conectar|conecta|conectou|imprimir|imprime|sincronizar|sincroniza|processar|processa|gravar|grava|gerar|gera|aparecer|aparece|atualizar|atualiza|baixar|baixa|funcione|abra|carregue|exista|encontre|ache|entenda|responda|salve|reconheca|bata|passe|consiga|conseguir}",
+    "^{se|caso|quando} ..10 ja {exista|existir|esteja|estiver|tenha|tiver|foi}",
+    "^{se|caso|quando} ..12 {nao aceita|nao aceitar|recusa|recusar|rejeita|rejeitar|nao deixa|nao deixar|nao salva|nao salvar|nao grava|nao gravar|tentar de novo|tenta de novo|tentar novamente|corrigir|lista de espera|mensagem de erro|avisa o erro}",
+    "^{se|caso|quando} ..10 {errar|errei|errou|escrever errado|escrevi errado|escreveu errado|digitar errado|digitei errado|colocar errado|coloquei errado|botar errado|botei errado|apertar errado|apertei errado|clicar errado|apagar sem querer|apaguei sem querer|apagou sem querer|sumir|sumiu|perder|perdi|perdeu|esquecer|esqueci|esqueceu|travar|travou|desligar|desligou|descarregar|descarregou|acabar a bateria|acabar a internet|ficar sem internet|cair a internet|dar pau|dar defeito|der pau|der defeito|der ruim|nao der certo|bugar|bugou|fechar sozinho|fechou sozinho|trocar de celular|trocar de aparelho|quebrar|quebrou|nao vier|nao aparecer|nao pagar|nao pagou|nao responder|nao atender|nao confirmar|desmarcar|desmarcou|cancelar|cancelou|desistir|desistiu|atrasar|atrasou|faltar|faltou|repetir|repetido|duas vezes}",
+    "^{se|caso|quando|e se} ..8 nao {apertar|apertou|vier|veio|for|foi|buscar|buscou|pagar|pagou|responder|respondeu|confirmar|confirmou|aparecer|apareceu|entregar|entregou|chegar|chegou|conseguir|conseguiu|der|deu|pegar|funcionar|funcionou|salvar|salvou|marcar|marcou|avisar|avisou|vai|vem}",
+    "^{se|caso|quando} ..8 {avisar|avisa|falar|fala|disser|diz} que {nao vai|nao vem|nao pode|nao quer|desistiu|vai atrasar|cancelou}",
+    "^{se|caso|quando} ..12 {quero poder arrumar|poder arrumar|poder consertar|poder corrigir|dar pra arrumar|dar pra corrigir|volta atras|voltar atras|desfazer|toca de novo|avisa de novo|tenta de novo|que fique marcado|fica marcado|tira da lista|risca da lista}",
+    "^{se|caso} {eu|a gente|a pessoa|alguem|o cliente|a cliente|ela|ele} {errar|esquecer|apagar sem querer|se confundir|se enganar|fizer errado|fizer besteira}",
+    "{se eu|caso eu|quando eu} ..3 {errar|me enganar|me confundir|fizer besteira|fizer errado|apertar errado}",
+    "{poder|conseguir|dar pra|da pra} {arrumar|consertar|corrigir|desfazer|voltar atras} ..4 {erro|errado|sem querer|engano}",
+    "{apaguei|apagar|apagou|excluir|exclui|excluiu|deletei|deletar} {sem querer|por engano|errado}",
+    "{toca|avisa|manda|tenta} {de novo|outra vez|novamente} {se|caso|quando} ..6 {nao}",
+    "^{se|caso|quando} ..10 {numero errado|telefone errado|nome errado|valor errado|data errada|endereco errado|senha errada|foto errada|em branco|faltando alguma coisa|faltando algo}",
+    "{se|caso|quando} ..6 {ficar em branco|deixar em branco|deixar sem preencher|esquecer de preencher}"
+  ],
+  "fracas": [
+    "{falha|problema|excecao}",
+    "{sem querer|por engano}",
+    "{errado|errada}"
+  ],
+  "excecoes": [
+    "erros de {producao|digitacao dos alunos|fabrica|fabricacao|montagem|qualidade|portugues}",
+    "{controlar|acompanhar|registrar|analisar|contar|listar|cadastrar} ..3 {erros|falhas|defeitos}",
+    "^{quero|queria|preciso} ..3 {anotar|marcar|controlar|registrar} ..4 {erros|faltas|atrasos|desistencias|cancelamentos}",
+    "{marcar|anotar|controlar|registrar} {as faltas|os atrasos|quem faltou|quem atrasou}",
+    "{achados e perdidos|perdas e danos|lista de faltas|controle de faltas}"
+  ]
+}

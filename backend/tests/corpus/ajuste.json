@@ -1,0 +1,271 @@
+[
+ {
+  "nome": "livros",
+  "frases": [
+   [
+    "O",
+    "Quero criar um controle de empréstimo de livros para uma biblioteca de bairro, usando Python, FastAPI e SQLite."
+   ],
+   [
+    "E",
+    "A pessoa vai digitar em um formulário no navegador o nome do leitor, o título do livro e a data do empréstimo."
+   ],
+   [
+    "S",
+    "O sistema deve mostrar uma lista de empréstimos em aberto ordenada pela data de devolução, com os atrasados destacados em vermelho."
+   ],
+   [
+    "R",
+    "O prazo de devolução é de 14 dias a partir do empréstimo."
+   ],
+   [
+    "R",
+    "Cada leitor pode ter no máximo 3 livros emprestados."
+   ],
+   [
+    "R",
+    "Não pode emprestar um livro que já está emprestado."
+   ],
+   [
+    "T",
+    "Se faltar algum dado ou o livro já estiver emprestado, mostrar uma mensagem clara e não salvar."
+   ],
+   [
+    "R",
+    "A interface deve ser em português do Brasil e o código deve ter comentários simples."
+   ]
+  ]
+ },
+ {
+  "nome": "loja",
+  "frases": [
+   [
+    "O",
+    "Preciso de um site simples para a minha loja de bolos."
+   ],
+   [
+    "E",
+    "O cliente informa o sabor, o tamanho e o dia da retirada."
+   ],
+   [
+    "S",
+    "No final aparece um resumo do pedido com o valor total."
+   ],
+   [
+    "R",
+    "Só aceito encomendas com pelo menos 2 dias de antecedência."
+   ],
+   [
+    "R",
+    "O pagamento é somente por Pix."
+   ],
+   [
+    "T",
+    "Caso o cliente esqueça o telefone, o site pede para preencher."
+   ]
+  ]
+ },
+ {
+  "nome": "agenda",
+  "frases": [
+   [
+    "O",
+    "A ideia é um aplicativo de agenda para um salão de cabeleireiro."
+   ],
+   [
+    "E",
+    "A recepcionista cadastra o nome da cliente, o serviço e o horário."
+   ],
+   [
+    "S",
+    "A tela principal tem que exibir a agenda do dia separada por profissional."
+   ],
+   [
+    "R",
+    "Dois atendimentos não podem ocupar o mesmo horário."
+   ],
+   [
+    "R",
+    "Cada serviço dura no mínimo 30 minutos."
+   ],
+   [
+    "T",
+    "Quando o horário já estiver ocupado, avisar e sugerir o próximo livre."
+   ]
+  ]
+ },
+ {
+  "nome": "bot",
+  "frases": [
+   [
+    "O",
+    "Gostaria de um bot de WhatsApp para uma pizzaria."
+   ],
+   [
+    "E",
+    "O bot recebe a mensagem do cliente com o pedido e o endereço."
+   ],
+   [
+    "S",
+    "Depois ele responde com a confirmação e o tempo de entrega."
+   ],
+   [
+    "R",
+    "Ele só atende das 18h às 23h."
+   ],
+   [
+    "R",
+    "A taxa de entrega é de 5 reais."
+   ],
+   [
+    "T",
+    "Se não entender a mensagem, deve passar a conversa para um atendente."
+   ]
+  ]
+ },
+ {
+  "nome": "planilha",
+  "frases": [
+   [
+    "O",
+    "Preciso automatizar o fechamento mensal das vendas."
+   ],
+   [
+    "E",
+    "Vou colocar numa pasta as planilhas Excel de cada vendedor."
+   ],
+   [
+    "S",
+    "Quero receber um relatório em PDF com o total por vendedor."
+   ],
+   [
+    "R",
+    "Os arquivos originais não podem ser alterados."
+   ],
+   [
+    "R",
+    "Use apenas bibliotecas gratuitas."
+   ],
+   [
+    "T",
+    "Caso alguma planilha esteja corrompida, pular o arquivo e anotar o nome dele."
+   ]
+  ]
+ },
+ {
+  "nome": "jogo",
+  "frases": [
+   [
+    "O",
+    "Quero fazer um jogo de memória para crianças."
+   ],
+   [
+    "E",
+    "O jogador clica nas cartas com o mouse."
+   ],
+   [
+    "S",
+    "Ao terminar, o jogo mostra o tempo gasto e o número de tentativas."
+   ],
+   [
+    "R",
+    "São 8 pares de cartas."
+   ],
+   [
+    "R",
+    "É proibido ter propaganda."
+   ],
+   [
+    "T",
+    "Se uma imagem não carregar, mostrar o nome do desenho no lugar."
+   ]
+  ]
+ },
+ {
+  "nome": "academia",
+  "frases": [
+   [
+    "O",
+    "Estou querendo um programa para controlar os alunos de uma academia."
+   ],
+   [
+    "E",
+    "Os dados que entram são nome, plano e data do pagamento."
+   ],
+   [
+    "S",
+    "O resultado esperado é a lista de quem está com a mensalidade vencida."
+   ],
+   [
+    "R",
+    "O aluno é bloqueado após 10 dias de atraso."
+   ],
+   [
+    "R",
+    "Tem que funcionar no Mac."
+   ],
+   [
+    "T",
+    "Em caso de data inválida, não gravar e explicar o motivo."
+   ]
+  ]
+ },
+ {
+  "nome": "estoque",
+  "frases": [
+   [
+    "O",
+    "Quero um sistema que controle o estoque de um mercadinho."
+   ],
+   [
+    "E",
+    "O funcionário vai lançar o produto, a quantidade e o preço de compra."
+   ],
+   [
+    "S",
+    "O sistema gera um aviso quando um item estiver acabando."
+   ],
+   [
+    "R",
+    "O estoque nunca pode ficar negativo."
+   ],
+   [
+    "R",
+    "Somente o gerente pode apagar produtos."
+   ],
+   [
+    "T",
+    "Se o produto não for encontrado, oferecer o cadastro."
+   ]
+  ]
+ },
+ {
+  "nome": "armadilhas",
+  "frases": [
+   [
+    "O",
+    "Quero criar um painel para acompanhar os erros de produção de uma fábrica de ferro."
+   ],
+   [
+    "E",
+    "O operador preenche o número da peça e o defeito encontrado."
+   ],
+   [
+    "S",
+    "O painel deve exibir um gráfico semanal."
+   ],
+   [
+    "R",
+    "É importante que o painel seja simples."
+   ],
+   [
+    "R",
+    "Se o cliente quiser, pode filtrar por turno."
+   ],
+   [
+    "T",
+    "Quando a internet cair, guardar os registros e enviar depois."
+   ]
+  ]
+ }
+]

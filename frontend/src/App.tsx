@@ -30,6 +30,8 @@ import { AguardandoIa } from './AguardandoIa';
 import { AvisoIaOffline } from './AvisoIaOffline';
 import { BotaoCopiarPrompt } from './BotaoCopiarPrompt';
 import { iaOfflineBloqueiaEnvio } from './bloqueioEnvio';
+import { OrganizarPrompt, type RespostaOrganizar } from './OrganizarPrompt';
+import { haTrabalhoNaTela, primeiraEtapaVazia, avisoDepoisDeUsar } from './organizar';
 import {
   LIMITE_ENVIO_PADRAO,
   MARCA_RESPOSTA_CORTADA,
@@ -73,6 +75,8 @@ export default function App() {
   const configInicial = carregarConfigSalva();
 
   const [categoria, setCategoria] = useState<CategoriaId>('geral');
+  const [organizarAberto, setOrganizarAberto] = useState<boolean>(false);
+  const [avisoOrganizado, setAvisoOrganizado] = useState<string>('');
   const [etapa, setEtapa] = useState<number>(1);
 
   const [intencaoLivre, setIntencaoLivre] = useState<string>('');
@@ -900,7 +904,24 @@ export default function App() {
     void abrirECopiar(avisoLink.marca.nome, url, avisoLink.prompt, escolha === 'preenchido');
   };
 
+  // Substitui o formulário inteiro, para não misturar o pedido antigo com o colado.
+  // O Contexto colado é ignorado de propósito: o Contexto fixo só muda pela própria caixa.
+  const usarCamposOrganizados = ({ campos, categoria_sugerida, ficou_de_fora }: RespostaOrganizar) => {
+    resetar();
+    setCategoria(categoria_sugerida);
+    setObjetivo(campos.objetivo);
+    setStack(campos.stack);
+    setEntrada(campos.entrada);
+    setSaida(campos.saida);
+    setRegras(campos.regras);
+    setTratamentoErros(campos.tratamento_erros);
+    setEtapa(primeiraEtapaVazia(campos));
+    setAvisoOrganizado(avisoDepoisDeUsar(ficou_de_fora));
+  };
+
   const resetar = () => {
+    setOrganizarAberto(false);
+    setAvisoOrganizado('');
     setEtapa(1);
     setIntencaoLivre('');
     setAnaliseInfo(null);
@@ -1499,6 +1520,36 @@ export default function App() {
               )}
             </div>
           </div>
+        </section>
+
+        <section style={styles.card}>
+          <button
+            type="button"
+            style={styles.btnSecondary}
+            aria-expanded={organizarAberto}
+            onClick={() => {
+              setOrganizarAberto(!organizarAberto);
+              setAvisoOrganizado('');
+            }}
+          >
+            {organizarAberto ? 'Fechar' : 'Já tenho um prompt'}
+          </button>
+          {organizarAberto && (
+            <OrganizarPrompt
+              apiBase={API_BASE}
+              precisaConfirmar={haTrabalhoNaTela(
+                { objetivo, stack, entrada, saida, regras, tratamento_erros: tratamentoErros },
+                resultado !== null
+              )}
+              contextoSalvoLigado={contextoAtivoNoPedido}
+              aoUsar={usarCamposOrganizados}
+            />
+          )}
+          {avisoOrganizado && (
+            <div role="status" style={styles.statusMsg}>
+              {avisoOrganizado}
+            </div>
+          )}
         </section>
 
         <section style={styles.card}>

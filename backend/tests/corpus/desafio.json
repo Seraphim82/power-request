@@ -1,0 +1,118 @@
+[
+ {
+  "nome": "barbearia",
+  "frases": [
+   [
+    "O",
+    "Tô querendo um app pra fila da minha barbearia."
+   ],
+   [
+    "E",
+    "O cara chega e põe o nome dele no tablet."
+   ],
+   [
+    "S",
+    "Na TV fica passando quem é o próximo."
+   ],
+   [
+    "R",
+    "Quem marcou antes tem preferência."
+   ],
+   [
+    "R",
+    "Corte infantil é mais barato."
+   ],
+   [
+    "T",
+    "Se a pessoa sumir, pula pro próximo."
+   ]
+  ]
+ },
+ {
+  "nome": "horta",
+  "frases": [
+   [
+    "O",
+    "Preciso de um programa para cuidar da horta comunitária."
+   ],
+   [
+    "E",
+    "Os voluntários avisam o que plantaram e quando regaram."
+   ],
+   [
+    "S",
+    "Quero um calendário mostrando a próxima colheita."
+   ],
+   [
+    "R",
+    "Agrotóxico está fora de cogitação."
+   ],
+   [
+    "R",
+    "Cada canteiro tem um responsável."
+   ],
+   [
+    "T",
+    "Se ninguém regar por três dias, manda um alerta."
+   ]
+  ]
+ },
+ {
+  "nome": "locadora",
+  "frases": [
+   [
+    "O",
+    "Quero um sistema para alugar ferramentas."
+   ],
+   [
+    "E",
+    "O balconista escaneia a etiqueta e escolhe o prazo."
+   ],
+   [
+    "S",
+    "O contrato sai pronto para assinar."
+   ],
+   [
+    "R",
+    "A diária conta a partir da retirada."
+   ],
+   [
+    "R",
+    "Cliente com pendência não aluga."
+   ],
+   [
+    "T",
+    "Quando a ferramenta voltar quebrada, registrar a ocorrência."
+   ]
+  ]
+ },
+ {
+  "nome": "corrida",
+  "frases": [
+   [
+    "O",
+    "A ideia é um site de inscrição para uma corrida de rua."
+   ],
+   [
+    "E",
+    "O atleta preenche os dados e anexa o atestado."
+   ],
+   [
+    "S",
+    "O site devolve o número de peito."
+   ],
+   [
+    "R",
+    "As inscrições encerram uma semana antes."
+   ],
+   [
+    "R",
+    "Idoso paga metade."
+   ],
+   [
+    "T",
+    "Caso o pagamento falhe, a vaga fica reservada por uma hora."
+   ]
+  ]
+ }
+]

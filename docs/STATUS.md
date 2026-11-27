@@ -1,24 +1,58 @@
 # Status do projeto
 
-Atualizado em 26/11/2026.
+Atualizado em 27/11/2026.
 
 ## Onde parou
 
-- **Fases 1 e 2:** concluídas. A fase 2 está no commit local `a90d94c`, **não enviado**.
-- **Fase 3 (envio):** concluída e commitada (`ba6310d`) na branch `feat/organizar-prompt`, não enviada.
-  Sequenciar com orçamento único de tamanho, contador de caracteres e aviso de resposta cortada.
-  Escolha confirmada pelo dono em 26/11: faltando espaço, cortar primeiro as respostas mais antigas.
-- **Correção do Antigravity (item 13 do ERROS):** commitada em 26/11, não enviada. No Mac:
-  `make check` passou e o Antigravity ficou online no app (informado pelo dono).
-  Aviso de ganchos, Enviar e Sequenciar conferidos (ver Testes).
-- **`main`:** ainda sem merge (parada no commit `b21ce46`).
+- **Fases 1 a 4:** concluídas. Em 27/11, o registro do Git no Mac mostrou `origin/feat/organizar-prompt`
+  no mesmo commit da fase 4 (`a919e4e`), ou seja, enviadas.
+- **Fase 5 (Organizar prompt):** pronta e conferida no Mac em 27/11 (ver a seção da fase). Commit feito, **ainda não enviada**
+  (sem push).
+- **Correção do Antigravity (item 13 do ERROS):** no Mac, `make check` passou e o Antigravity ficou
+  online no app (informado pelo dono em 26/11). Aviso de ganchos, Enviar e Sequenciar conferidos
+  (ver Testes).
+- **`main`:** ainda sem merge (última anotação: parada no commit `b21ce46`).
 
 ## Próximo passo
 
-1. Push quando o dono pedir (a fase 4, condição para o push, já foi conferida).
-2. Em outro chat: seguir o `docs/PLANO.md`.
+1. Push da fase 5, quando o dono pedir.
+2. Em outro chat: fase 6 do `docs/PLANO.md`.
 
-## Fase 4 (26/11/2026): concluída, conferida no Mac e commitada (não enviada)
+## Fase 5 (27/11/2026): conferida no Mac, commitada (não enviada)
+
+- **No Mac, visto em prints do dono (dados inventados):** texto corrido de exemplo com os 6 campos
+  separados; 53 regras com 50 no formulário, aviso das 3 que ficaram de fora, confirmação e
+  "Continuar mesmo assim".
+- **No Mac, informado pelo dono:** depois de refazer uma etapa que estava pulando, "está tudo certo".
+  Não foram enviados os números do `make check` nem prints das outras partes do roteiro.
+- **Sem resultado informado:** teste com pedidos novos no jeito de pessoa leiga.
+
+- Prompt gerado pelo app volta com os campos separados. O Contexto é devolvido à parte; a frase
+  fixa do Padrão e o texto automático de Erros não preenchem campos.
+- Tela "Já tenho um prompt": mostra o resultado e só preenche o formulário em "Usar estes campos",
+  com confirmação se já houver trabalho. **Escolha do dono (opção A):** o Contexto colado é só
+  mostrado; não altera o Contexto fixo.
+- **Biblioteca de regras** (`backend/regras_prompt/`, só dados) lida por
+  `backend/classificador_texto.py`, que confere o formato ao carregar. Substitui a lista curta de
+  palavras-pista, que também casava pedaços de palavra. Tecnologias foram para a biblioteca.
+  Dobrada a pedido do dono, pensando em pessoa leiga (317 expressões, 148 tecnologias e 58
+  abreviações). Em 30 frases leigas novas: original 20%, versão anterior 63%, dobrada 76%.
+  Placar, limites e como ampliar: `backend/regras_prompt/README.md`.
+- **Em cópia em Linux (com a biblioteca):** 401 testes de backend (330 antigos mais 71 novos) e 22 de frontend
+  (17 antigos mais 5 novos), nenhum teste antigo alterado; tipos e build OK.
+- **Navegador (Chromium), servidor real da cópia, dados falsos:** limite de tamanho, recusa de
+  injeção, resultado some ao editar o texto, preencher, cancelar, substituir, sem erro de página;
+  o Contexto fixo salvo não mudou. Depois houve dois ajustes visuais (caixa do Contexto e lista
+  de perguntas), conferidos só por testes e build.
+- **Aviso de corte:** o Organizar mostra o que não coube e pede confirmação; máximo de regras subiu de 20 para 50 (OK do dono);
+  os outros limites não mudaram. Pior caso medido: texto colado no limite, Contexto fixo de 2.000 e
+  respostas curtas nos outros campos deu até 10.655; com respostas de 500 caracteres, até 11.855
+  (acima dos 11.000 do Enviar). Aviso testado
+  no Chromium com servidor real da cópia e dados falsos (53 regras, campo comprido, cancelar,
+  continuar, substituir, texto com HTML mostrado como texto).
+- Sem teste automático da tela. A área de transferência não foi testada. `npm audit` não foi rodado.
+
+## Fase 4 (26/11/2026): concluída, conferida no Mac, commitada e enviada
 
 Detalhes e limites em `docs/ERROS.md`.
 
@@ -43,7 +77,7 @@ Chromium com servidor, área de transferência e sites **simulados**. `npm audit
 - Sequenciar (continuar a conversa com as respostas guardadas), dentro do limite de envio.
 - Abrir a IA no navegador por link com o prompt, quando o site e o tamanho permitem.
 - Envio automático (opcional, macOS): perfis do Claude e do ChatGPT.
-- Organizar prompt: só no backend, ainda sem tela e com defeito conhecido.
+- Organizar prompt, com a tela "Já tenho um prompt" (conferida no Mac em 27/11).
 
 ## Testes
 

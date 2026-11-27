@@ -28,11 +28,20 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
   revisar e otimizar. **O aviso não impede a gravação.** Não enviar dados de cliente.
 - **Não confirmado:** se algum pedido chegou a ser gravado.
 
-### 8. Organizar prompt bagunça o prompt do próprio app (fase 5)
-- **Sintoma:** o Contexto entra no Objetivo e a seção Padrão vira regra.
-- **Causa:** essas seções não são reconhecidas à parte.
-- **Solução:** tratar Contexto e Padrão separados antes de criar a tela.
-- **Evitar:** teste de ida e volta (gerar e depois organizar).
+### Organizar ainda erra bastante com jeito de falar novo (melhorado na fase 5, segue aberto)
+- **Sintoma (cópia em Linux, dados falsos):** em 30 frases leigas novas, com a biblioteca dobrada e
+  congelada, 76% foram para o campo certo (original, 20%). Falharam Entrada, Regras de negócio e Erros.
+- **Narrativa pessoal:** já virou Regra por engano; três tipos corrigidos, podem existir outros.
+- **Causa:** a biblioteca reconhece formas de falar; não entende o sentido.
+- **Já feito:** biblioteca `backend/regras_prompt/`, palavras inteiras, prioridades e exceções.
+- **A fazer:** ampliar com frases de outras pessoas; avaliar a IA ativa como opção, com aviso.
+- **Limite:** texto ditado sem pontuação não é dividido em frases.
+
+### Organizar recusa prompt grande do próprio app (achado na fase 5, sem fase definida)
+- **Sintoma (medido em teste):** com Contexto de 2.000 e quatro campos de 1.500 caracteres, o
+  prompt gerado teve 8.948; o Organizar aceita 8.000. A tela mostra o contador e não envia.
+- **A avaliar:** aumentar o limite (a rota aceita até 20.000), com teste novo.
+
 
 ### 10. CI não roda os testes do frontend (fase 6)
 - **Causa:** `.github/workflows/ci.yml` não chama `npm test`.
@@ -49,6 +58,27 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 - **Sintoma (visto no código):** a partir da 51ª, a resposta aparece na tela, mas não é salva.
 - **Causa:** `salvar_rodada` devolve vazio no limite e a rota não avisa.
 - **Solução:** avisar na tela.
+
+## Corrigido na fase 5 (27/11): testado em Linux e conferido no Mac pelo dono
+
+### Organizar cortava regras sem aviso
+- **Sintoma:** acima de 20 regras (limite da época) o excedente sumia; regra acima de 2.000 caracteres era cortada.
+- **Causa:** o corte não gerava aviso.
+- **Solução:** o máximo subiu para 50 regras (os outros limites não mudaram). A tela avisa, mostra o que ficou de fora (inclusive o final de
+  campo cortado) e pede confirmação antes de preencher o formulário.
+- **Limite:** a lista some quando o painel fecha; a pessoa precisa copiar antes.
+- **Evitar:** `backend/tests/test_organizar_cortes.py`.
+
+### 8. Organizar prompt bagunçava o prompt do próprio app
+- **Sintoma:** o Contexto entrava no Objetivo (e linhas dele iam para Stack e Regras), a frase do
+  Padrão virava regra, uma regra com `;` virava duas e o texto automático de Erros voltava como
+  resposta da pessoa.
+- **Causa:** o texto do próprio app era lido como texto qualquer.
+- **Solução:** o formato do app é reconhecido e lido por seção; o Contexto sai à parte.
+- **Limites:** a leitura exata vale para o prompt sem edição. Se for editado, o Contexto continua
+  separado quando vier no começo e antes de `### Objetivo`, mas o resto usa a leitura comum. Um
+  Padrão escrito pela pessoa vai para Regras.
+- **Evitar:** teste de ida e volta (`backend/tests/test_organizar_ida_e_volta.py`).
 
 ## Corrigidos na fase 4 (26/11): testados em Linux e conferidos no Mac
 

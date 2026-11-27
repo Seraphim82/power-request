@@ -70,6 +70,13 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - **Objetivo:** terminar a função.
 - **Tarefas:** reconhecer Contexto e Padrão à parte; depois criar a tela.
 - **Pronto quando:** gerar e organizar devolve os campos sem misturar.
+- **Decidido (27/11):** o Contexto colado é só mostrado; não altera o Contexto fixo (opção A).
+- [x] Código, tela e testes novos (em cópia em Linux).
+- [x] Biblioteca de regras para texto corrido, em `backend/regras_prompt/` (pedido do dono, 27/11,
+  antes dos próximos testes).
+- [x] Avisar na tela o que for cortado no Organizar (pedido do dono, 27/11; em cópia em Linux).
+- [x] Máximo de regras do Organizar de 20 para 50, sem mexer nos outros limites (OK do dono, 27/11).
+- [x] Conferir no Mac (27/11: prints e informação do dono; detalhes no `docs/STATUS.md`).
 
 ## [ ] Fase 6: CI e documentos (itens 10 e 11)
 - **Objetivo:** verificação e documentação fiéis ao app.
@@ -103,6 +110,10 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - Investigar se dá para tirar os pedidos do app da captura de ganchos globais de memória.
 - Testar a trava com navegador, mensagens, subagentes e gancho travado por tempo.
 - Limpar o aviso do envio anterior ao iniciar um novo Sequenciar.
+- Biblioteca: nova rodada com frases do dono e de quem testar (escrever antes um grupo
+  inédito; há 115 pistas sem exemplo que as exercite); avaliar a IA ativa como opção; dividir texto ditado sem pontuação.
+- Organizar: revisar o limite de 8.000 caracteres (prompt grande do próprio app pode passar).
+- Fase 6: explicar no README a tela "Já tenho um prompt".
 - Avisar quando o histórico parar de guardar (50 rodadas).
 - Orientar sobre projeto grande: resposta acima de 24.000 e perda de contexto no Sequenciar.
 

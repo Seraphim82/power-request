@@ -52,6 +52,7 @@ Se não bater, avise antes de mexer.
 |---|---|
 | `backend/main.py` | rotas e proteções do servidor |
 | `backend/prompt_engine.py` | motor local, filtro, Sequenciar e Organizar prompt |
+| `backend/classificador_texto.py` e `backend/regras_prompt/` | biblioteca que separa texto corrido (ver o README da pasta) |
 | `backend/ai_hub.py` | provedores de IA, envio e Abrir no Terminal |
 | `backend/envio_automatico.py` e `backend/perfis_sites.json` | envio automático pelo site (macOS) |
 | `backend/history_store.py` | histórico em SQLite |
