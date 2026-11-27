@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import ai_hub
 from ai_hub import AIHubClient, AIHubError, AIHubSecurityError
 
 
@@ -36,7 +37,7 @@ def test_cli_local_passa_ataque_shell_apenas_por_stdin_com_shell_false():
 
     assert out == "OK"
     args, kwargs = mock_run.call_args
-    assert args[0] == ["/opt/homebrew/bin/claude", "-p"]
+    assert args[0] == ["/opt/homebrew/bin/claude", *ai_hub.CLAUDE_ARGS_PROTEGIDOS]
     assert kwargs["shell"] is False
     assert "; rm -rf /" in kwargs["input"]
     assert all("rm" not in a and "dangerously" not in a for a in args[0])

@@ -116,8 +116,10 @@ LOCAL_CLI_SPECS: dict[str, dict[str, Any]] = {
         "brand_id": "claude",
         "nome": "Claude (Local)",
         "binaries": ["claude"],
+        # Dentro do app o Claude roda SEMPRE com CLAUDE_ARGS_PROTEGIDOS (ver _call_local_cli).
         "args": ["-p"],
-        # No envio do prompt a IA só precisa escrever texto: sem ferramentas (arquivos, shell, web).
+        # Mínimo pedido pelo Enviar e pelo Sequenciar. Não decide nada: no Claude,
+        # _call_local_cli ignora os argumentos de quem chama e usa a proteção completa.
         "send_args": ["-p", "--tools", ""],
         # No Terminal o prompt entra como argumento inicial da sessão interativa.
         "terminal_mode": "argumento",
@@ -131,6 +133,24 @@ LOCAL_CLI_SPECS: dict[str, dict[str, Any]] = {
         "terminal_mode": "area_de_transferencia",
     },
 }
+
+# Claude (Local) dentro do app: sem ferramentas internas, sem MCP e sem personalizações
+# (ganchos, plugins, skills, CLAUDE.md, memória automática). Vale para todo uso dentro do app
+# (Testar Conexão, revisão, otimização, Enviar e Sequenciar). Não vale para Abrir no Terminal.
+# Limite (documentação oficial): ganchos impostos por política de administrador continuam valendo.
+CLAUDE_ARGS_PROTEGIDOS: tuple[str, ...] = (
+    "-p",
+    "--safe-mode",  # desliga ganchos, plugins, skills, CLAUDE.md, memória e servidores MCP
+    "--tools", "",  # nenhuma ferramenta interna (arquivos, terminal, web)
+    "--strict-mcp-config",  # ignora os servidores MCP configurados (não passamos --mcp-config)
+    "--disallowedTools", "mcp__*",  # e recusa qualquer ferramenta MCP que sobrar
+)
+PREFIXO_PASTA_CLAUDE = "power-request-claude-"
+AVISO_CLAUDE_SEM_MODO_SEGURO = (
+    "Sua versão do Claude (Local) não aceita o modo seguro que o app exige (sem ferramentas, "
+    "sem MCP e sem ganchos). Por segurança, o app não usa o Claude sem essa proteção. "
+    "No Terminal, rode claude update e use Testar Conexão de novo."
+)
 
 PROVIDER_UI_META: dict[str, dict[str, str]] = {
     "openrouter": {"auth_mode": "api_key"},
@@ -382,35 +402,41 @@ class AIHubClient:
         if provider == "antigravity_cli":
             return self._call_agy(cfg, binary_name, binary_path, combined_prompt, env, timeout)
 
-        cmd = [binary_path, *(cli_args or spec["args"])]
+        # Ponto único da proteção do Claude: quem chama não escolhe os argumentos nem a pasta.
+        # `cli_args` e `cwd` ficam na assinatura só por compatibilidade e são ignorados aqui.
+        del cli_args, cwd
+        if provider != "claude_cli":  # CLI novo precisa de trava própria, testada, antes de entrar
+            raise AIHubSecurityError(f"Conector local sem trava de segurança: '{provider}'.")
+        cmd = [binary_path, *CLAUDE_ARGS_PROTEGIDOS]
+        env["CLAUDE_CODE_SAFE_MODE"] = "1"  # reforço do --safe-mode
         limite = timeout or self.LOCAL_CLI_TIMEOUT
-        try:
-            proc = subprocess.run(
-                cmd,
-                input=combined_prompt,
-                capture_output=True,
-                text=True,
-                timeout=limite,
-                shell=False,
-                env=env,
-                **({"cwd": cwd} if cwd else {}),
-            )
-        except subprocess.TimeoutExpired:
-            raise AIHubError(
-                f"Tempo esgotado ({limite}s) aguardando resposta de {cfg['alias']}."
-            ) from None
-        except OSError as exc:
-            raise AIHubError(f"Falha ao executar {binary_name} localmente: {exc}") from None
+        # Pasta nova e vazia a cada uso; apagada ao terminar, inclusive em erro ou tempo esgotado.
+        with tempfile.TemporaryDirectory(prefix=PREFIXO_PASTA_CLAUDE) as pasta_isolada:
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    input=combined_prompt,
+                    capture_output=True,
+                    text=True,
+                    timeout=limite,
+                    shell=False,
+                    env=env,
+                    cwd=pasta_isolada,
+                )
+            except subprocess.TimeoutExpired:
+                raise AIHubError(
+                    f"Tempo esgotado ({limite}s) aguardando resposta de {cfg['alias']}."
+                ) from None
+            except OSError as exc:
+                raise AIHubError(f"Falha ao executar {binary_name} localmente: {exc}") from None
 
         stdout = (proc.stdout or "").strip()
         stderr = (proc.stderr or "").strip()
 
         if proc.returncode != 0:
-            if cli_args and "unknown option" in (stderr or "").lower():
-                raise AIHubError(
-                    f"Sua versão do {spec['nome']} não aceita o modo seguro usado no envio "
-                    "(sem ferramentas). Atualize o programa e tente de novo."
-                )
+            # Opção recusada = versão sem o modo seguro. Nunca tenta de novo sem a proteção.
+            if "unknown option" in f"{stderr}\n{stdout}".lower():
+                raise AIHubError(AVISO_CLAUDE_SEM_MODO_SEGURO)
             detalhe = (stderr or stdout or "verifique se você já fez login no terminal")[:280]
             raise AIHubError(f"{cfg['alias']} retornou erro (código {proc.returncode}): {detalhe}")
 

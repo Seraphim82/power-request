@@ -7,12 +7,43 @@ Os números seguem a análise de 26/11/2026 (o item 1, trabalho sem commit, foi 
 
 ### Claude local usa ferramentas no Testar Conexão, na revisão e na otimização (SEGURANÇA, achado na fase 6)
 - **Causa (visto no código, não reproduzido):** `testar_conexao`, `revisar_com_ia` e `otimizar_prompt_com_ia`
-  chamam `call_llm` sem `cli_args` e sem `cwd`: roda `claude -p` sem `--tools ""` e fora da pasta
-  temporária. Só o Enviar e o Sequenciar usam o modo sem ferramentas.
-- **Efeito possível:** valem as ferramentas e permissões configuradas no Claude da máquina. O texto
-  da revisão e da otimização vem do formulário. O teste de conexão roda sozinho ao selecionar a IA.
-- **Situação:** descrito no README e no SECURITY. Código não alterado. Sugestão: corrigir antes da
-  fase 7, com teste novo.
+  chamavam `call_llm` sem `cli_args` e sem `cwd`: rodava `claude -p` sem `--tools ""` e fora da pasta
+  temporária. Só o Enviar e o Sequenciar usavam o modo sem ferramentas.
+- **Achado junto (documentação oficial, 27/11):** `--tools ""` não afeta ferramentas MCP, e `claude -p`
+  carrega ganchos, plugins, skills e `CLAUDE.md`. Valia também para o Enviar e o Sequenciar.
+- **Correção (27/11, no código):** ponto único em `_call_local_cli` (`backend/ai_hub.py`): todo uso do
+  Claude dentro do app roda com `CLAUDE_ARGS_PROTEGIDOS` (`-p --safe-mode --tools "" --strict-mcp-config
+  --disallowedTools "mcp__*"`), `CLAUDE_CODE_SAFE_MODE=1` e pasta temporária nova, apagada ao fim. Quem
+  chama não muda argumentos nem pasta. Opção recusada pela versão instalada: aviso e bloqueio, sem
+  nova tentativa sem proteção. Abrir no Terminal não mudou.
+- **Testes:** `backend/tests/test_claude_protegido.py` (20 novos). Com autorização do dono (27/11), 3
+  testes antigos tiveram só a conferência do comando e da pasta ajustada para exigir a proteção:
+  `test_cli_local_passa_ataque_shell_apenas_por_stdin_com_shell_false`,
+  `test_cli_recebe_timeout_longo_e_pasta_temporaria` e
+  `test_chamadas_antigas_continuam_sem_cwd_e_com_timeout_curto` (o nome ficou antigo).
+- **Limites:** ganchos de política de administrador continuam valendo (documentação); o texto pode
+  ficar no histórico do Claude Code (`~/.claude`), anotado no PLANO (`--no-session-persistence`).
+- **Situação:** testado em cópia em Linux com o Claude simulado. **No Mac (27/11, Claude 2.1.332,
+  fora do app, mesmos argumentos):** com proteção, 0 ferramentas, 0 MCP e o gancho de teste não
+  rodou; sem proteção, 157 ferramentas (129 MCP, incluindo Gmail e Drive) e o gancho rodou.
+  `make check` passou. **Pelo app:** os cinco usos responderam, e o `ps` mostrou o Claude com as
+  opções de proteção (detalhes no `docs/STATUS.md`).
+- **Limite novo (visto no Mac):** com `--safe-mode`, 4 plugins `cc-plugin-*`, 20 skills e 5 agentes
+  ainda carregam. Sem ferramentas não são acionáveis; ganchos próprios desses plugins não testados.
+
+### Sequenciar com "continue" estoura o tempo com o Claude local (visto no Mac em 27/11, sem fase)
+- **Sintoma:** depois de uma resposta com código, "continue" deu "Tempo esgotado (600s)". O app
+  avisou e liberou o botão; logo depois, "Resuma em 3 linhas o que já foi feito" respondeu.
+- **Causa provável:** sem ferramentas, o Claude escreve todo o código como texto; um "continue"
+  pede uma resposta longa. Não medido se o modo seguro deixa a resposta mais lenta.
+- **A avaliar:** orientar a pedir partes menores ou usar Abrir no Terminal; avaliar outro limite de tempo.
+
+### Testes do backend dependem da versão do Python (achado em 27/11, sem fase definida)
+- **Sintoma (cópia em Linux):** com Python 3.10, 8 testes falham quando a suíte roda inteira e
+  passam isolados (igual antes e depois da correção do Claude local); com 3.13, todos passam. No Mac (3.15) e no CI (3.12), passam.
+- **Causa provável:** `test_api_contract.py` troca métodos do objeto `main.ai_hub` com `monkeypatch`;
+  ao desfazer, o método fica gravado no objeto e esconde trocas feitas depois na classe.
+- **A avaliar:** declarar a versão mínima do Python ou ajustar esses testes com o OK do dono.
 
 ### Script temporário antigo executado por engano (incidente na fase 6, 27/11)
 - **O que houve:** a gravação de `/tmp/ed.py` falhou (já existia um arquivo de outra sessão), e o

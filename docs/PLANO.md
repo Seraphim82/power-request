@@ -88,6 +88,17 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] README, SECURITY e CONTRIBUTING.
 - [ ] Confirmar o CI no GitHub (no Pull Request).
 
+## [ ] Correção do Claude local (antes da fase 7, pedido do dono em 27/11)
+- **Objetivo:** todo uso do Claude (Local) dentro do app sem ferramentas e em pasta temporária vazia.
+- **Decidido (27/11):** opção B: proteção num ponto único, com `--safe-mode`, `--tools ""`,
+  `--strict-mcp-config` e `--disallowedTools "mcp__*"`; versão sem essas opções é bloqueada;
+  3 testes antigos ajustados com autorização do dono (lista no `docs/ERROS.md`).
+- [x] Código e testes novos (em cópia em Linux, Claude simulado).
+- [x] Conferir no Mac: `make check` e prova com o Claude real, fora do app (dados falsos, 27/11).
+- [ ] Conferir no Mac: os cinco usos pelo app com o Claude real.
+- [ ] Commit próprio, a pedido do dono.
+- **Pronto quando:** a prova no Mac mostrar que gancho e ferramentas não rodam pelo app.
+
 ## [ ] Fase 7: versão
 - **Objetivo:** publicar uma versão marcada.
 - **Tarefas:** Pull Request e merge, tag, `CHANGELOG.md`. Para desfazer algo publicado,
@@ -109,8 +120,9 @@ Ideia do dono (26/11), a fazer em chat próprio.
 - **Fora:** liberar ferramentas ou arquivos no botão Enviar.
 
 ## Ajustes anotados, ainda sem fase (encaixar quando o dono decidir)
-- **Segurança (sugestão: antes da fase 7):** Claude local sem ferramentas e em pasta temporária
-  também no Testar Conexão, na revisão e na otimização, com teste novo.
+- Privacidade: avaliar `--no-session-persistence` no Claude local dentro do app, para o texto não
+  ficar no histórico do Claude Code (achado em 27/11).
+- Testes: versão mínima do Python, ou ajustar o `monkeypatch` do `test_api_contract.py` (ver ERROS).
 - Login OpenRouter: criar o botão ou remover a rota.
 - Conferir no Mac e corrigir a mensagem de permissão de Automação.
 - Alinhar a conferência de versão do Node (`Makefile`) com o que os testes exigem.

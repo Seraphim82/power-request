@@ -12,7 +12,7 @@ que falam com o serviço deles.
 - **Link com o prompt:** no ChatGPT e no Claude, o texto pode ir no endereço. O app avisa antes, toda vez; o site o recebe ao abrir a página e ele pode ficar no histórico do navegador.
 - **Envio automático (opcional, macOS):** usa as permissões de Acessibilidade e Automação do macOS. Confere a aba antes das teclas, o que reduz o risco, mas não o elimina.
 - **Ganchos globais do Antigravity:** a trava de ferramentas não os desliga, e eles podem guardar o que for enviado. O app avisa e pede aceite.
-- **Limite conhecido:** com o Claude local, Testar Conexão, revisão e otimização ainda não bloqueiam as ferramentas (veja o README).
+- **Claude local dentro do app:** roda sem ferramentas internas nem MCP, sem ganchos e plugins do usuário e numa pasta temporária vazia, em todos os usos (Testar Conexão, revisão, otimização, Enviar e Sequenciar). Se a versão não aceitar esse modo, o app bloqueia. **Limites:** ganchos impostos por política de administrador continuam valendo, e alguns plugins internos do Claude continuam carregando, sem ferramentas (veja o README). O **Abrir no Terminal** continua com as ferramentas do próprio Claude, de propósito.
 
 Não envie dados de clientes, senhas nem informações sigilosas.
 

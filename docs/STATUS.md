@@ -15,10 +15,36 @@ Atualizado em 27/11/2026.
 
 ## Próximo passo
 
-1. Em chat novo, a pedido do dono (27/11): primeiro corrigir o Claude local (ver `docs/ERROS.md`),
-   com teste novo e commit próprio; só depois do OK dele, a fase 7 do `docs/PLANO.md`.
-2. Fase 7: confirmar o CI no Pull Request antes do merge.
+1. Correção do Claude local: conferida no Mac; falta o commit próprio, quando o dono pedir.
+2. Só depois do OK do dono: fase 7 do `docs/PLANO.md` (confirmar o CI no Pull Request antes do merge).
 3. A fase 6 ainda não foi enviada (sem push).
+
+## Correção do Claude local (27/11/2026): conferida no Mac, sem commit
+
+- Todo uso do Claude (Local) dentro do app (Testar Conexão, revisão, otimização, Enviar e
+  Sequenciar) passa por um ponto único: `-p --safe-mode --tools "" --strict-mcp-config
+  --disallowedTools "mcp__*"`, pasta temporária nova e vazia, apagada ao fim. Abrir no Terminal e
+  Antigravity não mudaram. Versão que recusa as opções: aviso e bloqueio.
+- **Documentação oficial (27/11):** `--tools ""` sozinho não afeta MCP; sem `--safe-mode`, o `-p`
+  carrega ganchos, plugins, skills e `CLAUDE.md`. Ganchos de política de administrador continuam.
+- **No Mac (print do dono, 27/11):** Claude Code 2.1.332; a ajuda lista `--safe-mode`, `--tools`,
+  `--strict-mcp-config` e `--disallowedTools`; não existe `/Library/Application Support/ClaudeCode/`.
+- **Em cópia em Linux (Python 3.13, Claude simulado):** 421 testes de backend (401 antigos mais 20
+  novos) e 22 de frontend; tipos OK. 3 testes antigos ajustados com autorização do dono (ver ERROS).
+- **No Mac (prints do dono, 27/11):** `make check` passou (421 de backend, 22 de frontend, tipos e
+  build). `teste-claude-protegido/prova.sh`, fora do app, com os mesmos argumentos e dados falsos:
+  - sem proteção: 157 ferramentas (129 MCP), conectores do claude.ai (Gmail, Drive, Calendar) e
+    ai-memory conectados, 7 plugins, 90 skills; o gancho de teste rodou (SessionStart e
+    UserPromptSubmit) e o MCP falso foi carregado;
+  - com proteção: 0 ferramentas, 0 MCP, nenhum servidor MCP, gancho de teste não rodou, resposta OK.
+  - **Ainda carregam com proteção:** 4 plugins `cc-plugin-*` (agents-md, telemetry, privacy,
+    plugin-authoring), 20 skills e 5 agentes. Sem ferramentas, não há como acioná-los; se esses
+    plugins têm ganchos próprios, **não foi testado**.
+- **Pelo app no Mac (Safari, prints do dono, 27/11, dados inventados):** Testar Conexão, revisão
+  (Revisor: Claude Local), otimização, Enviar e Sequenciar responderam, sem aviso de modo seguro.
+  Durante o Sequenciar, `ps` mostrou o processo `claude -p --safe-mode --tools  --strict-mcp-config
+  --disallowedTools mcp__*`. Um "continue" no Sequenciar deu tempo esgotado (600 s); o pedido
+  "Resuma em 3 linhas" respondeu (ver ERROS). O código gerado pela IA não foi executado.
 
 ## Fase 6 (27/11/2026): CI e documentos, commitada (não enviada)
 
