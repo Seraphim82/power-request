@@ -37,7 +37,7 @@ MARCA_RESPOSTA_CORTADA = "\n\n[... resposta cortada pelo limite de tamanho ...]"
 def _resposta_para_historico(resultado: dict) -> str:
     return resultado["resposta"] + (MARCA_RESPOSTA_CORTADA if resultado.get("cortada") else "")
 
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.1.1"
 CONTEXTO_CHAVE = "contexto_fixo"
 FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
@@ -55,9 +55,23 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 PORTA_PADRAO = 8765
 DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+# Valem no desenvolvimento (make dev). Ao abrir o app (desktop_app.py), são desligadas.
+app.state.origens_dev = True
+
+
+def _origens_dev() -> list[str]:
+    return DEV_ORIGINS if app.state.origens_dev else []
+
+
+class _CorsDoApp(CORSMiddleware):
+    """Confere a cada pedido se as origens de desenvolvimento ainda valem."""
+
+    def is_allowed_origin(self, origin: str) -> bool:
+        return origin in _origens_dev()
+
 
 app.add_middleware(
-    CORSMiddleware,
+    _CorsDoApp,
     allow_origins=DEV_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
@@ -69,7 +83,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 def _origin_permitida(origin: str, host: str) -> bool:
     """Compara a origem inteira (protocolo, nome e porta): outro programa local não passa."""
     porta = getattr(app.state, "porta", PORTA_PADRAO)
-    aceitas = {f"http://127.0.0.1:{porta}", f"http://localhost:{porta}", *DEV_ORIGINS}
+    aceitas = {f"http://127.0.0.1:{porta}", f"http://localhost:{porta}", *_origens_dev()}
     if host:  # a própria origem do servidor; o nome já passou pelo TrustedHostMiddleware
         aceitas.add(f"http://{host}")
     return origin in aceitas
