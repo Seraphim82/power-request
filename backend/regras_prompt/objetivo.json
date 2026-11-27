@@ -1,0 +1,42 @@
+{
+  "campo": "objetivo",
+  "descricao": "Frase que diz o que a pessoa quer construir ou resolver. Decide antes dos outros campos.",
+  "fortes": [
+    "^{quero|queria|preciso|necessito|gostaria|desejo|pretendo|procuro|busco|vou|vamos|quero muito} ..2 {criar|fazer|desenvolver|construir|montar|programar|implementar|automatizar|digitalizar|informatizar|ter|lancar|publicar}",
+    "^{quero|queria|preciso|necessito|gostaria|desejo|pretendo|procuro|busco} ..2 {um|uma} ..2 {sistema|app|aplicativo|site|pagina|loja virtual|programa|software|script|robo|bot|chatbot|jogo|game|painel|dashboard|ferramenta|plataforma|portal|extensao|plugin|api|integracao|automacao|catalogo|cardapio|formulario|calculadora|agenda|controle|cadastro|gerenciador|organizador|assistente|blog|landing page|planilha automatica|macro|rotina}",
+    "^{estou querendo|estou precisando|estou pensando em|estamos precisando|estamos querendo|pensei em|tenho vontade de} ..3 {criar|fazer|desenvolver|construir|montar|programar|implementar|automatizar|digitalizar|informatizar|ter|lancar|publicar|um|uma}",
+    "^{a ideia|minha ideia|o objetivo|meu objetivo|o projeto|meu projeto|a proposta|a meta} {e|eh|seria|consiste em}",
+    "^{crie|faca|desenvolva|construa|monte|programe|implemente|elabore} ..2 {um|uma}",
+    "^{me ajude a|me ajuda a|pode criar|voce pode criar|consegue criar|consegue fazer}",
+    "^{um|uma} {sistema|app|aplicativo|site|pagina|loja virtual|programa|software|script|robo|bot|chatbot|jogo|game|painel|dashboard|ferramenta|plataforma|portal|extensao|plugin|api|integracao|automacao|catalogo|cardapio|formulario|calculadora|agenda|controle|cadastro|gerenciador|organizador|assistente|blog|landing page|planilha automatica|macro|rotina} ..4 {que|para|pra|de}",
+    "^{criar|fazer|desenvolver|construir|montar|programar|implementar|automatizar|digitalizar|informatizar|ter|lancar|publicar} {um|uma} {sistema|app|aplicativo|site|pagina|loja virtual|programa|software|script|robo|bot|chatbot|jogo|game|painel|dashboard|ferramenta|plataforma|portal|extensao|plugin|api|integracao|automacao|catalogo|cardapio|formulario|calculadora|agenda|controle|cadastro|gerenciador|organizador|assistente|blog|landing page|planilha automatica|macro|rotina}",
+    "^eu {quero|queria|preciso|gostaria|necessito|procuro|desejo} ..2 {um|uma} ..2 {negocio|coisa|coisinha|trem|treco|parada|troco|esquema|jeito|forma|maneira|lugar|aplicativozinho|programinha|sisteminha|sitezinho|joguinho|robozinho|appzinho|lembrete|caderninho|caderno|planilha|tabela}",
+    "^{quero|queria|preciso|gostaria de|procuro} ..2 {um|uma} ..2 {negocio|coisa|coisinha|trem|treco|parada|troco|esquema|jeito|forma|maneira|lugar|aplicativozinho|programinha|sisteminha|sitezinho|joguinho|robozinho|appzinho|lembrete|caderninho|caderno|planilha|tabela}",
+    "^{to|estou|tava|estava} {precisando|querendo|procurando|atras} ..3 {um|uma|de um|de uma}",
+    "^{queria|quero|gostaria de} {saber como|um jeito de|uma forma de|uma maneira de}",
+    "^{tem como|tem jeito de|da pra|sera que da pra|sera que tem como} ..2 {fazer|criar|montar}",
+    "^{faz|faca|cria|crie|monta|monte|bola} {pra mim|para mim} {um|uma}",
+    "^{preciso|quero|queria} {de ajuda|ajuda} {com|pra|para} ..3 {fazer|criar|montar|um|uma}",
+    "^{pensei|tava pensando|estava pensando|andei pensando} {em|num|numa}",
+    "^{meu sonho|minha vontade|o que eu quero|o que eu queria|o que eu preciso} {e|era|seria}",
+    "^{queria|quero|preciso} ..2 {que alguem fizesse|que voce fizesse|que me ajudasse a fazer}",
+    "^{preciso|quero|queria|gostaria de} {organizar|controlar|gerenciar|anotar|marcar|guardar|acompanhar} ..6 {meu|minha|meus|minhas|da minha|do meu|na minha|no meu}",
+    "^{oi|ola|bom dia|boa tarde|boa noite} ..3 {quero|queria|preciso|gostaria} ..2 {um|uma}",
+    "^{cara|moco|moca|amigo|gente|opa|entao|olha|seguinte|e o seguinte} ..4 {quero|queria|preciso|precisando|querendo}"
+  ],
+  "fracas": [
+    "^o problema e",
+    "^hoje eu",
+    "^atualmente",
+    "^{minha|meu} {dificuldade|problema|dor|sofrimento}",
+    "^{eu|a gente} {sempre esqueco|me perco|nos perdemos|perco}"
+  ],
+  "excecoes": [
+    "preciso que",
+    "quero que",
+    "gostaria que",
+    "queria que",
+    "{quero|queria} saber quanto",
+    "{preciso|quero|queria} saber quem"
+  ]
+}

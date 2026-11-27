@@ -1,13 +1,14 @@
 {
   "name": "power-request-frontend",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --experimental-strip-types --no-warnings --test src/abrirNaIa.test.ts src/tamanhoEnvio.test.ts src/tempoEspera.test.ts src/bloqueioEnvio.test.ts src/avisoLink.test.ts src/organizar.test.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

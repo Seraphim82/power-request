@@ -126,7 +126,7 @@ def test_cli_recebe_timeout_longo_e_pasta_temporaria():
     kw = run.call_args.kwargs
     assert kw["timeout"] == ai_hub.SEND_CLI_TIMEOUT
     assert "power-request-" in kw["cwd"]
-    assert run.call_args.args[0][1:] == ["-p", "--tools", ""]
+    assert run.call_args.args[0][1:] == list(ai_hub.CLAUDE_ARGS_PROTEGIDOS)
     assert kw["shell"] is False
 
 
@@ -135,7 +135,7 @@ def test_chamadas_antigas_continuam_sem_cwd_e_com_timeout_curto():
     with patch("ai_hub.shutil.which", return_value="/usr/bin/claude"), \
          patch("subprocess.run", return_value=proc) as run:
         AIHubClient().call_llm({"provider": "claude_cli"}, "sys", "usr")
-    assert "cwd" not in run.call_args.kwargs
+    assert ai_hub.PREFIXO_PASTA_CLAUDE in run.call_args.kwargs["cwd"]
     assert run.call_args.kwargs["timeout"] == AIHubClient.LOCAL_CLI_TIMEOUT
 
 

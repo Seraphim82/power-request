@@ -16,6 +16,8 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+import agy_seguro
+
 
 class AIHubError(Exception):
     """Erro genérico de comunicação ou configuração no Hub de IAs."""
@@ -100,7 +102,7 @@ PROVIDERS_CATALOG: dict[str, dict[str, Any]] = {
     },
     "antigravity_cli": {
         "nome": "Gemini / Antigravity (Local)",
-        "descricao": "Usa o Antigravity (agy) ou Gemini CLI já autenticado neste computador, sem chave API.",
+        "descricao": "Usa o Antigravity (agy) já autenticado neste computador, sem chave API. O Gemini CLI funciona só no Abrir no Terminal.",
         "precisa_chave": False,
         "modelo_padrao": "antigravity-cli-local",
         "modelos_sugeridos": ["antigravity-cli-local"],
@@ -114,8 +116,10 @@ LOCAL_CLI_SPECS: dict[str, dict[str, Any]] = {
         "brand_id": "claude",
         "nome": "Claude (Local)",
         "binaries": ["claude"],
+        # Dentro do app o Claude roda SEMPRE com CLAUDE_ARGS_PROTEGIDOS (ver _call_local_cli).
         "args": ["-p"],
-        # No envio do prompt a IA só precisa escrever texto: sem ferramentas (arquivos, shell, web).
+        # Mínimo pedido pelo Enviar e pelo Sequenciar. Não decide nada: no Claude,
+        # _call_local_cli ignora os argumentos de quem chama e usa a proteção completa.
         "send_args": ["-p", "--tools", ""],
         # No Terminal o prompt entra como argumento inicial da sessão interativa.
         "terminal_mode": "argumento",
@@ -129,6 +133,24 @@ LOCAL_CLI_SPECS: dict[str, dict[str, Any]] = {
         "terminal_mode": "area_de_transferencia",
     },
 }
+
+# Claude (Local) dentro do app: sem ferramentas internas, sem MCP e sem personalizações
+# (ganchos, plugins, skills, CLAUDE.md, memória automática). Vale para todo uso dentro do app
+# (Testar Conexão, revisão, otimização, Enviar e Sequenciar). Não vale para Abrir no Terminal.
+# Limite (documentação oficial): ganchos impostos por política de administrador continuam valendo.
+CLAUDE_ARGS_PROTEGIDOS: tuple[str, ...] = (
+    "-p",
+    "--safe-mode",  # desliga ganchos, plugins, skills, CLAUDE.md, memória e servidores MCP
+    "--tools", "",  # nenhuma ferramenta interna (arquivos, terminal, web)
+    "--strict-mcp-config",  # ignora os servidores MCP configurados (não passamos --mcp-config)
+    "--disallowedTools", "mcp__*",  # e recusa qualquer ferramenta MCP que sobrar
+)
+PREFIXO_PASTA_CLAUDE = "power-request-claude-"
+AVISO_CLAUDE_SEM_MODO_SEGURO = (
+    "Sua versão do Claude (Local) não aceita o modo seguro que o app exige (sem ferramentas, "
+    "sem MCP e sem ganchos). Por segurança, o app não usa o Claude sem essa proteção. "
+    "No Terminal, rode claude update e use Testar Conexão de novo."
+)
 
 PROVIDER_UI_META: dict[str, dict[str, str]] = {
     "openrouter": {"auth_mode": "api_key"},
@@ -177,6 +199,33 @@ MAX_TERMINAL_PROMPT_CHARS = 100_000
 TERMINAL_PASTAS_PROIBIDAS = {"library", "applications", "system", "private", "volumes"}
 
 SEND_SYSTEM_PROMPT = "Siga com precisão o pedido do usuário e entregue o resultado completo."
+
+
+class RespostaIA(str):
+    """Texto da resposta da IA, com a informação de se ele chegou cortado."""
+
+    cortada: bool = False
+
+    def __new__(cls, texto: str, cortada: bool = False) -> "RespostaIA":
+        obj = super().__new__(cls, texto)
+        obj.cortada = cortada
+        return obj
+
+
+def parou_no_limite(provider: str, data: dict[str, Any]) -> bool:
+    """True quando o provedor informa que parou por atingir o limite de tamanho."""
+    try:
+        if provider in {"openrouter", "openai"}:
+            return data["choices"][0].get("finish_reason") == "length"
+        if provider == "claude":
+            return data.get("stop_reason") == "max_tokens"
+        if provider == "gemini":
+            return data["candidates"][0].get("finishReason") == "MAX_TOKENS"
+        if provider == "ollama":
+            return data.get("done_reason") == "length"
+    except (KeyError, IndexError, TypeError, AttributeError):
+        return False
+    return False
 
 
 def _build_search_path() -> str:
@@ -303,13 +352,17 @@ class AIHubClient:
                 "Por segurança, conectores locais do terminal não aceitam caminhos ou URLs personalizadas."
             )
 
-        return {
+        limpo = {
             "provider": provider,
             "api_key": api_key,
             "model": model,
             "alias": alias[:60],
             "base_url": validated_url,
         }
+        # Aceite do aviso de ganchos globais: só vale o booleano True.
+        if provider == "antigravity_cli" and config.get("aceito_ganchos") is True:
+            limpo["aceito_ganchos"] = True
+        return limpo
 
     def _call_local_cli(
         self,
@@ -344,47 +397,110 @@ class AIHubClient:
                 f"Entrada excede o limite de segurança ({MAX_CLI_PROMPT_CHARS} caracteres) para execução local."
             )
 
-        env = os.environ.copy()
-        env["PATH"] = _build_search_path()
-        env["NO_COLOR"] = "1"
-        env["TERM"] = "dumb"
+        env = self._ambiente_cli()
 
-        cmd = [binary_path, *(cli_args or spec["args"])]
+        if provider == "antigravity_cli":
+            return self._call_agy(cfg, binary_name, binary_path, combined_prompt, env, timeout)
+
+        # Ponto único da proteção do Claude: quem chama não escolhe os argumentos nem a pasta.
+        # `cli_args` e `cwd` ficam na assinatura só por compatibilidade e são ignorados aqui.
+        del cli_args, cwd
+        if provider != "claude_cli":  # CLI novo precisa de trava própria, testada, antes de entrar
+            raise AIHubSecurityError(f"Conector local sem trava de segurança: '{provider}'.")
+        cmd = [binary_path, *CLAUDE_ARGS_PROTEGIDOS]
+        env["CLAUDE_CODE_SAFE_MODE"] = "1"  # reforço do --safe-mode
         limite = timeout or self.LOCAL_CLI_TIMEOUT
-        try:
-            proc = subprocess.run(
-                cmd,
-                input=combined_prompt,
-                capture_output=True,
-                text=True,
-                timeout=limite,
-                shell=False,
-                env=env,
-                **({"cwd": cwd} if cwd else {}),
-            )
-        except subprocess.TimeoutExpired:
-            raise AIHubError(
-                f"Tempo esgotado ({limite}s) aguardando resposta de {cfg['alias']}."
-            ) from None
-        except OSError as exc:
-            raise AIHubError(f"Falha ao executar {binary_name} localmente: {exc}") from None
+        # Pasta nova e vazia a cada uso; apagada ao terminar, inclusive em erro ou tempo esgotado.
+        with tempfile.TemporaryDirectory(prefix=PREFIXO_PASTA_CLAUDE) as pasta_isolada:
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    input=combined_prompt,
+                    capture_output=True,
+                    text=True,
+                    timeout=limite,
+                    shell=False,
+                    env=env,
+                    cwd=pasta_isolada,
+                )
+            except subprocess.TimeoutExpired:
+                raise AIHubError(
+                    f"Tempo esgotado ({limite}s) aguardando resposta de {cfg['alias']}."
+                ) from None
+            except OSError as exc:
+                raise AIHubError(f"Falha ao executar {binary_name} localmente: {exc}") from None
 
         stdout = (proc.stdout or "").strip()
         stderr = (proc.stderr or "").strip()
 
         if proc.returncode != 0:
-            if cli_args and "unknown option" in (stderr or "").lower():
-                raise AIHubError(
-                    f"Sua versão do {spec['nome']} não aceita o modo seguro usado no envio "
-                    "(sem ferramentas). Atualize o programa e tente de novo."
-                )
+            # Opção recusada = versão sem o modo seguro. Nunca tenta de novo sem a proteção.
+            if "unknown option" in f"{stderr}\n{stdout}".lower():
+                raise AIHubError(AVISO_CLAUDE_SEM_MODO_SEGURO)
             detalhe = (stderr or stdout or "verifique se você já fez login no terminal")[:280]
             raise AIHubError(f"{cfg['alias']} retornou erro (código {proc.returncode}): {detalhe}")
 
         if not stdout:
             raise AIHubError(f"{cfg['alias']} não retornou texto na resposta.")
 
-        return stdout[:MAX_CLI_OUTPUT_CHARS]
+        return RespostaIA(stdout[:MAX_CLI_OUTPUT_CHARS], len(stdout) > MAX_CLI_OUTPUT_CHARS)
+
+    @staticmethod
+    def _ambiente_cli() -> dict[str, str]:
+        env = os.environ.copy()
+        env["PATH"] = _build_search_path()
+        env["NO_COLOR"] = "1"
+        env["TERM"] = "dumb"
+        return env
+
+    @staticmethod
+    def _exigir_agy(binary_name: str) -> None:
+        if binary_name != "agy":
+            raise AIHubError(
+                "O Gemini CLI não é usado dentro do app, porque a trava de ferramentas não foi "
+                "testada nele. Instale o Antigravity (agy) ou use Abrir no Terminal."
+            )
+
+    def _call_agy(
+        self,
+        cfg: dict[str, Any],
+        binary_name: str,
+        binary_path: str,
+        texto: str,
+        env: dict[str, str],
+        timeout: int | None,
+    ) -> str:
+        """Antigravity: sem argumentos com o pedido, pasta própria e ferramentas travadas."""
+        self._exigir_agy(binary_name)
+        if agy_seguro.tem_ganchos_globais() and cfg.get("aceito_ganchos") is not True:
+            raise AIHubError(agy_seguro.AVISO_GANCHOS)
+        try:
+            resposta = agy_seguro.enviar(binary_path, texto, timeout or self.LOCAL_CLI_TIMEOUT, env)
+        except agy_seguro.AgyFalha as exc:
+            raise AIHubError(str(exc)) from None
+        return RespostaIA(resposta[:MAX_CLI_OUTPUT_CHARS], len(resposta) > MAX_CLI_OUTPUT_CHARS)
+
+    def _testar_agy(self, cfg: dict[str, Any]) -> dict[str, Any]:
+        """O teste de conexão do Antigravity é a própria prova da trava (só dados falsos)."""
+        binary_name, binary_path = self._resolve_local_binary("antigravity_cli")
+        if not binary_path:
+            raise AIHubError(
+                "Antigravity não foi encontrado neste computador (comando esperado: agy)."
+            )
+        self._exigir_agy(binary_name)
+        try:
+            agy_seguro.provar_trava(binary_path, self.LOCAL_CLI_TIMEOUT, self._ambiente_cli())
+        except agy_seguro.AgyFalha as exc:
+            raise AIHubError(str(exc)) from None
+        return {
+            "conectado": True,
+            "alias": cfg["alias"],
+            "provider": cfg["provider"],
+            "model": cfg["model"],
+            "resposta": "OK",
+            "mensagem": f"{cfg['alias']} respondeu e a trava de ferramentas foi conferida.",
+            "ganchos_globais": agy_seguro.tem_ganchos_globais(),
+        }
 
     def _build_request(
         self,
@@ -517,7 +633,10 @@ class AIHubClient:
             with urllib.request.urlopen(req, timeout=timeout or self.DEFAULT_TIMEOUT) as resp:
                 raw = resp.read().decode("utf-8", errors="replace")
                 data = json.loads(raw)
-                return self._extract_text(cfg["provider"], data)
+                return RespostaIA(
+                    self._extract_text(cfg["provider"], data),
+                    parou_no_limite(cfg["provider"], data),
+                )
         except urllib.error.HTTPError as exc:
             try:
                 detalhe = exc.read().decode("utf-8", errors="replace")[:250]
@@ -544,6 +663,8 @@ class AIHubClient:
     def testar_conexao(self, config: dict[str, Any]) -> dict[str, Any]:
         """Envia um ping mínimo para confirmar se a IA (nuvem ou local) está respondendo."""
         cfg = self.validate_config(config)
+        if cfg["provider"] == "antigravity_cli":
+            return self._testar_agy(cfg)
         resposta = self.call_llm(
             cfg,
             system_prompt="Responda apenas com a palavra OK.",
@@ -583,7 +704,8 @@ class AIHubClient:
                 cli_args=spec.get("send_args"),
             )
         return {
-            "resposta": resposta,
+            "resposta": str(resposta),
+            "cortada": bool(getattr(resposta, "cortada", False)),
             "alias": cfg["alias"],
             "provider": cfg["provider"],
             "model": cfg["model"],

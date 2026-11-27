@@ -1,0 +1,631 @@
+{
+  "campo": "stack",
+  "descricao": "Tecnologias reconhecidas em qualquer parte do texto. A ordem importa: nomes compostos vêm antes dos curtos.",
+  "tecnologias": [
+    {
+      "nome": "Python",
+      "apelidos": []
+    },
+    {
+      "nome": "FastAPI",
+      "apelidos": []
+    },
+    {
+      "nome": "Django",
+      "apelidos": []
+    },
+    {
+      "nome": "Flask",
+      "apelidos": []
+    },
+    {
+      "nome": "Node.js",
+      "apelidos": [
+        "nodejs",
+        "node js"
+      ]
+    },
+    {
+      "nome": "Express",
+      "apelidos": []
+    },
+    {
+      "nome": "TypeScript",
+      "apelidos": []
+    },
+    {
+      "nome": "JavaScript",
+      "apelidos": []
+    },
+    {
+      "nome": "React Native",
+      "apelidos": []
+    },
+    {
+      "nome": "React",
+      "apelidos": [
+        "reactjs",
+        "react.js"
+      ]
+    },
+    {
+      "nome": "Next.js",
+      "apelidos": [
+        "nextjs"
+      ]
+    },
+    {
+      "nome": "Vue",
+      "apelidos": [
+        "vuejs",
+        "vue.js"
+      ]
+    },
+    {
+      "nome": "Angular",
+      "apelidos": []
+    },
+    {
+      "nome": "Flutter",
+      "apelidos": []
+    },
+    {
+      "nome": "Dart",
+      "apelidos": []
+    },
+    {
+      "nome": "SwiftUI",
+      "apelidos": []
+    },
+    {
+      "nome": "Swift",
+      "apelidos": []
+    },
+    {
+      "nome": "Kotlin",
+      "apelidos": []
+    },
+    {
+      "nome": "Jetpack Compose",
+      "apelidos": []
+    },
+    {
+      "nome": "Java",
+      "apelidos": []
+    },
+    {
+      "nome": "PHP",
+      "apelidos": []
+    },
+    {
+      "nome": "Laravel",
+      "apelidos": []
+    },
+    {
+      "nome": "WordPress",
+      "apelidos": []
+    },
+    {
+      "nome": "C#",
+      "apelidos": []
+    },
+    {
+      "nome": ".NET",
+      "apelidos": []
+    },
+    {
+      "nome": "Go",
+      "apelidos": []
+    },
+    {
+      "nome": "Rust",
+      "apelidos": []
+    },
+    {
+      "nome": "SQLite",
+      "apelidos": []
+    },
+    {
+      "nome": "PostgreSQL",
+      "apelidos": [
+        "postgres"
+      ]
+    },
+    {
+      "nome": "MySQL",
+      "apelidos": []
+    },
+    {
+      "nome": "MongoDB",
+      "apelidos": []
+    },
+    {
+      "nome": "Firebase",
+      "apelidos": []
+    },
+    {
+      "nome": "Supabase",
+      "apelidos": []
+    },
+    {
+      "nome": "Godot",
+      "apelidos": []
+    },
+    {
+      "nome": "Unity",
+      "apelidos": []
+    },
+    {
+      "nome": "HTML",
+      "apelidos": []
+    },
+    {
+      "nome": "CSS",
+      "apelidos": []
+    },
+    {
+      "nome": "Tailwind",
+      "apelidos": [
+        "tailwindcss"
+      ]
+    },
+    {
+      "nome": "Pandas",
+      "apelidos": []
+    },
+    {
+      "nome": "Selenium",
+      "apelidos": []
+    },
+    {
+      "nome": "Playwright",
+      "apelidos": []
+    },
+    {
+      "nome": "AppleScript",
+      "apelidos": []
+    },
+    {
+      "nome": "Excel VBA",
+      "apelidos": []
+    },
+    {
+      "nome": "Google Apps Script",
+      "apelidos": [
+        "apps script"
+      ]
+    },
+    {
+      "nome": "WhatsApp Cloud API",
+      "apelidos": []
+    },
+    {
+      "nome": "Evolution API",
+      "apelidos": []
+    },
+    {
+      "nome": "Telegram Bot API",
+      "apelidos": []
+    },
+    {
+      "nome": "NestJS",
+      "apelidos": []
+    },
+    {
+      "nome": "Svelte",
+      "apelidos": []
+    },
+    {
+      "nome": "Nuxt",
+      "apelidos": []
+    },
+    {
+      "nome": "Astro",
+      "apelidos": []
+    },
+    {
+      "nome": "Bootstrap",
+      "apelidos": []
+    },
+    {
+      "nome": "Vite",
+      "apelidos": []
+    },
+    {
+      "nome": "Electron",
+      "apelidos": []
+    },
+    {
+      "nome": "Tauri",
+      "apelidos": []
+    },
+    {
+      "nome": "Streamlit",
+      "apelidos": []
+    },
+    {
+      "nome": "Ruby on Rails",
+      "apelidos": [
+        "rails"
+      ]
+    },
+    {
+      "nome": "Spring Boot",
+      "apelidos": []
+    },
+    {
+      "nome": "C++",
+      "apelidos": []
+    },
+    {
+      "nome": "MariaDB",
+      "apelidos": []
+    },
+    {
+      "nome": "Redis",
+      "apelidos": []
+    },
+    {
+      "nome": "Docker",
+      "apelidos": []
+    },
+    {
+      "nome": "GDScript",
+      "apelidos": []
+    },
+    {
+      "nome": "Unreal Engine",
+      "apelidos": []
+    },
+    {
+      "nome": "Pygame",
+      "apelidos": []
+    },
+    {
+      "nome": "Phaser",
+      "apelidos": []
+    },
+    {
+      "nome": "BeautifulSoup",
+      "apelidos": [
+        "beautiful soup"
+      ]
+    },
+    {
+      "nome": "OpenPyXL",
+      "apelidos": []
+    },
+    {
+      "nome": "n8n",
+      "apelidos": []
+    },
+    {
+      "nome": "Zapier",
+      "apelidos": []
+    },
+    {
+      "nome": "Power Automate",
+      "apelidos": []
+    },
+    {
+      "nome": "Arduino",
+      "apelidos": []
+    },
+    {
+      "nome": "Raspberry Pi",
+      "apelidos": []
+    },
+    {
+      "nome": "OpenSCAD",
+      "apelidos": []
+    },
+    {
+      "nome": "Ruby",
+      "apelidos": []
+    },
+    {
+      "nome": "Perl",
+      "apelidos": []
+    },
+    {
+      "nome": "Scala",
+      "apelidos": []
+    },
+    {
+      "nome": "Elixir",
+      "apelidos": []
+    },
+    {
+      "nome": "Clojure",
+      "apelidos": []
+    },
+    {
+      "nome": "Haskell",
+      "apelidos": []
+    },
+    {
+      "nome": "Objective-C",
+      "apelidos": []
+    },
+    {
+      "nome": "Solidity",
+      "apelidos": []
+    },
+    {
+      "nome": "Bash",
+      "apelidos": []
+    },
+    {
+      "nome": "PowerShell",
+      "apelidos": []
+    },
+    {
+      "nome": "SvelteKit",
+      "apelidos": []
+    },
+    {
+      "nome": "Gatsby",
+      "apelidos": []
+    },
+    {
+      "nome": "jQuery",
+      "apelidos": []
+    },
+    {
+      "nome": "Redux",
+      "apelidos": []
+    },
+    {
+      "nome": "Material UI",
+      "apelidos": [
+        "mui"
+      ]
+    },
+    {
+      "nome": "Sass",
+      "apelidos": []
+    },
+    {
+      "nome": "Webpack",
+      "apelidos": []
+    },
+    {
+      "nome": "Three.js",
+      "apelidos": []
+    },
+    {
+      "nome": "Deno",
+      "apelidos": []
+    },
+    {
+      "nome": "Fastify",
+      "apelidos": []
+    },
+    {
+      "nome": "Koa",
+      "apelidos": []
+    },
+    {
+      "nome": "Symfony",
+      "apelidos": []
+    },
+    {
+      "nome": "CodeIgniter",
+      "apelidos": []
+    },
+    {
+      "nome": "ASP.NET",
+      "apelidos": []
+    },
+    {
+      "nome": "Blazor",
+      "apelidos": []
+    },
+    {
+      "nome": "Hibernate",
+      "apelidos": []
+    },
+    {
+      "nome": "Quarkus",
+      "apelidos": []
+    },
+    {
+      "nome": "Celery",
+      "apelidos": []
+    },
+    {
+      "nome": "SQLAlchemy",
+      "apelidos": []
+    },
+    {
+      "nome": "Prisma",
+      "apelidos": []
+    },
+    {
+      "nome": "Drizzle",
+      "apelidos": []
+    },
+    {
+      "nome": "GraphQL",
+      "apelidos": []
+    },
+    {
+      "nome": "SQL Server",
+      "apelidos": [
+        "sqlserver",
+        "mssql"
+      ]
+    },
+    {
+      "nome": "Oracle Database",
+      "apelidos": [
+        "oracle db"
+      ]
+    },
+    {
+      "nome": "DynamoDB",
+      "apelidos": []
+    },
+    {
+      "nome": "Cassandra",
+      "apelidos": []
+    },
+    {
+      "nome": "Elasticsearch",
+      "apelidos": []
+    },
+    {
+      "nome": "CouchDB",
+      "apelidos": []
+    },
+    {
+      "nome": "Neo4j",
+      "apelidos": []
+    },
+    {
+      "nome": "PocketBase",
+      "apelidos": []
+    },
+    {
+      "nome": "Appwrite",
+      "apelidos": []
+    },
+    {
+      "nome": "Firestore",
+      "apelidos": []
+    },
+    {
+      "nome": "Ionic",
+      "apelidos": []
+    },
+    {
+      "nome": "Capacitor",
+      "apelidos": []
+    },
+    {
+      "nome": "Cordova",
+      "apelidos": []
+    },
+    {
+      "nome": "Xamarin",
+      "apelidos": []
+    },
+    {
+      "nome": ".NET MAUI",
+      "apelidos": []
+    },
+    {
+      "nome": "Kotlin Multiplatform",
+      "apelidos": []
+    },
+    {
+      "nome": "Kubernetes",
+      "apelidos": []
+    },
+    {
+      "nome": "Terraform",
+      "apelidos": []
+    },
+    {
+      "nome": "Ansible",
+      "apelidos": []
+    },
+    {
+      "nome": "Jenkins",
+      "apelidos": []
+    },
+    {
+      "nome": "GitHub Actions",
+      "apelidos": [
+        "github action"
+      ]
+    },
+    {
+      "nome": "Nginx",
+      "apelidos": []
+    },
+    {
+      "nome": "Vercel",
+      "apelidos": []
+    },
+    {
+      "nome": "Netlify",
+      "apelidos": []
+    },
+    {
+      "nome": "Cloudflare Workers",
+      "apelidos": []
+    },
+    {
+      "nome": "Heroku",
+      "apelidos": []
+    },
+    {
+      "nome": "NumPy",
+      "apelidos": []
+    },
+    {
+      "nome": "Matplotlib",
+      "apelidos": []
+    },
+    {
+      "nome": "TensorFlow",
+      "apelidos": []
+    },
+    {
+      "nome": "PyTorch",
+      "apelidos": []
+    },
+    {
+      "nome": "Scikit-learn",
+      "apelidos": [
+        "sklearn",
+        "scikit learn"
+      ]
+    },
+    {
+      "nome": "Jupyter",
+      "apelidos": []
+    },
+    {
+      "nome": "OpenCV",
+      "apelidos": []
+    },
+    {
+      "nome": "Scrapy",
+      "apelidos": []
+    },
+    {
+      "nome": "Puppeteer",
+      "apelidos": []
+    },
+    {
+      "nome": "Cypress",
+      "apelidos": []
+    },
+    {
+      "nome": "Pytest",
+      "apelidos": []
+    },
+    {
+      "nome": "Tkinter",
+      "apelidos": []
+    },
+    {
+      "nome": "PyQt",
+      "apelidos": []
+    },
+    {
+      "nome": "Kivy",
+      "apelidos": []
+    },
+    {
+      "nome": "Bevy",
+      "apelidos": []
+    },
+    {
+      "nome": "GameMaker",
+      "apelidos": []
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+[
+ {
+  "nome": "mercearia",
+  "frases": [
+   [
+    "O",
+    "Eu queria um negócio no celular pra marcar o fiado da minha vendinha."
+   ],
+   [
+    "E",
+    "Eu escrevo o nome da pessoa e quanto ela pegou."
+   ],
+   [
+    "S",
+    "Aí tem que aparecer quanto cada um tá devendo."
+   ],
+   [
+    "R",
+    "Quem deve mais de 100 reais não leva mais nada."
+   ],
+   [
+    "R",
+    "Só eu posso mexer nisso."
+   ],
+   [
+    "T",
+    "Se eu escrever errado, quero poder arrumar."
+   ]
+  ]
+ },
+ {
+  "nome": "costura",
+  "frases": [
+   [
+    "O",
+    "Preciso de uma coisa pra não esquecer as encomendas de costura."
+   ],
+   [
+    "E",
+    "A freguesa me fala o que quer e o dia que vem buscar."
+   ],
+   [
+    "S",
+    "Quero que ele me avise um dia antes."
+   ],
+   [
+    "R",
+    "Não pego serviço pra menos de três dias."
+   ],
+   [
+    "R",
+    "Metade do dinheiro é na hora."
+   ],
+   [
+    "T",
+    "Se ela não vier buscar, quero que fique marcado."
+   ]
+  ]
+ },
+ {
+  "nome": "van",
+  "frases": [
+   [
+    "O",
+    "Queria um aplicativo pra minha van escolar."
+   ],
+   [
+    "E",
+    "A mãe coloca o nome da criança e o endereço."
+   ],
+   [
+    "S",
+    "Eu quero ver quem vai hoje."
+   ],
+   [
+    "R",
+    "Cabe no máximo 15 crianças."
+   ],
+   [
+    "R",
+    "Criança pequena vai na frente não."
+   ],
+   [
+    "T",
+    "Se a mãe avisar que não vai, tira da lista do dia."
+   ]
+  ]
+ },
+ {
+  "nome": "remedio",
+  "frases": [
+   [
+    "O",
+    "Quero um lembrete pra minha mãe tomar os remédios."
+   ],
+   [
+    "E",
+    "Eu coloco o nome do remédio e a hora."
+   ],
+   [
+    "S",
+    "Na hora certa o celular tem que tocar."
+   ],
+   [
+    "R",
+    "Letra bem grande."
+   ],
+   [
+    "R",
+    "Não pode ter coisa complicada."
+   ],
+   [
+    "T",
+    "Se ela não apertar que tomou, toca de novo."
+   ]
+  ]
+ }
+]

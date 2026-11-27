@@ -1,0 +1,147 @@
+[
+ {
+  "nome": "marmita",
+  "frases": [
+   [
+    "O",
+    "Cara, eu tô precisando de um negócio pra anotar os pedidos de marmita."
+   ],
+   [
+    "E",
+    "A galera me chama e fala o prato e onde mora."
+   ],
+   [
+    "S",
+    "Aí eu queria bater o olho e saber o que falta entregar."
+   ],
+   [
+    "R",
+    "Fiado só pra quem já é freguês."
+   ],
+   [
+    "R",
+    "Passou das 11 não pego mais pedido."
+   ],
+   [
+    "T",
+    "Se faltar o endereço, não deixa salvar."
+   ]
+  ]
+ },
+ {
+  "nome": "oficina",
+  "frases": [
+   [
+    "O",
+    "Quero um sistema pra minha oficina."
+   ],
+   [
+    "E",
+    "O mecânico bota a placa do carro e o que foi feito."
+   ],
+   [
+    "S",
+    "Depois dá pra puxar o histórico de cada carro."
+   ],
+   [
+    "R",
+    "A garantia do serviço é de 90 dias."
+   ],
+   [
+    "R",
+    "Mecânico não enxerga o valor das peças."
+   ],
+   [
+    "T",
+    "Se a placa já estiver cadastrada, abre a ficha que já existe."
+   ]
+  ]
+ },
+ {
+  "nome": "igreja",
+  "frases": [
+   [
+    "O",
+    "Tava pensando num app pra escala de voluntários."
+   ],
+   [
+    "E",
+    "Cada um marca os dias que pode."
+   ],
+   [
+    "S",
+    "Sai a escala do mês montada."
+   ],
+   [
+    "R",
+    "Ninguém pode servir dois domingos seguidos."
+   ],
+   [
+    "R",
+    "Precisa ter duas pessoas por turno."
+   ],
+   [
+    "T",
+    "Quando alguém desistir em cima da hora, chama o reserva."
+   ]
+  ]
+ },
+ {
+  "nome": "farmacia",
+  "frases": [
+   [
+    "O",
+    "Preciso de uma ferramenta para controlar a validade dos remédios."
+   ],
+   [
+    "E",
+    "A farmacêutica bipa a caixa e coloca a data de vencimento."
+   ],
+   [
+    "S",
+    "Toda segunda chega um e-mail com o que vence no mês."
+   ],
+   [
+    "R",
+    "Medicamento vencido não entra no estoque."
+   ],
+   [
+    "R",
+    "O lote é obrigatório."
+   ],
+   [
+    "T",
+    "Caso o código de barras não leia, permitir digitar na mão."
+   ]
+  ]
+ },
+ {
+  "nome": "escola",
+  "frases": [
+   [
+    "O",
+    "A ideia é um portal de notas para uma escola pequena."
+   ],
+   [
+    "E",
+    "Os professores lançam as notas de cada bimestre."
+   ],
+   [
+    "S",
+    "Os pais conseguem consultar o boletim."
+   ],
+   [
+    "R",
+    "A média para passar é 6."
+   ],
+   [
+    "R",
+    "Cada pai só enxerga o próprio filho."
+   ],
+   [
+    "T",
+    "Se a nota for maior que 10, o portal não aceita."
+   ]
+  ]
+ }
+]

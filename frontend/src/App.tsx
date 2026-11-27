@@ -17,11 +17,28 @@ import {
   type CategoriaId,
   type EstadoIa,
   type ItemHistorico,
+  type Rodada,
   type LocalToolStatus,
   type ProviderInfo,
   type RevisaoPedido,
   type ResultadoPrompt,
 } from './constants';
+import { montarLinkIa } from './abrirNaIa';
+import { enderecoDaEscolha, precisaDeAviso, type EscolhaAviso } from './avisoLink';
+import { AvisoLinkPrompt } from './AvisoLinkPrompt';
+import { AguardandoIa } from './AguardandoIa';
+import { AvisoIaOffline } from './AvisoIaOffline';
+import { BotaoCopiarPrompt } from './BotaoCopiarPrompt';
+import { iaOfflineBloqueiaEnvio } from './bloqueioEnvio';
+import { OrganizarPrompt, type RespostaOrganizar } from './OrganizarPrompt';
+import { haTrabalhoNaTela, primeiraEtapaVazia, avisoDepoisDeUsar } from './organizar';
+import {
+  LIMITE_ENVIO_PADRAO,
+  MARCA_RESPOSTA_CORTADA,
+  recortarRodadas,
+  respostaFoiCortada,
+  tamanhoDoPrompt,
+} from './tamanhoEnvio';
 import { styles } from './styles';
 
 const API_BASE = window.location.port === '5173' ? 'http://127.0.0.1:8000' : '';
@@ -58,6 +75,8 @@ export default function App() {
   const configInicial = carregarConfigSalva();
 
   const [categoria, setCategoria] = useState<CategoriaId>('geral');
+  const [organizarAberto, setOrganizarAberto] = useState<boolean>(false);
+  const [avisoOrganizado, setAvisoOrganizado] = useState<string>('');
   const [etapa, setEtapa] = useState<number>(1);
 
   const [intencaoLivre, setIntencaoLivre] = useState<string>('');
@@ -104,14 +123,24 @@ export default function App() {
   const [testandoConexao, setTestandoConexao] = useState<boolean>(false);
   const [estadoIa, setEstadoIa] = useState<EstadoIa>('desconhecido');
   const [detalheIa, setDetalheIa] = useState<string>('');
+  // Ganchos globais do Antigravity podem guardar o que for enviado. O aceite fica só na memória.
+  const [ganchosGlobais, setGanchosGlobais] = useState<boolean>(false);
+  const [aceitoGanchos, setAceitoGanchos] = useState<boolean>(false);
   const verificacaoAtual = useRef<number>(0);
 
   const [enviando, setEnviando] = useState<boolean>(false);
   const [segundosEnvio, setSegundosEnvio] = useState<number>(0);
+  // Qual botão iniciou a espera, para a animação aparecer perto dele.
+  const [origemEnvio, setOrigemEnvio] = useState<'enviar' | 'sequenciar'>('enviar');
   const [respostaIa, setRespostaIa] = useState<{ texto: string; origem: string } | null>(null);
   const [erroEnvio, setErroEnvio] = useState<string>('');
   const [respostaCopiada, setRespostaCopiada] = useState<string>('');
+  // Sequenciar: rodadas já respondidas (a 1ª tem pedido vazio = o prompt original).
+  const [rodadas, setRodadas] = useState<Rodada[]>([]);
+  const [proximoPedido, setProximoPedido] = useState<string>('');
+  const [infoSequencia, setInfoSequencia] = useState<string>('');
   const envioAtual = useRef<number>(0);
+  const [limiteEnvio, setLimiteEnvio] = useState<number>(LIMITE_ENVIO_PADRAO);
 
   const [pastaTerminal, setPastaTerminal] = useState<string>(() => {
     try {
@@ -122,6 +151,17 @@ export default function App() {
   });
   const [abrindoTerminal, setAbrindoTerminal] = useState<boolean>(false);
   const [avisoTerminal, setAvisoTerminal] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+
+  // Envio automático pelo site da IA (experimental, desligado por padrão)
+  const [autoAtivado, setAutoAtivado] = useState<boolean>(false);
+  const [autoPerfis, setAutoPerfis] = useState<{ suportado: boolean; perfis: { chave: string; nome: string }[]; nao_validados?: string[]; navegadores: string[] } | null>(null);
+  const [autoIa, setAutoIa] = useState<string>('claude');
+  const [autoNavegador, setAutoNavegador] = useState<string>('');
+  const [contagemAuto, setContagemAuto] = useState<number | null>(null);
+  const [autoEnviando, setAutoEnviando] = useState<boolean>(false);
+  const [autoAviso, setAutoAviso] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
+  const [autoTeste, setAutoTeste] = useState<{ ok: boolean; itens: { item: string; ok: boolean; detalhe: string }[] } | null>(null);
+  const [autoTestando, setAutoTestando] = useState<boolean>(false);
 
   const [contextoAberto, setContextoAberto] = useState<boolean>(false);
   const [contextoFixo, setContextoFixo] = useState<string>('');
@@ -135,6 +175,16 @@ export default function App() {
   });
   const [salvandoContexto, setSalvandoContexto] = useState<boolean>(false);
   const [statusContexto, setStatusContexto] = useState<string>('');
+
+  // Aviso antes de abrir a IA com o prompt no endereço (toda vez; nada fica guardado).
+  // Guarda o prompt do momento do clique: o que a pessoa confirmou é o que vai.
+  const [avisoLink, setAvisoLink] = useState<{
+    marca: (typeof BRANDS)[number];
+    prompt: string;
+    url: string;
+  } | null>(null);
+
+  const iaOffline = iaOfflineBloqueiaEnvio(estadoIa);
 
   const catConfig: CategoriaConfig =
     CATEGORIES.find((c) => c.id === categoria) || CATEGORIES[0];
@@ -173,6 +223,15 @@ export default function App() {
       setCarregandoHistorico(false);
     }
   };
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/health`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (Number(d?.limite_envio) > 0) setLimiteEnvio(Number(d.limite_envio));
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     carregarHistorico();
@@ -252,6 +311,7 @@ export default function App() {
       model: model.trim(),
       alias: alias.trim(),
       base_url: baseUrl.trim(),
+      aceito_ganchos: providerId === 'antigravity_cli' && aceitoGanchos,
     };
   };
 
@@ -284,6 +344,7 @@ export default function App() {
         setStatusConexao(`Conectado: ${data.mensagem}`);
         setEstadoIa('online');
         setDetalheIa(String(data.mensagem || ''));
+        if (data.provider === 'antigravity_cli') setGanchosGlobais(data.ganchos_globais === true);
       }
     } catch {
       if (id !== verificacaoAtual.current) return;
@@ -390,6 +451,66 @@ export default function App() {
     setRespostaIa(null);
     setErroEnvio('');
     setRespostaCopiada('');
+    setRodadas([]);
+    setProximoPedido('');
+    setInfoSequencia('');
+  };
+
+  const sequenciar = async () => {
+    const novo = proximoPedido.trim();
+    if (!resultado?.prompt_final || enviando || !novo || rodadas.length === 0) return;
+    const cfg = montarAiConfigPayload();
+    if (!cfg) {
+      setErroEnvio('Informe a chave desta IA no Hub de IAs antes de enviar.');
+      setHubAberto(true);
+      return;
+    }
+    const id = ++envioAtual.current;
+    setEnviando(true);
+    setOrigemEnvio('sequenciar');
+    setSegundosEnvio(0);
+    setErroEnvio('');
+    setRespostaCopiada('');
+    const { enviadas, anteriores } = recortarRodadas(rodadas);
+    try {
+      const res = await fetch(`${API_BASE}/api/sequenciar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt_base: resultado.prompt_final,
+          rodadas: enviadas.map((r) => ({ pedido: r.pedido, resposta: r.resposta })),
+          rodadas_anteriores: anteriores,
+          novo_pedido: novo,
+          ai_config: cfg,
+          ...(resultado.historico_id ? { pedido_id: resultado.historico_id } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (id !== envioAtual.current) return;
+      if (!res.ok) {
+        setErroEnvio(String(data.detail || 'Não foi possível sequenciar.'));
+      } else {
+        const origem = `${data.alias} (${data.model})`;
+        const texto = String(data.resposta || '') + (data.cortada ? MARCA_RESPOSTA_CORTADA : '');
+        setRespostaIa({ texto, origem });
+        setRodadas((prev) => [...prev, { pedido: novo, resposta: texto, origem }]);
+        setProximoPedido('');
+        const omitidas = Number(data.rodadas_omitidas || 0);
+        const cortadas: number[] = Array.isArray(data.rodadas_cortadas) ? data.rodadas_cortadas : [];
+        setInfoSequencia(
+          `Enviei o pedido original + ${data.rodadas_enviadas} resposta(s) anterior(es) + seu novo pedido (~${data.tokens_estimados} tokens).` +
+            (omitidas ? ` ${omitidas} rodada(s) mais antiga(s) ficaram de fora.` : '') +
+            (cortadas.length
+              ? ` Atenção: a resposta da(s) rodada(s) ${cortadas.join(', ')} foi enviada sem o meio, por falta de espaço.`
+              : ''),
+        );
+      }
+    } catch {
+      if (id !== envioAtual.current) return;
+      setErroEnvio('Não foi possível conectar ao servidor local.');
+    } finally {
+      if (id === envioAtual.current) setEnviando(false);
+    }
   };
 
   const enviarParaIa = async () => {
@@ -402,6 +523,7 @@ export default function App() {
     }
     const id = ++envioAtual.current;
     setEnviando(true);
+    setOrigemEnvio('enviar');
     setSegundosEnvio(0);
     setErroEnvio('');
     setRespostaIa(null);
@@ -410,14 +532,23 @@ export default function App() {
       const res = await fetch(`${API_BASE}/api/enviar-prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: resultado.prompt_final, ai_config: cfg }),
+        body: JSON.stringify({
+          prompt: resultado.prompt_final,
+          ai_config: cfg,
+          ...(resultado.historico_id ? { pedido_id: resultado.historico_id } : {}),
+        }),
       });
       const data = await res.json();
       if (id !== envioAtual.current) return;
       if (!res.ok) {
         setErroEnvio(String(data.detail || 'Não foi possível enviar o prompt.'));
       } else {
-        setRespostaIa({ texto: String(data.resposta || ''), origem: `${data.alias} (${data.model})` });
+        const origem = `${data.alias} (${data.model})`;
+        const texto = String(data.resposta || '') + (data.cortada ? MARCA_RESPOSTA_CORTADA : '');
+        setRespostaIa({ texto, origem });
+        setRodadas([{ pedido: '', resposta: texto, origem }]);
+        setProximoPedido('');
+        setInfoSequencia('');
       }
     } catch {
       if (id !== envioAtual.current) return;
@@ -460,6 +591,83 @@ export default function App() {
       setAvisoTerminal({ tipo: 'erro', texto: 'Não foi possível conectar ao servidor local.' });
     } finally {
       setAbrindoTerminal(false);
+    }
+  };
+
+  useEffect(() => {
+    let ativo = true;
+    fetch(`${API_BASE}/api/envio-automatico/perfis`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (ativo && d) setAutoPerfis(d);
+      })
+      .catch(() => undefined);
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const dispararEnvioAuto = async () => {
+    if (!resultado?.prompt_final) return;
+    setAutoEnviando(true);
+    setAutoAviso(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/envio-automatico`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: resultado.prompt_final,
+          ia: autoIa,
+          navegador: autoNavegador || null,
+          aviso_aceito: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAutoAviso({ tipo: 'erro', texto: String(data.detail || 'Não foi possível enviar pelo site.') });
+      } else {
+        setAutoAviso({ tipo: data.status === 'confirmado' ? 'ok' : 'erro', texto: String(data.mensagem || '') });
+      }
+    } catch {
+      setAutoAviso({ tipo: 'erro', texto: 'Não foi possível conectar ao servidor local.' });
+    } finally {
+      setAutoEnviando(false);
+    }
+  };
+
+  // Contagem regressiva de 3s antes de mexer no teclado; dá tempo de Cancelar.
+  useEffect(() => {
+    if (contagemAuto === null) return;
+    if (contagemAuto <= 0) {
+      setContagemAuto(null);
+      void dispararEnvioAuto();
+      return;
+    }
+    const t = window.setTimeout(() => setContagemAuto((c) => (c === null ? null : c - 1)), 1000);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contagemAuto]);
+
+  const testarAutomacao = async () => {
+    if (autoTestando) return;
+    setAutoTestando(true);
+    setAutoTeste(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/envio-automatico/testar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ navegador: autoNavegador || null }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAutoTeste(data);
+      } else {
+        setAutoTeste({ ok: false, itens: [{ item: 'Teste', ok: false, detalhe: String(data.detail || 'Falhou.') }] });
+      }
+    } catch {
+      setAutoTeste({ ok: false, itens: [{ item: 'Servidor', ok: false, detalhe: 'Não foi possível conectar ao servidor local.' }] });
+    } finally {
+      setAutoTestando(false);
     }
   };
 
@@ -605,6 +813,23 @@ export default function App() {
     setRevisao(null);
     setErro('');
     limparEnvio();
+    const idItem = item.id;
+    fetch(`${API_BASE}/api/historico/${idItem}/rodadas`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const lista: Rodada[] = Array.isArray(d?.rodadas)
+          ? d.rodadas.map((r: { pedido_texto: string; resposta: string; origem: string }) => ({
+              pedido: r.pedido_texto || '',
+              resposta: r.resposta || '',
+              origem: r.origem || 'IA',
+            }))
+          : [];
+        if (lista.length === 0) return;
+        setRodadas(lista);
+        const ultima = lista[lista.length - 1];
+        setRespostaIa({ texto: ultima.resposta, origem: ultima.origem });
+      })
+      .catch(() => undefined);
     setEtapa(1);
     setHistoricoAberto(false);
   };
@@ -638,28 +863,65 @@ export default function App() {
     }
   };
 
-  const copiarPrompt = async () => {
-    if (!resultado?.prompt_final) return;
-    try {
-      await navigator.clipboard.writeText(resultado.prompt_final);
-      setCopiadoTexto('Prompt copiado para a área de transferência.');
-    } catch {
-      setCopiadoTexto('Selecione e copie o texto do quadro acima.');
+  const atalhoColar = /Mac/i.test(navigator.platform) ? '⌘V' : 'Ctrl+V';
+
+  // Chamar direto do clique: o navegador só deixa abrir a aba e copiar logo após o gesto.
+  const abrirECopiar = async (nome: string, url: string, prompt: string, preenchido: boolean) => {
+    // A cópia começa antes de abrir a aba, enquanto esta página ainda está em foco.
+    const copia = navigator.clipboard.writeText(prompt).then(
+      () => true,
+      () => false
+    );
+    // Com "noopener" o navegador não informa se a aba abriu, então o texto não afirma isso.
+    window.open(url, '_blank', 'noopener,noreferrer');
+    const copiou = await copia;
+    const seNaoAbrir = `Se a aba não abrir, abra o ${nome} no navegador.`;
+    if (preenchido) {
+      setCopiadoTexto(`Abrindo ${nome} com o prompt já preenchido. Confira e aperte Enter. Se a caixa vier vazia, cole (${atalhoColar}). ${seNaoAbrir}`);
+    } else if (copiou) {
+      setCopiadoTexto(`Prompt copiado! Em ${nome}, clique na caixa de texto, cole (${atalhoColar}) e aperte Enter. ${seNaoAbrir}`);
+    } else {
+      setCopiadoTexto(`Não consegui copiar. Copie o prompt do quadro acima e cole no ${nome}. ${seNaoAbrir}`);
     }
   };
 
-  const copiarAbrirEm = async (nomeMarca: string, chatUrl: string) => {
+  const copiarAbrirEm = (marca: (typeof BRANDS)[number]) => {
     if (!resultado?.prompt_final) return;
-    try {
-      await navigator.clipboard.writeText(resultado.prompt_final);
-      setCopiadoTexto(`Prompt copiado! Abrindo ${nomeMarca}...`);
-    } catch {
-      setCopiadoTexto(`Abrindo ${nomeMarca} — se precisar, copie o prompt acima.`);
+    const link = montarLinkIa(marca, resultado.prompt_final);
+    setCopiadoTexto('');
+    if (precisaDeAviso(link)) {
+      setAvisoLink({ marca, prompt: resultado.prompt_final, url: link.url });
+      return;
     }
-    window.open(chatUrl, '_blank', 'noopener,noreferrer');
+    void abrirECopiar(marca.nome, link.url, resultado.prompt_final, false);
+  };
+
+  const escolherNoAviso = (escolha: EscolhaAviso, ciente: boolean) => {
+    if (!avisoLink) return;
+    const url = enderecoDaEscolha(escolha, ciente, avisoLink.marca.chatUrl, avisoLink.url);
+    if (!url) return;
+    setAvisoLink(null);
+    void abrirECopiar(avisoLink.marca.nome, url, avisoLink.prompt, escolha === 'preenchido');
+  };
+
+  // Substitui o formulário inteiro, para não misturar o pedido antigo com o colado.
+  // O Contexto colado é ignorado de propósito: o Contexto fixo só muda pela própria caixa.
+  const usarCamposOrganizados = ({ campos, categoria_sugerida, ficou_de_fora }: RespostaOrganizar) => {
+    resetar();
+    setCategoria(categoria_sugerida);
+    setObjetivo(campos.objetivo);
+    setStack(campos.stack);
+    setEntrada(campos.entrada);
+    setSaida(campos.saida);
+    setRegras(campos.regras);
+    setTratamentoErros(campos.tratamento_erros);
+    setEtapa(primeiraEtapaVazia(campos));
+    setAvisoOrganizado(avisoDepoisDeUsar(ficou_de_fora));
   };
 
   const resetar = () => {
+    setOrganizarAberto(false);
+    setAvisoOrganizado('');
     setEtapa(1);
     setIntencaoLivre('');
     setAnaliseInfo(null);
@@ -1109,6 +1371,27 @@ export default function App() {
               </div>
             )}
 
+            {providerId === 'antigravity_cli' && ganchosGlobais && (
+              <div style={styles.modeBox}>
+                <label style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '13px', color: '#cbd5e1', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={aceitoGanchos}
+                    onChange={(e) => setAceitoGanchos(e.target.checked)}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <span>
+                    Estou ciente: o que eu mandar ao Antigravity <strong>pode ser guardado</strong>
+                    <span style={{ display: 'block', color: '#94a3b8', fontSize: '12px' }}>
+                      Há ganchos globais ligados a ele (por exemplo, um programa de memória). A trava de
+                      ferramentas não os desliga. Não envie dados de cliente. Marque para liberar o envio
+                      e a revisão com esta IA.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
+
             <div style={styles.chipsRow}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
                 <input
@@ -1237,6 +1520,36 @@ export default function App() {
               )}
             </div>
           </div>
+        </section>
+
+        <section style={styles.card}>
+          <button
+            type="button"
+            style={styles.btnSecondary}
+            aria-expanded={organizarAberto}
+            onClick={() => {
+              setOrganizarAberto(!organizarAberto);
+              setAvisoOrganizado('');
+            }}
+          >
+            {organizarAberto ? 'Fechar' : 'Já tenho um prompt'}
+          </button>
+          {organizarAberto && (
+            <OrganizarPrompt
+              apiBase={API_BASE}
+              precisaConfirmar={haTrabalhoNaTela(
+                { objetivo, stack, entrada, saida, regras, tratamento_erros: tratamentoErros },
+                resultado !== null
+              )}
+              contextoSalvoLigado={contextoAtivoNoPedido}
+              aoUsar={usarCamposOrganizados}
+            />
+          )}
+          {avisoOrganizado && (
+            <div role="status" style={styles.statusMsg}>
+              {avisoOrganizado}
+            </div>
+          )}
         </section>
 
         <section style={styles.card}>
@@ -1406,9 +1719,7 @@ export default function App() {
                     {resultado.aviso ? ` • ${resultado.aviso}` : ''}
                   </div>
                 </div>
-                <button type="button" style={styles.btnPrimary} onClick={copiarPrompt}>
-                  Copiar Prompt
-                </button>
+                <BotaoCopiarPrompt key={resultado.prompt_final} texto={resultado.prompt_final} />
               </div>
 
               <pre
@@ -1432,22 +1743,50 @@ export default function App() {
                 }}
               >
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    style={{ ...styles.btnPrimary, opacity: enviando ? 0.7 : 1 }}
-                    onClick={enviarParaIa}
-                    disabled={enviando}
-                  >
-                    {enviando
-                      ? `Enviando... ${segundosEnvio}s`
-                      : `Enviar para ${providerSelecionado?.nome ?? 'a IA ativa'}`}
-                  </button>
-                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                    {modoAuth === 'api_key'
-                      ? 'Usa a sua chave de API (consome a sua cota). A resposta aparece aqui.'
-                      : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
-                  </span>
+                  {enviando && origemEnvio === 'enviar' ? (
+                    <AguardandoIa segundos={segundosEnvio} />
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        data-testid="btn-enviar"
+                        style={{
+                          ...styles.btnPrimary,
+                          opacity:
+                            enviando || iaOffline || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? 0.5 : 1,
+                        }}
+                        onClick={enviarParaIa}
+                        disabled={enviando || iaOffline || tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio}
+                      >
+                        {`Enviar para ${providerSelecionado?.nome ?? 'a IA ativa'}`}
+                      </button>
+                      <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                        {modoAuth === 'api_key'
+                          ? 'Usa a sua chave de API (consome a sua cota). A resposta aparece aqui.'
+                          : 'Usa a IA já logada neste computador. A resposta aparece aqui.'}
+                      </span>
+                    </>
+                  )}
                 </div>
+                {iaOffline && !enviando && <AvisoIaOffline motivo={detalheIa} aoTestar={testarConexaoIa} />}
+
+                {tamanhoDoPrompt(resultado.prompt_final) > limiteEnvio ? (
+                  <div
+                    role="status"
+                    data-testid="tamanho-prompt"
+                    style={{ marginTop: '8px', fontSize: '13px', color: '#fde68a', lineHeight: 1.5 }}
+                  >
+                    Prompt com {tamanhoDoPrompt(resultado.prompt_final).toLocaleString('pt-BR')} caracteres: passa do
+                    limite de {limiteEnvio.toLocaleString('pt-BR')} do botão Enviar. Reduza o pedido (menos regras ou
+                    textos menores) ou use <strong>Copiar Prompt</strong>
+                    {modoAuth === 'local_cli' ? ' ou Abrir no Terminal' : ''}.
+                  </div>
+                ) : (
+                  <div data-testid="tamanho-prompt" style={{ marginTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
+                    Tamanho: {tamanhoDoPrompt(resultado.prompt_final).toLocaleString('pt-BR')} de{' '}
+                    {limiteEnvio.toLocaleString('pt-BR')} caracteres para o botão Enviar.
+                  </div>
+                )}
 
                 {modoAuth === 'local_cli' && (
                   <div
@@ -1497,6 +1836,124 @@ export default function App() {
                   </div>
                 )}
 
+                {autoPerfis && (
+                  <div
+                    data-testid="bloco-envio-automatico"
+                    style={{
+                      marginTop: '14px',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1px solid #1e293b',
+                      backgroundColor: '#0b1220',
+                    }}
+                  >
+                    <label style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '13px', color: '#cbd5e1' }}>
+                      <input
+                        type="checkbox"
+                        checked={autoAtivado}
+                        onChange={(e) => {
+                          setAutoAtivado(e.target.checked);
+                          setContagemAuto(null);
+                          setAutoAviso(null);
+                        }}
+                      />
+                      <span>
+                        <strong>Abrir no site da IA</strong> (experimental): o app abre o site, cola o prompt e envia.
+                        A conversa fica no histórico da própria IA.
+                      </span>
+                    </label>
+
+                    {autoAtivado && !autoPerfis.suportado && (
+                      <div style={{ marginTop: '10px', fontSize: '13px', color: '#fde68a' }}>
+                        Ainda não funciona neste sistema (só macOS). Use <strong>Copiar Prompt</strong> e cole no site.
+                      </div>
+                    )}
+
+                    {autoAtivado && autoPerfis.suportado && (
+                      <>
+                        <div style={{ marginTop: '10px', fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+                          O macOS vai pedir permissão de <strong>Acessibilidade</strong> (para o app apertar ⌘V e
+                          Enter). Revise o prompt antes: ele pode ter dados de terceiros. Depois de clicar, aguarde
+                          3 segundos e não mexa no teclado até terminar. Se não der para confirmar o envio, o texto
+                          fica copiado.
+                        </div>
+                        <div style={{ marginTop: '10px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <select
+                            aria-label="IA do site"
+                            style={{ ...styles.input, flex: '0 1 160px', minWidth: 0 }}
+                            value={autoIa}
+                            onChange={(e) => setAutoIa(e.target.value)}
+                          >
+                            {autoPerfis.perfis.map((p) => (
+                              <option key={p.chave} value={p.chave}>
+                                {p.nome}
+                                {autoPerfis.nao_validados?.includes(p.chave) ? ' (ainda não validado)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            aria-label="Navegador"
+                            style={{ ...styles.input, flex: '0 1 180px', minWidth: 0 }}
+                            value={autoNavegador}
+                            onChange={(e) => setAutoNavegador(e.target.value)}
+                          >
+                            <option value="">Navegador: automático</option>
+                            {autoPerfis.navegadores.map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                          {contagemAuto === null ? (
+                            <button
+                              type="button"
+                              style={{ ...styles.btnSecondary, opacity: autoEnviando ? 0.7 : 1 }}
+                              onClick={() => {
+                                setAutoAviso(null);
+                                setContagemAuto(3);
+                              }}
+                              disabled={autoEnviando || !autoIa}
+                            >
+                              {autoEnviando ? 'Enviando...' : 'Enviar pelo site'}
+                            </button>
+                          ) : (
+                            <button type="button" style={styles.btnSecondary} onClick={() => setContagemAuto(null)}>
+                              Cancelar ({contagemAuto})
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            style={{ ...styles.btnSecondary, opacity: autoTestando ? 0.7 : 1 }}
+                            onClick={testarAutomacao}
+                            disabled={autoTestando || autoEnviando || contagemAuto !== null}
+                          >
+                            {autoTestando ? 'Testando...' : 'Testar automação'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {autoAviso && (
+                      <div
+                        role={autoAviso.tipo === 'erro' ? 'alert' : 'status'}
+                        data-testid="aviso-envio-automatico"
+                        style={{ marginTop: '10px', fontSize: '13px', color: autoAviso.tipo === 'erro' ? '#fecaca' : '#bbf7d0' }}
+                      >
+                        {autoAviso.texto}
+                      </div>
+                    )}
+                    {autoTeste && (
+                      <ul data-testid="resultado-teste-automacao" style={{ margin: '10px 0 0', paddingLeft: '18px', fontSize: '13px' }}>
+                        {autoTeste.itens.map((i) => (
+                          <li key={i.item} style={{ color: i.ok ? '#bbf7d0' : '#fecaca' }}>
+                            {i.ok ? '✓' : '✗'} {i.item}: {i.detalhe}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {erroEnvio && (
                   <div
                     role="alert"
@@ -1541,6 +1998,15 @@ export default function App() {
                         Copiar resposta
                       </button>
                     </div>
+                    {respostaFoiCortada(respostaIa.texto) && (
+                      <div
+                        role="alert"
+                        data-testid="aviso-resposta-cortada"
+                        style={{ marginBottom: '10px', fontSize: '13px', color: '#fde68a' }}
+                      >
+                        Atenção: esta resposta chegou <strong>cortada</strong> pelo limite de tamanho. Está incompleta.
+                      </div>
+                    )}
                     <pre
                       data-testid="resposta-ia"
                       style={{
@@ -1562,6 +2028,84 @@ export default function App() {
                     )}
                   </div>
                 )}
+
+                {rodadas.length > 0 && (
+                  <div
+                    data-testid="bloco-sequenciar"
+                    style={{
+                      marginTop: '12px',
+                      padding: '14px',
+                      borderRadius: '12px',
+                      border: '1px solid #334155',
+                      backgroundColor: '#0b1220',
+                    }}
+                  >
+                    <strong style={{ color: '#e2e8f0', fontSize: '14px' }}>
+                      Continuar a conversa (Sequenciar) · {rodadas.length} rodada(s)
+                    </strong>
+                    <p style={{ margin: '6px 0 10px', fontSize: '12.5px', color: '#94a3b8', lineHeight: 1.5 }}>
+                      Escreva o próximo pedido. O app reenvia o pedido original, o novo pedido e até as 3 últimas respostas
+                      que couberem no limite (as mais antigas são cortadas primeiro, com aviso). O Histórico guarda até 50
+                      rodadas por pedido.
+                    </p>
+                    <textarea
+                      data-testid="proximo-pedido"
+                      value={proximoPedido}
+                      onChange={(e) => setProximoPedido(e.target.value)}
+                      maxLength={2000}
+                      rows={3}
+                      disabled={enviando}
+                      placeholder="Ex.: Agora adicione login com e-mail e senha."
+                      style={{
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        backgroundColor: '#020617',
+                        color: '#e2e8f0',
+                        fontSize: '14px',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginTop: '8px' }}>
+                      {enviando && origemEnvio === 'sequenciar' ? (
+                        <AguardandoIa segundos={segundosEnvio} />
+                      ) : (
+                        <button
+                          type="button"
+                          data-testid="btn-sequenciar"
+                          style={{ ...styles.btnPrimary, opacity: enviando || iaOffline ? 0.5 : 1 }}
+                          disabled={enviando || iaOffline || !proximoPedido.trim()}
+                          onClick={sequenciar}
+                        >
+                          Sequenciar
+                        </button>
+                      )}
+                      {infoSequencia && <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>{infoSequencia}</span>}
+                    </div>
+                    {iaOffline && !enviando && <AvisoIaOffline motivo={detalheIa} aoTestar={testarConexaoIa} />}
+                    {rodadas.length > 1 && (
+                      <details style={{ marginTop: '10px' }}>
+                        <summary style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '12.5px' }}>
+                          Ver rodadas anteriores
+                        </summary>
+                        {rodadas.slice(0, -1).map((r, i) => (
+                          <div key={i} style={{ marginTop: '8px', fontSize: '12.5px', color: '#cbd5e1' }}>
+                            <div style={{ color: '#94a3b8' }}>
+                              Rodada {i + 1}
+                              {r.pedido ? ` — pedido: ${r.pedido}` : ' — prompt original'}
+                            </div>
+                            <pre style={{ margin: '4px 0 0', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: '160px', overflow: 'auto' }}>
+                              {r.resposta}
+                            </pre>
+                          </div>
+                        ))}
+                      </details>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div
@@ -1572,7 +2116,7 @@ export default function App() {
                 }}
               >
                 <div style={{ fontSize: '12.5px', color: '#94a3b8', marginBottom: '8px' }}>
-                  Ou copie e abra direto na sua IA favorita:
+                  Abrir direto na sua IA. Quando o prompt puder ir pelo endereço, aparece um aviso antes:
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {BRANDS.filter((b) => b.chatUrl).map((b) => (
@@ -1580,12 +2124,20 @@ export default function App() {
                       key={b.id}
                       type="button"
                       style={{ ...styles.btnSecondary, borderColor: b.cor, color: b.cor }}
-                      onClick={() => copiarAbrirEm(b.nome, b.chatUrl)}
+                      onClick={() => copiarAbrirEm(b)}
                     >
                       Abrir no {b.nome}
                     </button>
                   ))}
                 </div>
+                {avisoLink && (
+                  <AvisoLinkPrompt
+                    nome={avisoLink.marca.nome}
+                    atalhoColar={atalhoColar}
+                    onEscolher={escolherNoAviso}
+                    onCancelar={() => setAvisoLink(null)}
+                  />
+                )}
                 {copiadoTexto && (
                   <div style={{ marginTop: '8px', fontSize: '13px', color: '#4ade80', fontWeight: 600 }}>
                     {copiadoTexto}

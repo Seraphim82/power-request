@@ -1,0 +1,147 @@
+[
+ {
+  "nome": "pet",
+  "frases": [
+   [
+    "O",
+    "Queria um programinha pro meu pet shop."
+   ],
+   [
+    "E",
+    "A moça do balcão anota o nome do bicho e o telefone do dono."
+   ],
+   [
+    "S",
+    "Aí aparece quem tem banho marcado hoje."
+   ],
+   [
+    "R",
+    "Cachorro bravo só com focinheira."
+   ],
+   [
+    "R",
+    "O banho leva uns 40 minutos."
+   ],
+   [
+    "T",
+    "Se o telefone vier errado, pede pra corrigir."
+   ]
+  ]
+ },
+ {
+  "nome": "feira",
+  "frases": [
+   [
+    "O",
+    "Pensei num app pra controlar as vendas na feira."
+   ],
+   [
+    "E",
+    "Eu boto o produto e quanto vendeu."
+   ],
+   [
+    "S",
+    "No fim do dia quero saber quanto entrou."
+   ],
+   [
+    "R",
+    "Não vendo fiado."
+   ],
+   [
+    "R",
+    "Tem que dar pra usar sem sinal."
+   ],
+   [
+    "T",
+    "Se eu errar o valor, preciso conseguir apagar."
+   ]
+  ]
+ },
+ {
+  "nome": "biblio",
+  "frases": [
+   [
+    "O",
+    "Preciso de um catálogo para os discos da minha coleção."
+   ],
+   [
+    "E",
+    "Para cada disco registro artista, ano e estado de conservação."
+   ],
+   [
+    "S",
+    "Quero buscar e ver todos de um mesmo artista."
+   ],
+   [
+    "R",
+    "O ano deve ter quatro dígitos."
+   ],
+   [
+    "R",
+    "Não aceitar disco sem artista."
+   ],
+   [
+    "T",
+    "Caso o disco já exista, perguntar se é outra cópia."
+   ]
+  ]
+ },
+ {
+  "nome": "obra",
+  "frases": [
+   [
+    "O",
+    "Gostaria de um sistema para o diário de uma obra."
+   ],
+   [
+    "E",
+    "O encarregado tira foto e escreve o que foi feito no dia."
+   ],
+   [
+    "S",
+    "O engenheiro recebe um resumo semanal."
+   ],
+   [
+    "R",
+    "Nenhum registro pode ser apagado."
+   ],
+   [
+    "R",
+    "O relatório fecha toda sexta."
+   ],
+   [
+    "T",
+    "Se a foto não subir, tentar de novo mais tarde."
+   ]
+  ]
+ },
+ {
+  "nome": "curso",
+  "frases": [
+   [
+    "O",
+    "Quero criar uma plataforma de inscrição para um curso de violão."
+   ],
+   [
+    "E",
+    "O interessado deixa nome, e-mail e o horário preferido."
+   ],
+   [
+    "S",
+    "Ele ganha um comprovante na hora."
+   ],
+   [
+    "R",
+    "A turma comporta 8 alunos."
+   ],
+   [
+    "R",
+    "Menor de idade precisa de autorização."
+   ],
+   [
+    "T",
+    "Quando a turma encher, colocar o nome numa lista de espera."
+   ]
+  ]
+ }
+]

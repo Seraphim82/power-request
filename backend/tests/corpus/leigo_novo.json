@@ -1,0 +1,147 @@
+[
+ {
+  "nome": "pastel",
+  "frases": [
+   [
+    "O",
+    "Moço, eu queria um trem pra anotar os pedidos da minha barraca de pastel."
+   ],
+   [
+    "E",
+    "O menino que me ajuda escreve o sabor e o nome do freguês."
+   ],
+   [
+    "S",
+    "Aí eu preciso enxergar qual é o próximo da fila."
+   ],
+   [
+    "R",
+    "Pastel doce só sai depois das seis."
+   ],
+   [
+    "R",
+    "Não faço entrega."
+   ],
+   [
+    "T",
+    "Se o menino anotar errado, tem que dar pra mudar."
+   ]
+  ]
+ },
+ {
+  "nome": "jardim",
+  "frases": [
+   [
+    "O",
+    "Tô precisando de um jeito de marcar meus serviços de jardinagem."
+   ],
+   [
+    "E",
+    "Quando o cliente liga eu anoto a rua e o dia."
+   ],
+   [
+    "S",
+    "De manhã o celular me mostra onde eu tenho que ir."
+   ],
+   [
+    "R",
+    "Dia de chuva eu não trabalho."
+   ],
+   [
+    "R",
+    "Cobro 80 reais a visita."
+   ],
+   [
+    "T",
+    "Se chover, quero passar o serviço pra outro dia."
+   ]
+  ]
+ },
+ {
+  "nome": "dizimo",
+  "frases": [
+   [
+    "O",
+    "Queria uma planilha pra juntar o dinheiro da rifa da escola."
+   ],
+   [
+    "E",
+    "Cada mãe fala o número que quer e paga."
+   ],
+   [
+    "S",
+    "No final preciso saber quanto juntou."
+   ],
+   [
+    "R",
+    "Cada número custa 5 reais."
+   ],
+   [
+    "R",
+    "Número vendido não pode vender de novo."
+   ],
+   [
+    "T",
+    "Se alguém desistir, o número fica livre outra vez."
+   ]
+  ]
+ },
+ {
+  "nome": "cabelo",
+  "frases": [
+   [
+    "O",
+    "Quero um aplicativo pra minha filha marcar as clientes de unha."
+   ],
+   [
+    "E",
+    "Ela bota o nome da moça e o horário."
+   ],
+   [
+    "S",
+    "Quero que apareça quem vem amanhã."
+   ],
+   [
+    "R",
+    "Domingo ela não atende."
+   ],
+   [
+    "R",
+    "Tem que ser bem facinho de usar."
+   ],
+   [
+    "T",
+    "Se marcar duas no mesmo horário, avisa ela."
+   ]
+  ]
+ },
+ {
+  "nome": "abrev",
+  "frases": [
+   [
+    "O",
+    "qro um app p minha lojinha de roupa."
+   ],
+   [
+    "E",
+    "a vendedora coloca o q vendeu e o preço."
+   ],
+   [
+    "S",
+    "dps quero ver qto vendi hj."
+   ],
+   [
+    "R",
+    "n pode vender fiado."
+   ],
+   [
+    "R",
+    "so eu posso apagar venda."
+   ],
+   [
+    "T",
+    "se ela digitar errado tem q dar pra arrumar."
+   ]
+  ]
+ }
+]

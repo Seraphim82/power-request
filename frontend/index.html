@@ -16,6 +16,12 @@
       }
       @keyframes ia-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); } 50% { box-shadow: 0 0 0 5px rgba(74, 222, 128, 0); } }
       @keyframes ia-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+      /* Espera pela resposta da IA: o ponto de luz vai do prompt ao computador. */
+      .espera-ponto { position: absolute; top: 1px; left: 0; width: 10px; height: 10px; border-radius: 50%; background: #fde68a; box-shadow: 0 0 10px 3px rgba(253, 230, 138, 0.7); animation: espera-viagem 1.6s ease-in infinite; }
+      .espera-tela { animation: espera-ping 1.6s ease-out infinite; }
+      @keyframes espera-viagem { 0% { left: 0; opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { left: calc(100% - 10px); opacity: 0; } }
+      @keyframes espera-ping { 0%, 100% { filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.95)); } 30%, 80% { filter: drop-shadow(0 0 0 rgba(74, 222, 128, 0)); } }
+      @media (prefers-reduced-motion: reduce) { .espera-ponto { animation: none; left: calc(50% - 5px); } .espera-tela { animation: none; } }
       .ia-dot-online { animation: ia-glow 2.4s ease-out infinite; }
       .ia-dot-verificando { animation: ia-pulse 0.9s ease-in-out infinite; }
       @media (prefers-reduced-motion: reduce) { .ia-dot-online, .ia-dot-verificando { animation: none; } }

@@ -1,0 +1,176 @@
+[
+ {
+  "nome": "clinica",
+  "frases": [
+   [
+    "O",
+    "Preciso de um sistema para marcar consultas numa clínica veterinária."
+   ],
+   [
+    "E",
+    "O tutor escreve o nome do animal, a espécie e o motivo da visita."
+   ],
+   [
+    "S",
+    "A atendente deve ver os horários marcados em um calendário."
+   ],
+   [
+    "R",
+    "Cada veterinário atende no máximo 12 animais por dia."
+   ],
+   [
+    "R",
+    "Cancelamentos só com 24 horas de antecedência."
+   ],
+   [
+    "T",
+    "Se o horário lotar, mostrar outras datas."
+   ]
+  ]
+ },
+ {
+  "nome": "fotos",
+  "frases": [
+   [
+    "O",
+    "Quero um script que organize as minhas fotos de viagem."
+   ],
+   [
+    "E",
+    "Ele vai ler uma pasta com imagens em JPG."
+   ],
+   [
+    "S",
+    "No fim, cria uma pasta para cada mês."
+   ],
+   [
+    "R",
+    "Jamais apague a foto original."
+   ],
+   [
+    "R",
+    "Precisa rodar sem internet."
+   ],
+   [
+    "T",
+    "Caso a foto não tenha data, mandar para uma pasta chamada sem data."
+   ]
+  ]
+ },
+ {
+  "nome": "condominio",
+  "frases": [
+   [
+    "O",
+    "A ideia é um app para reservar o salão de festas do condomínio."
+   ],
+   [
+    "E",
+    "O morador seleciona a data e informa o número do apartamento."
+   ],
+   [
+    "S",
+    "O aplicativo mostra um comprovante da reserva."
+   ],
+   [
+    "R",
+    "Cada apartamento pode reservar apenas uma vez por mês."
+   ],
+   [
+    "R",
+    "A reserva custa 150 reais."
+   ],
+   [
+    "T",
+    "Se a data já tiver dono, avisar o morador."
+   ]
+  ]
+ },
+ {
+  "nome": "orcamento",
+  "frases": [
+   [
+    "O",
+    "Gostaria de uma ferramenta para montar orçamentos de pintura."
+   ],
+   [
+    "E",
+    "Eu informo a metragem das paredes e o tipo de tinta."
+   ],
+   [
+    "S",
+    "Ela precisa gerar um orçamento pronto para imprimir."
+   ],
+   [
+    "R",
+    "O valor mínimo do serviço é de 300 reais."
+   ],
+   [
+    "R",
+    "Todo orçamento vale por 15 dias."
+   ],
+   [
+    "T",
+    "Se eu digitar uma metragem negativa, recusar e pedir de novo."
+   ]
+  ]
+ },
+ {
+  "nome": "enquete",
+  "frases": [
+   [
+    "O",
+    "Quero um bot de Telegram para fazer enquetes numa turma."
+   ],
+   [
+    "E",
+    "O professor manda a pergunta e as alternativas."
+   ],
+   [
+    "S",
+    "O bot publica o placar quando a votação acaba."
+   ],
+   [
+    "R",
+    "Cada aluno vota uma única vez."
+   ],
+   [
+    "R",
+    "A votação fica aberta por 10 minutos."
+   ],
+   [
+    "T",
+    "Em caso de voto repetido, ignorar e avisar o aluno."
+   ]
+  ]
+ },
+ {
+  "nome": "armadilhas2",
+  "frases": [
+   [
+    "O",
+    "Preciso de um catálogo para uma loja de materiais de ferro e aço."
+   ],
+   [
+    "E",
+    "O vendedor insere o código e a medida de cada peça."
+   ],
+   [
+    "S",
+    "A busca deve retornar o preço e a quantidade disponível."
+   ],
+   [
+    "R",
+    "É muito importante que a busca ignore acentos."
+   ],
+   [
+    "R",
+    "Se for cliente antigo, aplicar 5% de desconto."
+   ],
+   [
+    "T",
+    "Se o código não existir, mostrar produtos parecidos."
+   ]
+  ]
+ }
+]

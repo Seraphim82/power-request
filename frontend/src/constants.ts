@@ -49,6 +49,13 @@ export interface ResultadoPrompt {
   aviso?: string;
 }
 
+/** Uma rodada do Sequenciar: o pedido (vazio na 1ª = prompt original) e a resposta da IA. */
+export interface Rodada {
+  pedido: string;
+  resposta: string;
+  origem: string;
+}
+
 export interface ItemHistorico {
   id: number;
   criado_em: string;
@@ -206,9 +213,22 @@ export const CATEGORIES: CategoriaConfig[] = [
   },
 ];
 
+// `preenchimento` só onde o site aceita o prompt pelo endereço (confirmado). Nos demais: copiar e colar.
 export const BRANDS = [
-  { id: 'chatgpt', nome: 'ChatGPT', cor: '#10a37f', chatUrl: 'https://chatgpt.com/' },
-  { id: 'claude', nome: 'Claude', cor: '#d97757', chatUrl: 'https://claude.ai/new' },
+  {
+    id: 'chatgpt',
+    nome: 'ChatGPT',
+    cor: '#10a37f',
+    chatUrl: 'https://chatgpt.com/',
+    preenchimento: { param: 'q' },
+  },
+  {
+    id: 'claude',
+    nome: 'Claude',
+    cor: '#d97757',
+    chatUrl: 'https://claude.ai/new',
+    preenchimento: { param: 'q' },
+  },
   { id: 'gemini', nome: 'Gemini', cor: '#4285f4', chatUrl: 'https://gemini.google.com/app' },
   { id: 'grok', nome: 'Grok', cor: '#e5e7eb', chatUrl: 'https://grok.com/' },
   { id: 'deepseek', nome: 'DeepSeek', cor: '#6366f1', chatUrl: 'https://chat.deepseek.com/' },

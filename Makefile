@@ -1,5 +1,5 @@
 # Atalhos do Power Request (rode a partir da raiz do projeto)
-.PHONY: setup test typecheck build check run dev app icon node-check
+.PHONY: setup test test-front typecheck build check run dev app icon node-check
 
 node-check:  ## Confere a versão do Node exigida pelo frontend
 	@node -e "const [a,b]=process.versions.node.split('.').map(Number); if(!(a>22||(a===22&&b>=12)||(a===20&&b>=19))){console.error('Precisa de Node 20.19+ ou 22.12+ (voce tem '+process.versions.node+'). Instale em https://nodejs.org');process.exit(1)}"
@@ -11,13 +11,16 @@ setup: node-check  ## Instala backend (venv) e frontend
 test:  ## Testes do backend
 	cd backend && ./venv/bin/python -m pytest
 
+test-front: node-check  ## Testes do frontend (montagem do link da IA)
+	cd frontend && npm test
+
 typecheck: node-check  ## Checagem de tipos do frontend
 	cd frontend && npm run typecheck
 
 build: node-check  ## Compila o frontend (frontend/dist)
 	cd frontend && npm run build
 
-check: test typecheck build  ## Tudo que precisa passar antes de um commit
+check: test test-front typecheck build  ## Tudo que precisa passar antes de um commit
 
 run: build  ## Servidor unificado em http://127.0.0.1:8765
 	cd backend && ./venv/bin/python desktop_app.py
