@@ -5,6 +5,10 @@ Atualizado em 27/11/2026.
 ## Onde parou
 
 - **Fases 1 a 7:** concluídas. **Versão 2.1.0 publicada em 27/11.**
+- **Versão 2.1.1 publicada em 27/11** (corrige duas falhas altas da 2.1.0). Pull Request #3, merge
+  pelo dono (`28507da`). CI e CodeQL verdes no PR e na `main` (prints do dono). A tag `v2.1.1`
+  aponta para `28507da`, conferido no Mac e no GitHub. O `Power Request.app` da 2.1.1 não foi testado.
+- **Alerta CodeQL #20:** analisado como falso positivo e fechado pelo dono (relato; ver ERROS).
 - **Pull Request #1:** merge feito pelo dono em 27/11 (commit `31b4277`).
 - **Tag `v2.1.0`:** publicada pelo dono; aponta para `31b4277`.
 - **CI no GitHub:** verde. Conferido em 27/11 pela API pública do GitHub: no último commit do PR
@@ -19,12 +23,14 @@ Atualizado em 27/11/2026.
 
 ## Próximo passo
 
-1. Versão 2.1.1 decidida pelo dono e colocada no código (27/11); ainda não publicada. Com o
-   número novo, o `make check` passou no Mac (print do dono): 435 testes de backend, 22 de
-   frontend, tipos e build. Falta publicar: Pull Request, CI, merge e tag. Os testes manuais
-   abaixo são de antes da troca do número.
-2. Fase 8 em andamento (27/11): revisão feita; duas falhas altas corrigidas com OK do dono (ver
-   ERROS). No Mac (prints do dono): 435 testes de backend; no `make check`, 22 de
+1. Fase 8 ainda aberta: falta decidir as pendências do `docs/PLANO.md`, só com o OK do dono.
+2. Testar o `Power Request.app` da 2.1.1.
+
+Testes das correções (27/11). Com o número 2.1.1, o `make check` passou no Mac (print do dono):
+435 testes de backend, 22 de frontend, tipos e build. Os testes manuais abaixo são de antes da
+troca do número.
+
+- Duas falhas altas corrigidas com OK do dono (ver ERROS). No Mac (prints do dono): 435 testes de backend; no `make check`, 22 de
    frontend, tipos e build; os dois bloqueios responderam 403 e a pasta do teste não foi criada.
    O Abrir no Terminal com prompt comum abriu o
    Claude real com o texto (relato e print do dono). O histórico apareceu no app (relato do

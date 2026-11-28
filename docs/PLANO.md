@@ -122,7 +122,8 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [ ] Avaliar a origem `localhost` quando outro programa usa a mesma porta em IPv6 (ver ERROS).
 - [x] Decidido pelo dono (27/11): versão 2.1.1, porque a 2.1.0 publicada tem as falhas. Número
   atualizado no código e no `CHANGELOG.md`.
-- [ ] Commit, Pull Request, CI, merge e tag `v2.1.1`.
+- [x] Commit, Pull Request #3, CI, merge (`28507da`) e tag `v2.1.1` (27/11).
+- [x] Alerta CodeQL #20: analisado como falso positivo; fechado pelo dono (27/11).
 - [ ] Avaliar código de acesso nas rotas e o prompt de uma palavra só no Abrir no Terminal.
 - [ ] Itens baixos (ver `docs/ERROS.md`), cada correção com teste novo e só com OK: tirar
   `testserver` da produção (há teste antigo que usa esse nome), limitar o corpo lido, restringir o

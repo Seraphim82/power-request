@@ -11,7 +11,7 @@ recebeu 403, sem criar a pasta. Leitura (CORS) e demais ações: só nos testes 
 normal: o Abrir no Terminal com prompt comum abriu o Claude real com o texto (relato e print do
 dono). O histórico apareceu no app (relato do dono).
 
-Atinge a versão 2.1.0 publicada. As duas falhas se somavam: uma página na porta 5173 podia abrir o
+Atinge a versão 2.1.0; corrigido na 2.1.1, publicada em 27/11. As duas falhas se somavam: uma página na porta 5173 podia abrir o
 Terminal com uma opção do Claude escolhida por ela. Reproduzido com Claude e envio falsos. Não foi
 testado se o Claude real executaria um comando por essas opções.
 
@@ -68,7 +68,13 @@ Estes itens não foram corrigidos.
   status do envio, e filtra os caracteres.
 - **#19:** confirmo que é só em teste; em produção o host é comparado por inteiro.
 - **#14 a #18:** os dois textos passam por `mensagem_publica`; o teste da correção passa.
-- A situação atual dos alertas no painel do GitHub não foi conferida.
+- **#20 "Information exposure through an exception" (Medium):** apareceu no painel depois da
+  revisão (print do dono: 1 aberto e 19 fechados); detectado primeiro em `31b4277`. O caminho começa
+  no erro da IA em `/api/revisar-pedido`, que passa por `mensagem_publica`, e o alerta aponta para
+  `/api/analisar-intencao`. As rotas só compartilham `_run_domain_action`, que devolve o resultado
+  da ação sem guardar estado. Falso positivo pelo código; vistos só os passos 1 e 2 dos 15.
+  **Limite:** o filtro remove caminhos e limita o tamanho; não procura chaves ou outros segredos.
+  Fechado pelo dono em 27/11 (relato; não conferido por mim no painel).
 
 ### Claude local usa ferramentas no Testar Conexão, na revisão e na otimização (SEGURANÇA, achado na fase 6)
 - **Causa (visto no código, não reproduzido):** `testar_conexao`, `revisar_com_ia` e `otimizar_prompt_com_ia`
