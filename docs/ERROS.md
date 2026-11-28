@@ -69,16 +69,28 @@ testado se o Claude real executaria um comando por essas opções.
 - **Limite que continua:** um programa local que responda no endereço do Ollama ainda pode
   redirecionar o pedido (pela regra do `urllib`, sem o corpo). Não foi testado nem corrigido.
 
+## Corrigido na fase 8, PR C (27/11): limpeza, testado em Linux e conferido no Mac em parte
+
+- **No Mac (27/11):** `make check` passou (print do dono); com `make run`, o app abriu e gerou um
+  prompt de teste inventado pelo "Já tenho um prompt" (relato). A rota removida não foi chamada à
+  mão. O `ci.yml` é protegido contra escrita remota: o dono aplicou a mudança no Terminal, e o
+  arquivo ficou idêntico ao testado em Linux. O CI com os commits fixos só roda no GitHub.
+
+- **Rota do login OpenRouter:** removida, com a linha do README. A função
+  `exchange_openrouter_oauth_code` e os testes dela ficaram. A chave de API do OpenRouter não muda.
+  Os dados `oauth` do catálogo de provedores não foram mexidos.
+- **CI:** `checkout` e `setup-node` presos ao commit da v4.4.0, e `setup-python` ao da v5.6.0 (eram
+  os commits das marcas `v4` e `v5` na consulta de 27/11 ao GitHub). O código dessas ações não foi
+  revisado. **Limite:** as atualizações delas passam a ser manuais; as análises CodeQL são
+  configuradas no GitHub e não estão no arquivo.
+- Teste novo: `backend/tests/test_fase8_limpeza.py` (os 2 falham sem a mudança).
+
 ## Em aberto
 
 ### Fase 8, revisão de segurança (27/11): itens de gravidade baixa
 Conferidos sobre o código da `main` (`c13c48a`), em cópia em Linux, com dados e programas falsos.
-Estes itens não foram corrigidos.
+Os itens baixos foram tratados nos PRs A, B e C. Resta o limite abaixo.
 - **Sem senha nas rotas** (limite do desenho, aceito): ver a decisão no registro do PR A.
-- **CI** (visto no código): ações fixadas por versão (`@v4`, `@v5`), não pelo commit.
-- **Login OpenRouter:** a tela não chama a rota. Não vi a rota guardar a chave; ela a devolve a
-  quem chamou. Recomendação: remover a rota e a linha do README, mantendo a função e seus testes
-  (nenhum teste que encontrei chama a rota). Chave de API do OpenRouter não muda.
 
 ### CodeQL revisto na fase 8 (27/11)
 - **#13:** confirmo falso positivo pelo código: o log recebe método, modelo da rota, código e o

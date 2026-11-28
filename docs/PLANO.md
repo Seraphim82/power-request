@@ -131,10 +131,13 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] PR B (dados e rede), código e teste novo (27/11, em cópia em Linux): limite do corpo,
   endereço do Ollama, chave em redirecionamento, erro 422 e histórico apagado.
 - [x] PR B: conferir no Mac (27/11, `make check`, 413 e 422; histórico por relato do dono).
-- [ ] PR B: commit, Pull Request, CI e merge.
-- [ ] PR C (limpeza): plano aprovado pelo dono em 27/11.
-- [ ] Itens baixos do PR C (ver `docs/ERROS.md`): fixar as ações do CI e remover a rota do
-  OpenRouter.
+- [x] PR B: Pull Request #6, 6 verificações verdes, sem alertas novos, merge (`76f72de`) (27/11).
+- [x] PR C (limpeza), código e teste novo (27/11, em cópia em Linux): rota do OpenRouter removida
+  e ações do CI presas a um commit.
+- [x] PR C: conferir no Mac (27/11, `make check`; uso do app por relato do dono).
+- [ ] PR C: commit, Pull Request, CI e merge.
+- [ ] Fechamento: decidir o número da versão, gerar e testar o `.app`, atualizar os documentos e
+  apagar as branches já na `main`.
 - [ ] Conferências no Mac.
 
 ## Depois da fase 4: conversa completa na pasta do projeto do cliente
@@ -151,7 +154,7 @@ Ideia do dono (26/11), a fazer em chat próprio.
   ficar no histórico do Claude Code (achado em 27/11).
 - Sequenciar com "continue" estoura 600 s no Claude local (ver ERROS): orientar ou ajustar o tempo.
 - Testes: versão mínima do Python, ou ajustar o `monkeypatch` do `test_api_contract.py` (ver ERROS).
-- Login OpenRouter: criar o botão ou remover a rota.
+- CI: avaliar o Dependabot para avisar quando houver versão nova das ações presas a um commit.
 - Conferir no Mac e corrigir a mensagem de permissão de Automação.
 - Alinhar a conferência de versão do Node (`Makefile`) com o que os testes exigem.
 - Trocar o texto do botão "Estruturar com IA" ou ligá-lo à IA.

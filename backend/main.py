@@ -21,7 +21,6 @@ from ai_hub import (
     AIHubError,
     AIHubSecurityError,
     MAX_SEND_PROMPT_CHARS,
-    exchange_openrouter_oauth_code,
     providers_for_ui,
 )
 import envio_automatico
@@ -169,11 +168,6 @@ class AIConfigModel(BaseModel):
     aceito_ganchos: bool = False
 
 
-class OAuthExchangeRequest(BaseModel):
-    code: str
-    code_verifier: str
-
-
 class IntencaoRequest(BaseModel):
     intencao: str
 
@@ -304,13 +298,6 @@ def listar_provedores():
 @app.get("/api/hub/local-tools")
 def detectar_ferramentas_locais():
     return {"tools": ai_hub.ferramentas_locais_para_ui()}
-
-
-@app.post("/api/hub/openrouter/exchange")
-def concluir_login_openrouter(req: OAuthExchangeRequest):
-    return _run_domain_action(
-        lambda: exchange_openrouter_oauth_code(req.code, req.code_verifier)
-    )
 
 
 @app.post("/api/hub/testar")

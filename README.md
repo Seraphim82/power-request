@@ -137,7 +137,6 @@ Se você marcar **Lembrar esta chave neste navegador**, ela é guardada no `loca
 | GET | `/api/health` | estado, versão e limite do envio |
 | GET | `/api/hub/providers` · `/api/hub/local-tools` | catálogo de IAs e CLIs detectados |
 | POST | `/api/hub/testar` | testa a conexão com a IA |
-| POST | `/api/hub/openrouter/exchange` | troca o código do login OpenRouter por uma chave (a tela atual não usa) |
 | POST | `/api/analisar-intencao` | sugere a categoria a partir da ideia |
 | POST | `/api/revisar-pedido` · `/api/gerar-prompt` | revisão e geração do prompt |
 | POST | `/api/organizar-prompt` | separa um texto colado nos campos |
