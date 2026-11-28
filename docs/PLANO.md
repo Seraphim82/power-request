@@ -135,10 +135,12 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] PR C (limpeza), código e teste novo (27/11, em cópia em Linux): rota do OpenRouter removida
   e ações do CI presas a um commit.
 - [x] PR C: conferir no Mac (27/11, `make check`; uso do app por relato do dono).
-- [ ] PR C: commit, Pull Request, CI e merge.
-- [ ] Fechamento: decidir o número da versão, gerar e testar o `.app`, atualizar os documentos e
-  apagar as branches já na `main`.
-- [ ] Conferências no Mac.
+- [x] PR C: Pull Request #7, 6 verificações verdes, sem alertas novos, merge (`1c2b41e`) (27/11).
+- [x] Decidido pelo dono (27/11): versão 2.1.2. Número atualizado no código e no `CHANGELOG.md`.
+- [x] Gerar e testar o `.app` da 2.1.2 e repetir o Abrir no Terminal com frase (27/11, relato do
+  dono).
+- [x] Conferências no Mac (27/11). O que ficou só em teste automático está em `docs/ERROS.md`.
+- [ ] Fechamento: commit, Pull Request, merge, tag `v2.1.2` e apagar as branches já na `main`.
 
 ## Depois da fase 4: conversa completa na pasta do projeto do cliente
 Ideia do dono (26/11), a fazer em chat próprio.

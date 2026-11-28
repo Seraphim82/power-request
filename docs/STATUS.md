@@ -38,9 +38,15 @@ Atualizado em 27/11/2026.
    nenhum alterado, e 2 novos). No Mac (27/11): `make check` passou (480 de backend, 22 de
    frontend, tipos e build; print do dono) e o app abriu e gerou um prompt pelo "Já tenho um
    prompt" (relato). O `ci.yml` foi aplicado pelo dono no Terminal, por ser protegido contra
-   escrita remota. Falta commit, Pull Request, CI e merge.
-   Depois: fechamento.
-2. Testar o `Power Request.app` da 2.1.1.
+   escrita remota. **PR C concluído:** Pull Request #7, 6 verificações verdes e sem alertas novos,
+   merge pelo dono (`1c2b41e`); CI #19 e CodeQL #19 verdes na `main` (prints do dono).
+2. Fechamento da **2.1.2** (número escolhido pelo dono, ainda não publicada). Em cópia em Linux,
+   já com o número novo: 480 testes de backend, 22 de frontend, tipos e build OK.
+   **No Mac (27/11):** o `Power Request.app` foi gerado com a versão 2.1.2 (conferido no arquivo
+   do app). O dono respondeu "tudo correto" ao roteiro (`make check`, abrir o app, versão no
+   servidor, prompt no histórico e desligar), sem prints, e confirmou que, no Abrir no Terminal,
+   o Claude real abriu e recebeu o texto de teste. Falta commit, Pull Request, CI, merge, tag e
+   apagar as branches já na `main`. O `.app` da 2.1.1 não foi testado.
 
 Testes das correções (27/11). Com o número 2.1.1, o `make check` passou no Mac (print do dono):
 435 testes de backend, 22 de frontend, tipos e build. Os testes manuais abaixo são de antes da
