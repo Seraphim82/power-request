@@ -48,23 +48,33 @@ testado se o Claude real executaria um comando por essas opções.
 - **Código de acesso nas rotas (decidido com o OK do dono no plano):** não criar agora. Um programa
   no computador poderia pedir a mesma página e pegar o código. Segue como limite conhecido.
 
+## Corrigido na fase 8, PR B (27/11): gravidade baixa, testado em Linux e conferido no Mac em parte
+
+- **No Mac (27/11):** `make check` passou, e com `make run` o envio de 1,2 MB em partes recebeu 413
+  e o erro 422 não devolveu o texto enviado (prints do dono). O prompt apareceu no histórico
+  (relato do dono). Ollama, chave em redirecionamento e histórico apagado: no Mac, só pelos testes
+  automáticos.
+
+- **Limite de 1 MB:** agora conta o corpo recebido, em partes ou não (`backend/limite_corpo.py`).
+- **Endereço do Ollama:** só `http(s)://localhost` ou `127.0.0.1`, com porta opcional. Quem usava
+  caminho ou consulta no endereço precisa tirar.
+- **Chave em redirecionamento:** o cabeçalho da chave não é repetido (testado entre dois servidores
+  falsos em `127.0.0.1`, nunca com provedor real ou chave real).
+- **Erro 422:** devolve só tipo, campo e mensagem.
+- **Histórico apagado:** `secure_delete` em toda conexão e `VACUUM` no Limpar tudo. O teste procura
+  um texto fictício nos arquivos do banco. Sobras de exclusões feitas antes saem no Limpar tudo.
+  **Limites:** não alcança backups nem garante remoção física no disco; se o `VACUUM` falhar, a
+  exclusão vale e o app não avisa.
+- Teste novo: `backend/tests/test_fase8_dados_rede.py` (30 casos; 21 falham sem a correção).
+- **Limite que continua:** um programa local que responda no endereço do Ollama ainda pode
+  redirecionar o pedido (pela regra do `urllib`, sem o corpo). Não foi testado nem corrigido.
+
 ## Em aberto
 
 ### Fase 8, revisão de segurança (27/11): itens de gravidade baixa
 Conferidos sobre o código da `main` (`c13c48a`), em cópia em Linux, com dados e programas falsos.
 Estes itens não foram corrigidos.
-- **Sem senha nas rotas** (visto no código, limite do desenho): um programa no computador que acesse
-  o servidor pode chamá-lo sem informar origem. Avaliar um código de acesso.
-- **Limite de 1 MB depende do `Content-Length`** (reproduzido): 3 MB enviados em partes passaram.
-- **Endereço do Ollama pouco restrito** (reproduzido na validação): aceita outra porta local,
-  caminho e consulta próprios, e um nome com `\` antes de `@localhost`. Neste último, o programa
-  tentou resolver o texto inteiro como nome (resolução bloqueada na prova); não vi conexão externa.
-- **Redirecionamento leva o cabeçalho da chave** (comportamento do `urllib`, reproduzido entre dois
-  servidores locais falsos). No app, as chaves vão para endereços HTTPS fixos; o Ollama não usa chave.
-- **Erro 422 devolve o que foi enviado**, inclusive um campo de chave, a quem fez a chamada
-  (reproduzido). O log do app não grava o corpo.
-- **Apagar o histórico** (visto no código): o banco não liga `secure_delete` nem roda `VACUUM`;
-  não testei se o texto apagado continua no arquivo.
+- **Sem senha nas rotas** (limite do desenho, aceito): ver a decisão no registro do PR A.
 - **CI** (visto no código): ações fixadas por versão (`@v4`, `@v5`), não pelo commit.
 - **Login OpenRouter:** a tela não chama a rota. Não vi a rota guardar a chave; ela a devolve a
   quem chamou. Recomendação: remover a rota e a linha do README, mantendo a função e seus testes

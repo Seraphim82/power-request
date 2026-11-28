@@ -187,6 +187,22 @@ def providers_for_ui() -> list[dict[str, Any]]:
 MODEL_NAME_PATTERN = re.compile(r"^[a-zA-Z0-9._:/-]{2,120}$")
 OAUTH_TOKEN_PATTERN = re.compile(r"^[a-zA-Z0-9._~-]{8,512}$")
 ALLOWED_LOCAL_HOSTS = {"localhost", "127.0.0.1"}
+# Só "protocolo://nome[:porta]", com uma barra final opcional. Nada de usuário, caminho ou consulta.
+_OLLAMA_RE = re.compile(r"(?i)(https?)://(localhost|127\.0\.0\.1)(?::([0-9]{1,5}))?/?")
+
+
+def _endereco_do_ollama(texto: str) -> str:
+    """Confere o endereço inteiro e devolve um novo, montado só com as partes aceitas."""
+    achado = _OLLAMA_RE.fullmatch(texto)
+    porta = int(achado[3]) if achado and achado[3] else None
+    if not achado or (porta is not None and not 1 <= porta <= 65535):
+        raise AIHubSecurityError(
+            "Por segurança (proteção SSRF), o Ollama só pode apontar para localhost ou 127.0.0.1, "
+            "sem usuário, caminho ou consulta. Exemplo: http://127.0.0.1:11434"
+        )
+    final = f":{porta}" if porta is not None else ""
+    return f"{achado[1].lower()}://{achado[2].lower()}{final}"
+
 MAX_CLI_PROMPT_CHARS = 12000
 MAX_CLI_OUTPUT_CHARS = 24000
 
@@ -243,6 +259,17 @@ def _build_search_path() -> str:
         if extra not in parts:
             parts.append(extra)
     return os.pathsep.join(parts)
+
+
+def _pedido_com_chave(
+    url: str, body: dict, headers: dict[str, str], nome: str, valor: str
+) -> urllib.request.Request:
+    """A chave vai como cabeçalho "sem redirecionamento": o urllib não a repete em outro endereço."""
+    pedido = urllib.request.Request(
+        url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
+    )
+    pedido.add_unredirected_header(nome.capitalize(), valor)
+    return pedido
 
 
 class AIHubClient:
@@ -340,12 +367,7 @@ class AIHubClient:
         validated_url = ""
         if provider == "ollama":
             raw_url = base_url or "http://127.0.0.1:11434"
-            parsed = urllib.parse.urlparse(raw_url)
-            if parsed.scheme not in {"http", "https"} or parsed.hostname not in ALLOWED_LOCAL_HOSTS:
-                raise AIHubSecurityError(
-                    "Por segurança (proteção SSRF), o Ollama só pode apontar para localhost ou 127.0.0.1."
-                )
-            validated_url = raw_url.rstrip("/")
+            validated_url = _endereco_do_ollama(raw_url)
 
         if provider in LOCAL_CLI_SPECS and base_url:
             raise AIHubSecurityError(
@@ -521,7 +543,6 @@ class AIHubClient:
             )
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
             }
             if provider == "openrouter":
                 headers["HTTP-Referer"] = "http://localhost:5173"
@@ -536,15 +557,12 @@ class AIHubClient:
             }
             if max_tokens:
                 body["max_tokens"] = max_tokens
-            return urllib.request.Request(
-                url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
-            )
+            return _pedido_com_chave(url, body, headers, "Authorization", f"Bearer {api_key}")
 
         if provider == "claude":
             url = "https://api.anthropic.com/v1/messages"
             headers = {
                 "Content-Type": "application/json",
-                "x-api-key": api_key,
                 "anthropic-version": "2023-06-01",
             }
             body = {
@@ -554,15 +572,12 @@ class AIHubClient:
                 "system": system_prompt,
                 "messages": [{"role": "user", "content": user_prompt}],
             }
-            return urllib.request.Request(
-                url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
-            )
+            return _pedido_com_chave(url, body, headers, "x-api-key", api_key)
 
         if provider == "gemini":
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
             headers = {
                 "Content-Type": "application/json",
-                "x-goog-api-key": api_key,
             }
             body = {
                 "system_instruction": {"parts": [{"text": system_prompt}]},
@@ -572,9 +587,7 @@ class AIHubClient:
                     **({"maxOutputTokens": max_tokens} if max_tokens else {}),
                 },
             }
-            return urllib.request.Request(
-                url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST"
-            )
+            return _pedido_com_chave(url, body, headers, "x-goog-api-key", api_key)
 
         if provider == "ollama":
             url = f"{cfg['base_url']}/api/chat"
