@@ -8,6 +8,12 @@ seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
 ### Segurança
 - No uso normal, o app só atende por `127.0.0.1` (`localhost` é recusado).
 - O Abrir no Terminal recusa, no Claude, prompt de uma palavra só.
+- O limite de 1 MB vale também para pedidos enviados em partes.
+- O endereço do Ollama aceita só `localhost` ou `127.0.0.1` com porta, sem usuário, caminho ou
+  consulta.
+- A chave de API não é repetida quando há redirecionamento.
+- Erros de formato (422) não devolvem mais o que foi enviado.
+- O texto apagado do histórico é sobrescrito no banco; Limpar tudo também compacta o arquivo.
 
 ## [2.1.1] - 2026-11-27
 

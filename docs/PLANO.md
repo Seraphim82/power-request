@@ -122,17 +122,19 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] PR A, código e teste novo (27/11, em cópia em Linux): só `127.0.0.1` no uso normal
   (`localhost` e `testserver` recusados) e prompt de uma palavra recusado no Claude.
 - [x] PR A: conferir no Mac (27/11, `make check` e dois bloqueios; dono).
-- [ ] PR A: commit, Pull Request, CI e merge.
+- [x] PR A: Pull Request #5, 6 verificações verdes, merge (`e82d94c`) pelo dono (27/11).
 - [x] Decidido pelo dono (27/11): versão 2.1.1, porque a 2.1.0 publicada tem as falhas. Número
   atualizado no código e no `CHANGELOG.md`.
 - [x] Commit, Pull Request #3, CI, merge (`28507da`) e tag `v2.1.1` (27/11).
 - [x] Alerta CodeQL #20: analisado como falso positivo; fechado pelo dono (27/11).
 - [x] Código de acesso nas rotas: avaliado; não criar agora (OK do dono no plano, 27/11).
-- [ ] PR B (dados e rede) e PR C (limpeza): plano aprovado pelo dono em 27/11.
-- [ ] Itens baixos restantes (ver `docs/ERROS.md`), cada correção com teste novo: limitar o corpo
-  lido, restringir o
-  endereço do Ollama, não seguir redirecionamento com chave, limpar o erro 422, apagar de fato o
-  histórico, fixar as ações do CI e remover a rota do OpenRouter.
+- [x] PR B (dados e rede), código e teste novo (27/11, em cópia em Linux): limite do corpo,
+  endereço do Ollama, chave em redirecionamento, erro 422 e histórico apagado.
+- [x] PR B: conferir no Mac (27/11, `make check`, 413 e 422; histórico por relato do dono).
+- [ ] PR B: commit, Pull Request, CI e merge.
+- [ ] PR C (limpeza): plano aprovado pelo dono em 27/11.
+- [ ] Itens baixos do PR C (ver `docs/ERROS.md`): fixar as ações do CI e remover a rota do
+  OpenRouter.
 - [ ] Conferências no Mac.
 
 ## Depois da fase 4: conversa completa na pasta do projeto do cliente

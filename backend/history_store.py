@@ -55,6 +55,7 @@ class HistoryStore:
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, timeout=10)
         conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA secure_delete = ON")  # o conteúdo apagado é sobrescrito no arquivo
         return conn
 
     def _init_db(self) -> None:
@@ -220,7 +221,20 @@ class HistoryStore:
         with self._connect() as conn:
             conn.execute("DELETE FROM rodadas")
             cursor = conn.execute("DELETE FROM pedidos")
-            return int(cursor.rowcount)
+            removidos = int(cursor.rowcount)
+        self._compactar()
+        return removidos
+
+    def _compactar(self) -> None:
+        """Reescreve o banco para tirar sobras de exclusões antigas. Se não der, a exclusão vale."""
+        try:
+            conn = self._connect()
+            try:
+                conn.execute("VACUUM")
+            finally:
+                conn.close()
+        except sqlite3.Error:
+            pass
 
     # ---------- Sequenciar: respostas guardadas por pedido ----------
     MAX_RODADAS_POR_PEDIDO = 50

@@ -108,7 +108,7 @@ Modo desenvolvimento (recarrega sozinho): `make dev` mostra os dois comandos (AP
 | Tipo | Provedores | Observação |
 |---|---|---|
 | CLI local | Claude (`claude`), Antigravity/Gemini (`agy`/`gemini`) | usa o login já feito no terminal, sem chave |
-| Servidor local | Ollama | só `localhost`/`127.0.0.1` |
+| Servidor local | Ollama | só `localhost`/`127.0.0.1`, sem usuário, caminho ou consulta |
 | Chave de API | OpenRouter, Gemini, Claude, OpenAI | por padrão a chave fica **só na memória** e some ao recarregar a página |
 
 Se você marcar **Lembrar esta chave neste navegador**, ela é guardada no `localStorage`, **sem criptografia**. Ao usar uma IA por chave, a chave e o texto são enviados ao provedor escolhido.
@@ -127,8 +127,8 @@ Se você marcar **Lembrar esta chave neste navegador**, ela é guardada no `loca
 - **Limites (Claude local):** ganchos impostos por política de administrador continuam valendo; o login, o modelo e as permissões do seu Claude continuam valendo; o texto enviado pode ficar no histórico do próprio Claude Code (`~/.claude`); alguns plugins internos (`cc-plugin-*`), skills e agentes continuam carregando, mas sem nenhuma ferramenta para usar. No Mac (Claude 2.1.332), com essas opções o Claude ficou com 0 ferramentas e 0 MCP e um gancho de teste não rodou (detalhes em [docs/STATUS.md](docs/STATUS.md)).
 - **Antigravity dentro do app:** pasta temporária e a trava descrita acima, que recusa as ferramentas. No máximo 2 envios simultâneos; a resposta é exibida como texto puro. No Sequenciar, as respostas anteriores vão marcadas como texto de referência, o que não garante que a IA ignore ordens escritas nelas.
 - **Abrir no Terminal:** o prompt nunca vai dentro de um comando de shell; fica num arquivo temporário privado (permissão 0600) que o script lê e apaga antes de iniciar a IA. A pasta precisa estar dentro da sua pasta de usuário (a própria pasta de usuário, pastas ocultas como `.ssh`, `Library` e links para fora são recusados). Só funciona com IAs locais e só no macOS. No Claude, um prompt que começa com `-` ou que tem uma palavra só é recusado, para o texto não ser lido como opção ou comando do programa.
-- **Dados no computador:** o histórico (pedidos, prompts, respostas) e o Contexto fixo ficam em `~/.power_request/history.db`. Na mesma pasta há um log curto de falhas (`power_request.log`), com data, método, rota, código e tipo do erro, sem mensagem, prompt, resposta ou chave. O log é ligado ao abrir pelo app ou por `make run`. A pasta usa permissão 700, e o banco e o log, 600. **Isso não é criptografia.**
-- **Cabeçalhos:** CSP restritiva, `X-Frame-Options: DENY`, `nosniff`, `no-referrer`; requisições `cross-site` e corpos acima de 1 MB são recusados; `/docs` e `/openapi.json` ficam desligados.
+- **Dados no computador:** o histórico (pedidos, prompts, respostas) e o Contexto fixo ficam em `~/.power_request/history.db`. Na mesma pasta há um log curto de falhas (`power_request.log`), com data, método, rota, código e tipo do erro, sem mensagem, prompt, resposta ou chave. O log é ligado ao abrir pelo app ou por `make run`. A pasta usa permissão 700, e o banco e o log, 600. **Isso não é criptografia.** Ao apagar pedidos, o conteúdo é sobrescrito dentro do banco; **Limpar tudo** também compacta o arquivo. Isso não alcança backups (como o Time Machine) nem garante a remoção física no disco.
+- **Cabeçalhos:** CSP restritiva, `X-Frame-Options: DENY`, `nosniff`, `no-referrer`; requisições `cross-site` e corpos acima de 1 MB são recusados (conta o que chega de fato, mesmo enviado em partes); um erro de formato diz o campo, sem devolver o que foi enviado; a chave de API não é repetida se o provedor redirecionar para outro endereço; `/docs` e `/openapi.json` ficam desligados.
 
 ## API
 

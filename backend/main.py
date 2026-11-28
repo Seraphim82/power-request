@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Callable, Optional, TypeVar
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -25,6 +27,7 @@ from ai_hub import (
 import envio_automatico
 import registro_local
 from history_store import HistoryStore, HistoryStoreError
+from limite_corpo import LimiteDoCorpo
 from prompt_engine import PowerRequestEngine, SecurityError, ValidationError
 
 T = TypeVar("T")
@@ -72,6 +75,9 @@ class _CorsDoApp(CORSMiddleware):
         return origin in _origens_dev()
 
 
+MAX_BODY_BYTES = 1_000_000
+# Registrado primeiro para ficar por dentro das conferências de origem e de nome.
+app.add_middleware(LimiteDoCorpo, limite=MAX_BODY_BYTES)
 app.add_middleware(
     _CorsDoApp,
     allow_origins=DEV_ORIGINS,
@@ -99,7 +105,6 @@ def _registrar(request: Request, codigo: object, tipo: str) -> None:
     registro_local.registrar_falha(request.method, rota, codigo, tipo)
 
 
-MAX_BODY_BYTES = 1_000_000
 MAX_ENVIOS_SIMULTANEOS = 2
 envios_em_andamento = threading.BoundedSemaphore(MAX_ENVIOS_SIMULTANEOS)
 
@@ -261,6 +266,14 @@ def _erro_http(status: int):
         return JSONResponse(status_code=status, content={"detail": mensagem_publica(exc)})
 
     return tratador
+
+
+@app.exception_handler(RequestValidationError)
+async def erro_de_formato(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Diz qual campo está errado sem devolver o que foi enviado (que pode ter chave ou prompt)."""
+    request.state.tipo_erro = type(exc).__name__
+    itens = [{k: e[k] for k in ("type", "loc", "msg") if k in e} for e in exc.errors()]
+    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(itens)})
 
 
 for _classe in FORBIDDEN_ERRORS:

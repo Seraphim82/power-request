@@ -24,12 +24,17 @@ Atualizado em 27/11/2026.
 ## Próximo passo
 
 1. Fase 8: plano das pendências aprovado pelo dono (PRs A, B e C). Pull Request #4 (registro da
-   2.1.1) na `main` (`86b349b`). PR A feito e testado só em Linux (448 testes de backend: 435
-   anteriores, nenhum alterado, e 13 novos). No Mac (27/11): `make check` OK (o print mostra 22 de
-   frontend, tipos e build; o total do backend foi confirmado pelo dono); com `make run`, `curl` com
-   nome `localhost` recebeu 400 e o prompt de uma palavra recebeu 403 (prints); a pasta do teste não
-   foi criada e o app carregou (relato). O Abrir no Terminal com frase não foi repetido no Mac depois
-   do PR A. Falta commit, Pull Request, CI e merge.
+   2.1.1) na `main` (`86b349b`). **PR A concluído:** Pull Request #5, 6 verificações verdes e sem
+   alertas novos, merge pelo dono (`e82d94c`); CI #15 e CodeQL #15 verdes na `main` (prints do
+   dono). No Mac, antes do merge: `make check` OK (o print mostra 22 de frontend, tipos e build; o
+   total do backend foi confirmado pelo dono) e os bloqueios do nome `localhost` (400) e do prompt
+   de uma palavra (403) com `make run`. O Abrir no Terminal com frase não foi repetido no Mac
+   depois do PR A.
+   **PR B** feito e testado só em Linux (Python 3.13): 478 testes de backend (448 anteriores,
+   nenhum alterado, e 30 novos). Frontend não mudou. No Mac (27/11): `make check` passou (478 de
+   backend, 22 de frontend, tipos e build), e com `make run` vieram o 413 no envio em partes e o 422
+   sem o texto enviado (prints do dono); o prompt apareceu no histórico (relato). Falta commit,
+   Pull Request, CI e merge. Depois: PR C e fechamento.
 2. Testar o `Power Request.app` da 2.1.1.
 
 Testes das correções (27/11). Com o número 2.1.1, o `make check` passou no Mac (print do dono):
