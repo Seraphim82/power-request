@@ -14,6 +14,10 @@ seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
 - A chave de API não é repetida quando há redirecionamento.
 - Erros de formato (422) não devolvem mais o que foi enviado.
 - O texto apagado do histórico é sobrescrito no banco; Limpar tudo também compacta o arquivo.
+- As ações do CI ficam presas a um commit exato.
+
+### Removido
+- A rota do login OpenRouter, que a tela não usava. A conexão por chave de API não muda.
 
 ## [2.1.1] - 2026-11-27
 

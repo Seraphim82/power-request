@@ -30,11 +30,16 @@ Atualizado em 27/11/2026.
    total do backend foi confirmado pelo dono) e os bloqueios do nome `localhost` (400) e do prompt
    de uma palavra (403) com `make run`. O Abrir no Terminal com frase não foi repetido no Mac
    depois do PR A.
-   **PR B** feito e testado só em Linux (Python 3.13): 478 testes de backend (448 anteriores,
-   nenhum alterado, e 30 novos). Frontend não mudou. No Mac (27/11): `make check` passou (478 de
-   backend, 22 de frontend, tipos e build), e com `make run` vieram o 413 no envio em partes e o 422
-   sem o texto enviado (prints do dono); o prompt apareceu no histórico (relato). Falta commit,
-   Pull Request, CI e merge. Depois: PR C e fechamento.
+   **PR B concluído:** Pull Request #6, 6 verificações verdes e sem alertas novos, merge pelo
+   dono (`76f72de`); CI #17 e CodeQL #17 verdes na `main` (prints do dono). Antes do merge, no Mac:
+   `make check` (478 de backend, 22 de frontend, tipos e build), 413 no envio em partes e 422 sem o
+   texto enviado (prints); o prompt apareceu no histórico (relato).
+   **PR C** feito e testado só em Linux (Python 3.13): 480 testes de backend (478 anteriores,
+   nenhum alterado, e 2 novos). No Mac (27/11): `make check` passou (480 de backend, 22 de
+   frontend, tipos e build; print do dono) e o app abriu e gerou um prompt pelo "Já tenho um
+   prompt" (relato). O `ci.yml` foi aplicado pelo dono no Terminal, por ser protegido contra
+   escrita remota. Falta commit, Pull Request, CI e merge.
+   Depois: fechamento.
 2. Testar o `Power Request.app` da 2.1.1.
 
 Testes das correções (27/11). Com o número 2.1.1, o `make check` passou no Mac (print do dono):
