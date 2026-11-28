@@ -34,20 +34,27 @@ testado se o Claude real executaria um comando por essas opções.
 - `test_script_gerado_entrega_prompt_intacto_e_apaga_temporarios` falha se sobrarem pastas
   `power-request-term-*` de execuções anteriores na pasta temporária (visto em Linux).
 
+## Corrigido na fase 8, PR A (27/11): gravidade baixa, testado em Linux e conferido no Mac em parte
+
+- **No Mac:** os bloqueios do nome `localhost` (400) e do prompt de uma palavra (403) funcionaram
+  com `make run` (prints do dono). O bloqueio de `testserver` e das alterações: só testes automáticos.
+
+- **`localhost` em IPv6:** no uso normal só valem o endereço e a origem `127.0.0.1`. O risco não foi
+  reproduzido; o app já recusava alterações marcadas pelo navegador como de outro site. É proteção extra.
+- **Nome `testserver`:** recusado no uso normal; continua valendo nos testes e no `make dev`.
+- **Prompt de uma palavra no Abrir no Terminal:** recusado no Claude. Não foi testado se o Claude
+  real trataria a palavra como subcomando.
+- Teste novo: `backend/tests/test_fase8_acesso.py`.
+- **Código de acesso nas rotas (decidido com o OK do dono no plano):** não criar agora. Um programa
+  no computador poderia pedir a mesma página e pegar o código. Segue como limite conhecido.
+
 ## Em aberto
 
 ### Fase 8, revisão de segurança (27/11): itens de gravidade baixa
 Conferidos sobre o código da `main` (`c13c48a`), em cópia em Linux, com dados e programas falsos.
 Estes itens não foram corrigidos.
-- **`localhost` na mesma porta, em IPv6** (visto no Mac e no código, risco não reproduzido): o app
-  escuta só em `127.0.0.1`, mas aceita a origem `http://localhost:<porta>`. No Mac, outro programa
-  escutava em `[::1]:8765`; `localhost` pode levar a ele, e uma página servida por ele seria aceita.
-  Avaliar aceitar só `127.0.0.1` ou escolher porta livre nos dois endereços.
 - **Sem senha nas rotas** (visto no código, limite do desenho): um programa no computador que acesse
   o servidor pode chamá-lo sem informar origem. Avaliar um código de acesso.
-- **Abrir no Terminal com uma palavra só** (não testado): um prompt igual ao nome de um subcomando
-  do Claude (ex.: `update`) pode ser entendido como comando.
-- **Nome `testserver` aceito fora dos testes** (reproduzido): está em `ALLOWED_HOSTS`.
 - **Limite de 1 MB depende do `Content-Length`** (reproduzido): 3 MB enviados em partes passaram.
 - **Endereço do Ollama pouco restrito** (reproduzido na validação): aceita outra porta local,
   caminho e consulta próprios, e um nome com `\` antes de `@localhost`. Neste último, o programa

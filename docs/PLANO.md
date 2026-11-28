@@ -119,14 +119,18 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] Conferir os dois bloqueios no Mac (27/11, prints do dono).
 - [x] Confirmar no Mac o Abrir no Terminal com prompt comum (27/11, Claude real; dono).
 - [x] Confirmar no Mac que o histórico aparece no app (27/11, relato do dono).
-- [ ] Avaliar a origem `localhost` quando outro programa usa a mesma porta em IPv6 (ver ERROS).
+- [x] PR A, código e teste novo (27/11, em cópia em Linux): só `127.0.0.1` no uso normal
+  (`localhost` e `testserver` recusados) e prompt de uma palavra recusado no Claude.
+- [x] PR A: conferir no Mac (27/11, `make check` e dois bloqueios; dono).
+- [ ] PR A: commit, Pull Request, CI e merge.
 - [x] Decidido pelo dono (27/11): versão 2.1.1, porque a 2.1.0 publicada tem as falhas. Número
   atualizado no código e no `CHANGELOG.md`.
 - [x] Commit, Pull Request #3, CI, merge (`28507da`) e tag `v2.1.1` (27/11).
 - [x] Alerta CodeQL #20: analisado como falso positivo; fechado pelo dono (27/11).
-- [ ] Avaliar código de acesso nas rotas e o prompt de uma palavra só no Abrir no Terminal.
-- [ ] Itens baixos (ver `docs/ERROS.md`), cada correção com teste novo e só com OK: tirar
-  `testserver` da produção (há teste antigo que usa esse nome), limitar o corpo lido, restringir o
+- [x] Código de acesso nas rotas: avaliado; não criar agora (OK do dono no plano, 27/11).
+- [ ] PR B (dados e rede) e PR C (limpeza): plano aprovado pelo dono em 27/11.
+- [ ] Itens baixos restantes (ver `docs/ERROS.md`), cada correção com teste novo: limitar o corpo
+  lido, restringir o
   endereço do Ollama, não seguir redirecionamento com chave, limpar o erro 422, apagar de fato o
   histórico, fixar as ações do CI e remover a rota do OpenRouter.
 - [ ] Conferências no Mac.

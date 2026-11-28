@@ -3,6 +3,12 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); números de versão
 seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
 
+## Não publicado
+
+### Segurança
+- No uso normal, o app só atende por `127.0.0.1` (`localhost` é recusado).
+- O Abrir no Terminal recusa, no Claude, prompt de uma palavra só.
+
 ## [2.1.1] - 2026-11-27
 
 ### Segurança

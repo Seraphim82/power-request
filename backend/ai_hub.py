@@ -770,6 +770,12 @@ class AIHubClient:
                 "o programa poderia entender o texto como um comando dele. Apague o \"-\" do começo "
                 "ou escreva uma frase antes."
             )
+        # Uma palavra só (ex.: "update") pode ser lida como um subcomando do programa.
+        if modo == "argumento" and len(texto.split()) < 2:
+            raise AIHubSecurityError(
+                "Por segurança, o Abrir no Terminal não aceita um prompt de uma palavra só, porque o "
+                "programa poderia entender a palavra como um comando dele. Escreva uma frase."
+            )
         destino = self.validar_pasta_terminal(pasta)
 
         env_path = _build_search_path()

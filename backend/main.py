@@ -55,7 +55,9 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 PORTA_PADRAO = 8765
 DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
-# Valem no desenvolvimento (make dev). Ao abrir o app (desktop_app.py), são desligadas.
+# Valem no desenvolvimento (make dev) e nos testes. Ao abrir o app (desktop_app.py), são desligadas
+# a porta 5173 e os nomes "localhost" e "testserver": no uso normal só vale 127.0.0.1.
+# "localhost" pode levar a ::1, onde outro programa pode usar a mesma porta.
 app.state.origens_dev = True
 
 
@@ -83,7 +85,9 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=ALLOWED_HOSTS)
 def _origin_permitida(origin: str, host: str) -> bool:
     """Compara a origem inteira (protocolo, nome e porta): outro programa local não passa."""
     porta = getattr(app.state, "porta", PORTA_PADRAO)
-    aceitas = {f"http://127.0.0.1:{porta}", f"http://localhost:{porta}", *_origens_dev()}
+    aceitas = {f"http://127.0.0.1:{porta}", *_origens_dev()}
+    if app.state.origens_dev:
+        aceitas.add(f"http://localhost:{porta}")
     if host:  # a própria origem do servidor; o nome já passou pelo TrustedHostMiddleware
         aceitas.add(f"http://{host}")
     return origin in aceitas
@@ -116,7 +120,10 @@ SECURITY_HEADERS = {
 async def protecao_do_servidor_local(request: Request, call_next):
     """Bloqueia origens externas e corpos gigantes; acrescenta cabeçalhos de segurança."""
     resposta = None
-    if request.method not in SAFE_METHODS:
+    nome_pedido = request.headers.get("host", "").split(":")[0]
+    if not app.state.origens_dev and nome_pedido != "127.0.0.1":
+        resposta = JSONResponse(status_code=400, content={"detail": "Endereço não autorizado."})
+    elif request.method not in SAFE_METHODS:
         origin = request.headers.get("origin")
         site = request.headers.get("sec-fetch-site")
         host = request.headers.get("host", "")
