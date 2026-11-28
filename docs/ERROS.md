@@ -87,6 +87,16 @@ testado se o Claude real executaria um comando por essas opções.
 
 ## Em aberto
 
+### Botão Fechar Power Request: limites (27/11)
+- A aba só fecha sozinha se o navegador deixar; senão, fica a tela "Power Request encerrado". No
+  Safari do dono ela fechou (relato, 27/11); no Chromium automatizado em Linux, não.
+- A recusa por envio em andamento cobre o Enviar e o Sequenciar. Testar Conexão, revisão,
+  otimização e envio pelo site não são recusados; pelo funcionamento do servidor (uvicorn), ele
+  termina o que está atendendo antes de sair, mas isso não foi testado.
+- Como nas outras rotas, não há senha: um programa instalado no computador consegue pedir o
+  fechamento.
+- Abas extras do app continuam abertas e deixam de responder.
+
 ### Fase 8, revisão de segurança (27/11): itens de gravidade baixa
 Conferidos sobre o código da `main` (`c13c48a`), em cópia em Linux, com dados e programas falsos.
 Os itens baixos foram tratados nos PRs A, B e C. Resta o limite abaixo.

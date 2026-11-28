@@ -7,14 +7,14 @@ import threading
 from pathlib import Path
 from typing import Callable, Optional, TypeVar
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictBool
 
 from ai_hub import (
     AIHubClient,
@@ -61,6 +61,8 @@ SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 # a porta 5173 e os nomes "localhost" e "testserver": no uso normal só vale 127.0.0.1.
 # "localhost" pode levar a ::1, onde outro programa pode usar a mesma porta.
 app.state.origens_dev = True
+# Função que desliga o servidor. Só o desktop_app.py preenche; no "make dev" o botão não existe.
+app.state.encerrar = None
 
 
 def _origens_dev() -> list[str]:
@@ -210,6 +212,10 @@ class TestarAutomacaoRequest(BaseModel):
     navegador: Optional[str] = Field(default=None, max_length=40)
 
 
+class EncerrarRequest(BaseModel):
+    confirmar: StrictBool
+
+
 class OrganizarPromptRequest(BaseModel):
     texto: str = Field(max_length=20_000)
 
@@ -287,7 +293,41 @@ def health_check():
         "version": APP_VERSION,
         "frontend_ready": (FRONTEND_DIST / "index.html").is_file(),
         "limite_envio": MAX_SEND_PROMPT_CHARS,
+        "pode_encerrar": app.state.encerrar is not None,
     }
+
+
+def _reservar_todas_as_vagas_de_envio() -> bool:
+    """Pega todas as vagas ou nenhuma. Com todas pegas, nenhum envio novo começa."""
+    for pegas in range(MAX_ENVIOS_SIMULTANEOS):
+        if not envios_em_andamento.acquire(blocking=False):
+            for _ in range(pegas):
+                envios_em_andamento.release()
+            return False
+    return True
+
+
+@app.post("/api/encerrar")
+def encerrar_app(req: EncerrarRequest, request: Request, tarefas: BackgroundTasks):
+    """Desliga o app a pedido da própria tela."""
+    # Mais rígido que as outras rotas: aqui a origem é obrigatória (já foi conferida acima).
+    if request.headers.get("origin") is None:
+        raise HTTPException(status_code=403, detail="Origem não autorizada para esta operação.")
+    if req.confirmar is not True:
+        raise HTTPException(status_code=400, detail="Confirme o fechamento do app.")
+    desligar = app.state.encerrar
+    if desligar is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Neste modo o app não fecha por aqui. No Terminal, aperte Control + C.",
+        )
+    if not _reservar_todas_as_vagas_de_envio():
+        raise HTTPException(
+            status_code=409,
+            detail="Há um envio em andamento. Aguarde terminar para fechar o app.",
+        )
+    tarefas.add_task(desligar)  # roda depois que a resposta sai
+    return {"encerrando": True}
 
 
 @app.get("/api/hub/providers")

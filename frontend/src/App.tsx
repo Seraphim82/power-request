@@ -28,6 +28,7 @@ import { enderecoDaEscolha, precisaDeAviso, type EscolhaAviso } from './avisoLin
 import { AvisoLinkPrompt } from './AvisoLinkPrompt';
 import { AguardandoIa } from './AguardandoIa';
 import { AvisoIaOffline } from './AvisoIaOffline';
+import { AppEncerrado, FecharApp } from './FecharApp';
 import { BotaoCopiarPrompt } from './BotaoCopiarPrompt';
 import { iaOfflineBloqueiaEnvio } from './bloqueioEnvio';
 import { OrganizarPrompt, type RespostaOrganizar } from './OrganizarPrompt';
@@ -73,6 +74,8 @@ function carregarConfigSalva(): AIConfigSalva {
 
 export default function App() {
   const configInicial = carregarConfigSalva();
+  const [podeEncerrar, setPodeEncerrar] = useState<boolean>(false);
+  const [encerrado, setEncerrado] = useState<boolean>(false);
 
   const [categoria, setCategoria] = useState<CategoriaId>('geral');
   const [organizarAberto, setOrganizarAberto] = useState<boolean>(false);
@@ -229,6 +232,7 @@ export default function App() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (Number(d?.limite_envio) > 0) setLimiteEnvio(Number(d.limite_envio));
+        setPodeEncerrar(d?.pode_encerrar === true);
       })
       .catch(() => undefined);
   }, []);
@@ -1079,6 +1083,8 @@ export default function App() {
   const etapaAtualMeta = STEP_META[etapa - 1] || STEP_META[0];
   const modoAuth = providerSelecionado?.auth_mode || 'local_cli';
 
+  if (encerrado) return <AppEncerrado />;
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -1154,6 +1160,16 @@ export default function App() {
             <button type="button" className="btn-header" style={styles.btnHeader} onClick={resetar}>
               Novo Pedido
             </button>
+            {podeEncerrar && (
+              <FecharApp
+                apiBase={API_BASE}
+                aoFechar={() => {
+                  setEncerrado(true);
+                  // Tenta fechar a aba; se o navegador não deixar, fica a tela de encerrado.
+                  window.close();
+                }}
+              />
+            )}
           </div>
         </header>
 
