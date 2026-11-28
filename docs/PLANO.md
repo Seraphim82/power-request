@@ -152,7 +152,10 @@ Para desligar o app sem usar o Terminal. Plano aprovado pelo dono.
   Sequenciar, sem comando de Terminal. No `make dev` o botão não aparece.
 - [x] Conferir no Mac (27/11, relato do dono): no Safari a aba fecha sozinha; "Não" mantém o app
   aberto.
-- [ ] Commit, Pull Request e merge; decidir o número da versão.
+- [x] Commit, Pull Request #9 e merge (`3943dea`) pelo dono (27/11).
+- [x] Decidido pelo dono (27/11): versão 2.2.0. Número atualizado no código e no `CHANGELOG.md`.
+- [x] Gerar e testar o `.app` da 2.2.0 no Mac (27/11, relato do dono).
+- [ ] Fechamento: commit, Pull Request, merge, tag `v2.2.0` e apagar a branch.
 
 ## Depois da fase 4: conversa completa na pasta do projeto do cliente
 Ideia do dono (26/11), a fazer em chat próprio.

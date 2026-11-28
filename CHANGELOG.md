@@ -3,11 +3,12 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); números de versão
 seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
 
-## [Não lançado]
+## [2.2.0] - 2026-11-27
 
 ### Adicionado
-- Botão vermelho **Fechar**, no canto superior direito, com janela de confirmação, para desligar o app sem usar o Terminal. Não
-  fecha enquanto o Enviar ou o Sequenciar estiverem esperando resposta.
+- Botão vermelho **Fechar**, no canto superior direito, com janela de confirmação, para desligar
+  o app sem usar o Terminal. Não fecha enquanto o Enviar ou o Sequenciar estiverem esperando
+  resposta.
 
 ## [2.1.2] - 2026-11-27
 
@@ -81,6 +82,7 @@ Lista completa em [docs/ERROS.md](docs/ERROS.md). Os principais:
 ## [2.0.0]
 Versão publicada antes deste histórico (até o commit `b21ce46`), sem registro detalhado.
 
+[2.2.0]: https://github.com/Seraphim82/power-request/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/Seraphim82/power-request/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/Seraphim82/power-request/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Seraphim82/power-request/compare/b21ce46...v2.1.0

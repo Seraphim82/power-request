@@ -64,8 +64,16 @@ Atualizado em 27/11/2026.
    Chromium: "Não" e Esc mantiveram o app ligado; "Sim, fechar" encerrou o programa).
    **No Mac, visual novo (27/11, relato do dono, no Safari):** a aba fechou sozinha, o teste no
    Terminal mostrou o app desligado e, ao clicar em "Não", o app continuou aberto. Outros
-   navegadores não foram testados. Falta commit, Pull Request, CI e merge. O número da versão não foi
-   decidido.
+   navegadores não foram testados. **Na `main`:** Pull Request #9, 6 verificações verdes e sem
+   alertas novos, merge pelo dono (`3943dea`); CI #23 e CodeQL #23 verdes na `main` (prints do
+   dono). Antes do commit, `make check` no Mac: 503 testes de backend, tipos e build (print do
+   dono). A branch `recurso/botao-fechar` foi apagada.
+4. **Versão 2.2.0** (número escolhido pelo dono, ainda não publicada), na branch `versao/2.2.0`:
+   só o número da versão e os documentos. Testada em Linux: 503 testes de backend, 22 de
+   frontend, tipos e build. **No Mac (27/11, relato do dono, sem print):** "todos os passos rodaram
+   com sucesso" no roteiro (`make check`, gerar o `.app`, abrir, versão 2.2.0 no servidor, fechar
+   pelo botão e conferir o app desligado). Falta commit, Pull Request, CI, merge, tag `v2.2.0` e
+   apagar a branch.
 
 Testes das correções (27/11). Com o número 2.1.1, o `make check` passou no Mac (print do dono):
 435 testes de backend, 22 de frontend, tipos e build. Os testes manuais abaixo são de antes da
