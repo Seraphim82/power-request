@@ -3,7 +3,7 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); números de versão
 seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
 
-## Não publicado
+## [2.1.2] - 2026-11-27
 
 ### Segurança
 - No uso normal, o app só atende por `127.0.0.1` (`localhost` é recusado).
@@ -75,5 +75,6 @@ Lista completa em [docs/ERROS.md](docs/ERROS.md). Os principais:
 ## [2.0.0]
 Versão publicada antes deste histórico (até o commit `b21ce46`), sem registro detalhado.
 
+[2.1.2]: https://github.com/Seraphim82/power-request/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/Seraphim82/power-request/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/Seraphim82/power-request/compare/b21ce46...v2.1.0
