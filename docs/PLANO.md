@@ -109,7 +109,7 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
   usar `git revert`.
 - **Pronto quando:** `main` atualizada e com tag.
 
-## [ ] Fase 8: revisão de segurança
+## [x] Fase 8: revisão de segurança
 - **Objetivo:** olhar de novo, em chat novo.
 - **Tarefas:** revisar o código e as proteções.
 - **Pronto quando:** relatório sem pendência crítica ou alta.
@@ -140,7 +140,19 @@ Implementada e conferida no Mac em 26/11 (alcance no `docs/STATUS.md`).
 - [x] Gerar e testar o `.app` da 2.1.2 e repetir o Abrir no Terminal com frase (27/11, relato do
   dono).
 - [x] Conferências no Mac (27/11). O que ficou só em teste automático está em `docs/ERROS.md`.
-- [ ] Fechamento: commit, Pull Request, merge, tag `v2.1.2` e apagar as branches já na `main`.
+- [x] Fechamento: commit, Pull Request #8, merge (`70642d8`), tag `v2.1.2` e branches já na
+  `main` apagadas pelo dono (27/11).
+
+## Pedido do dono (27/11): botão Fechar Power Request
+Para desligar o app sem usar o Terminal. Plano aprovado pelo dono.
+- [x] Botão com confirmação, rota `POST /api/encerrar` e testes novos (em cópia em Linux).
+- [x] Ajuste pedido pelo dono: botão vermelho "Fechar" no canto superior direito e confirmação em
+  janela (em cópia em Linux).
+- [x] Proteções: origem obrigatória e conferida, confirmação no pedido, não fecha durante Enviar ou
+  Sequenciar, sem comando de Terminal. No `make dev` o botão não aparece.
+- [x] Conferir no Mac (27/11, relato do dono): no Safari a aba fecha sozinha; "Não" mantém o app
+  aberto.
+- [ ] Commit, Pull Request e merge; decidir o número da versão.
 
 ## Depois da fase 4: conversa completa na pasta do projeto do cliente
 Ideia do dono (26/11), a fazer em chat próprio.

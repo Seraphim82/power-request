@@ -3,6 +3,12 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); números de versão
 seguem [SemVer](https://semver.org/lang/pt-BR/). Só o macOS foi testado.
 
+## [Não lançado]
+
+### Adicionado
+- Botão vermelho **Fechar**, no canto superior direito, com janela de confirmação, para desligar o app sem usar o Terminal. Não
+  fecha enquanto o Enviar ou o Sequenciar estiverem esperando resposta.
+
 ## [2.1.2] - 2026-11-27
 
 ### Segurança

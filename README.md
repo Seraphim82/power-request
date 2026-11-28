@@ -103,6 +103,8 @@ make icon      # após trocar o logo em assets/, regenera o ícone e a cópia us
 
 Modo desenvolvimento (recarrega sozinho): `make dev` mostra os dois comandos (API em `:8000`, Vite em `:5173`).
 
+Para desligar o app, use o botão vermelho **Fechar**, no canto superior direito, e confirme na janela que aparece (só fechar a aba não desliga). Se o navegador não deixar a aba fechar sozinha, aparece o aviso de que já pode fechá-la. Depois de atualizar o app, desligue o que estava aberto antes de abrir o novo.
+
 ## Hub de IAs
 
 | Tipo | Provedores | Observação |
@@ -120,6 +122,7 @@ Se você marcar **Lembrar esta chave neste navegador**, ela é guardada no `loca
 - No uso normal (`make run` ou o `.app`), o servidor só atende pelo endereço `127.0.0.1` (proteção contra DNS rebinding). No `make dev` e nos testes, `localhost` também vale.
 - Nas operações que não são só de leitura, o servidor compara a origem inteira (protocolo, nome e porta): no uso normal (`make run` ou o `.app`) passa só o próprio app; o Vite de desenvolvimento (porta 5173) é aceito apenas quando a API roda sem o `desktop_app.py`, como no `make dev`. Isso protege contra páginas de outras origens abertas no navegador. Não há login: um programa instalado no computador consegue chamar o servidor diretamente.
 - CORS liberado apenas para o Vite em desenvolvimento, sem credenciais.
+- **Fechar o app:** exige a origem do próprio app e uma confirmação no pedido, não roda comando de Terminal e não age durante o Enviar ou o Sequenciar. No `make dev` fica desativado.
 - Campos de texto passam por limite de tamanho e um filtro de injeção **básico** (não é garantia de proteção); consultas SQL são parametrizadas.
 - CLIs locais só rodam da lista fixa de comandos, sem shell, com limite de entrada e de tempo.
 - Chaves de API são mascaradas em mensagens de erro.
@@ -134,7 +137,8 @@ Se você marcar **Lembrar esta chave neste navegador**, ela é guardada no `loca
 
 | Método | Rota | Para quê |
 |---|---|---|
-| GET | `/api/health` | estado, versão e limite do envio |
+| GET | `/api/health` | estado, versão, limite do envio e se o app pode ser fechado pela tela |
+| POST | `/api/encerrar` | desliga o app, com confirmação |
 | GET | `/api/hub/providers` · `/api/hub/local-tools` | catálogo de IAs e CLIs detectados |
 | POST | `/api/hub/testar` | testa a conexão com a IA |
 | POST | `/api/analisar-intencao` | sugere a categoria a partir da ideia |

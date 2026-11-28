@@ -45,6 +45,8 @@ def main() -> None:
 
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
     server = uvicorn.Server(config)
+    # Botão "Fechar Power Request": o servidor termina o que está atendendo e sai.
+    app.state.encerrar = lambda: setattr(server, "should_exit", True)
 
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()

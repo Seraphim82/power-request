@@ -40,13 +40,32 @@ Atualizado em 27/11/2026.
    prompt" (relato). O `ci.yml` foi aplicado pelo dono no Terminal, por ser protegido contra
    escrita remota. **PR C concluído:** Pull Request #7, 6 verificações verdes e sem alertas novos,
    merge pelo dono (`1c2b41e`); CI #19 e CodeQL #19 verdes na `main` (prints do dono).
-2. Fechamento da **2.1.2** (número escolhido pelo dono, ainda não publicada). Em cópia em Linux,
-   já com o número novo: 480 testes de backend, 22 de frontend, tipos e build OK.
-   **No Mac (27/11):** o `Power Request.app` foi gerado com a versão 2.1.2 (conferido no arquivo
-   do app). O dono respondeu "tudo correto" ao roteiro (`make check`, abrir o app, versão no
-   servidor, prompt no histórico e desligar), sem prints, e confirmou que, no Abrir no Terminal,
-   o Claude real abriu e recebeu o texto de teste. Falta commit, Pull Request, CI, merge, tag e
-   apagar as branches já na `main`. O `.app` da 2.1.1 não foi testado.
+2. **2.1.2 publicada em 27/11** e **fase 8 concluída** (sem pendência crítica ou alta). Pull
+   Request #8, 6 verificações verdes e sem alertas novos, merge pelo dono (`70642d8`); CI #21 e
+   CodeQL #21 verdes na `main` (prints do dono).
+   **No Mac (27/11), antes do merge:** o `Power Request.app` foi gerado com a versão 2.1.2
+   (conferido no arquivo do app). O dono respondeu "tudo correto" ao roteiro (`make check`, abrir
+   o app, versão no servidor, prompt no histórico e desligar) e confirmou que, no Abrir no
+   Terminal, o Claude real abriu e recebeu o texto de teste. Um print posterior mostra o `make app`,
+   o servidor respondendo `2.1.2` e o comando de desligar; o total de testes do backend não aparece.
+   **Tag e Release:** a tag `v2.1.2` aponta para `70642d8` (conferido no Mac e no GitHub). Ela foi
+   criada junto com uma Release no site do GitHub e é do tipo simples (as anteriores são anotadas);
+   a descrição da Release foi corrigida pelo dono. O `.app` da 2.1.1 não foi testado.
+   **Branches:** o dono apagou as seis que já estavam na `main`. Conferido no Mac e no GitHub:
+   sobrou só a `main`, e o stash antigo continua guardado.
+3. **Botão Fechar Power Request** (pedido do dono, fora da fase 8), na branch
+   `recurso/botao-fechar`. Feito e testado só em Linux (Python 3.13): 503 testes de backend (480
+   anteriores, nenhum alterado, e 23 novos), 22 de frontend, tipos e build. Num Chromium
+   automatizado: Cancelar manteve o app ligado; confirmar encerrou o programa; a aba ficou aberta
+   com a tela "Power Request encerrado". **No Mac, primeira versão (print do dono, 27/11):**
+   `make check` passou (503 de backend, 22 de frontend, tipos e build), o `.app` foi gerado e,
+   depois, o servidor não respondia mais. Depois disso o dono pediu outro visual: botão vermelho
+   "Fechar" no canto superior direito e confirmação em janela (testado em Linux no mesmo
+   Chromium: "Não" e Esc mantiveram o app ligado; "Sim, fechar" encerrou o programa).
+   **No Mac, visual novo (27/11, relato do dono, no Safari):** a aba fechou sozinha, o teste no
+   Terminal mostrou o app desligado e, ao clicar em "Não", o app continuou aberto. Outros
+   navegadores não foram testados. Falta commit, Pull Request, CI e merge. O número da versão não foi
+   decidido.
 
 Testes das correções (27/11). Com o número 2.1.1, o `make check` passou no Mac (print do dono):
 435 testes de backend, 22 de frontend, tipos e build. Os testes manuais abaixo são de antes da
